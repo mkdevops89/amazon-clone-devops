@@ -1,0 +1,15 @@
+Vagrant.configure("2") do |config|
+  # Use Ubuntu 20.04 LTS Box
+  config.vm.box = "ubuntu/focal64"
+  
+  # Assign a private IP for easy access (e.g., http://192.168.33.10:3000)
+  config.vm.network "private_network", ip: "192.168.33.10"
+
+  # Provision using Ansible
+  config.vm.provision "shell", path: "bootstrap.sh"
+
+  # Ansible Provisioner (Commented out for Shell-only usage)
+  # config.vm.provision "ansible" do |ansible|
+  #   ansible.playbook = "ops/ansible/playbook.yml"
+  # end
+end
