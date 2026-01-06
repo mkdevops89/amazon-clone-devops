@@ -1,0 +1,71 @@
+# ===========================
+# Project Specific
+# ===========================
+.DS_Store
+.vscode/
+
+# ... (omitted middle sections)
+
+# ===========================
+# Documentation
+# ===========================
+# Ignore markdown files and the docs folder (Local Only)
+/*.md
+docs/
+!docs/testcase.md
+git_commit.txt
+!README.md
+
+.idea/
+*.log
+
+# ===========================
+# Frontend (Node/Next.js)
+# ===========================
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.env.local
+frontend/.env
+frontend/coverage/
+
+# ===========================
+# Backend (Java/Maven)
+# ===========================
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.properties
+backend/mvnw
+backend/mvnw.cmd
+*.class
+*.jar
+*.war
+
+# ===========================
+# Infrastructure (Terraform/Terragrunt)
+# ===========================
+# CRITICAL: Never commit state files, they contain secrets!
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+.terragrunt-cache/
+
+# ===========================
+# Provisioning (Vagrant/Ansible)
+# ===========================
+.vagrant/
+*.retry
+
+# ===========================
+# Secrets & Credentials
+# ===========================
+secrets.yml
+secrets.yaml
+credentials.json
+*.pem
+*.key
+*.p12
+
+
