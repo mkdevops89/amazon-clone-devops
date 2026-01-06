@@ -11,7 +11,8 @@ provider "aws" {
 # - Private Subnets (for Apps and Databases)
 # - NAT Gateway (allows private instances to access internet for updates)
 module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
   name   = "amazon-vpc"
   cidr   = "10.0.0.0/16"
 
@@ -28,6 +29,7 @@ module "vpc" {
 # Provision Elastic Kubernetes Service
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
+  version         = "~> 20.0"
   cluster_name    = "amazon-cluster"
   cluster_version = "1.27"
   vpc_id          = module.vpc.vpc_id
@@ -47,9 +49,12 @@ module "eks" {
 # Managed Relational Database Service
 module "db" {
   source  = "terraform-aws-modules/rds/aws"
+  version = "~> 6.0"
   identifier = "amazon-db"
   engine            = "mysql"
   engine_version    = "8.0"
+  major_engine_version = "8.0"
+  family            = "mysql8.0"
   instance_class    = "db.t3.micro" # Free tier eligible
   allocated_storage = 5
   username = "admin"
@@ -62,9 +67,11 @@ module "db" {
 # ==========================================
 # Managed Redis for session storage and caching
 module "elasticache" {
-  source = "terraform-aws-modules/elasticache/aws"
+  source  = "terraform-aws-modules/elasticache/aws"
+  version = "~> 1.0"
   
   cluster_id           = "amazon-redis"
+  replication_group_id = "amazon-redis-rep-group"
   engine               = "redis"
   engine_version       = "6.x"
   node_type            = "cache.t3.micro"
@@ -78,22 +85,28 @@ module "elasticache" {
 # Amazon MQ (RabbitMQ)
 # ==========================================
 # Managed RabbitMQ service for message queuing
-module "mq" {
-  source  = "terraform-aws-modules/mq/aws"
-  version = "~> 2.0"
-
+# Replace module with direct resource due to registry issues
+resource "aws_mq_broker" "rabbitmq" {
   broker_name = "amazon-mq"
-  engine_type = "RabbitMQ"
-  engine_version = "3.10.10"
+
+  engine_type        = "RabbitMQ"
+  engine_version     = "3.10.10"
   host_instance_type = "mq.t3.micro"
   
-  # Security
   publicly_accessible = false
   subnet_ids          = [module.vpc.private_subnets[0]]
-  
-  # User
-  users = [{
+
+  user {
     username = "admin"
-    password = "SecurePassword123!" # Change in production!
-  }]
+    password = random_password.mq_password.result
+  }
+
+  logs {
+    general = true
+  }
+}
+
+resource "random_password" "mq_password" {
+  length  = 16
+  special = true
 }

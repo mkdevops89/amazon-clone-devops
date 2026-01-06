@@ -25,10 +25,10 @@ output "redis_endpoint" {
 
 output "mq_broker_console_url" {
   description = "The URL of the Amazon MQ Web Console"
-  value       = module.mq.broker_console_url
+  value       = aws_mq_broker.rabbitmq.instances[0].console_url
 }
 
 output "mq_broker_endpoints" {
   description = "The endpoints for the Amazon MQ Broker"
-  value       = module.mq.broker_instances[0].console_url
+  value       = aws_mq_broker.rabbitmq.instances[0].endpoints
 }
