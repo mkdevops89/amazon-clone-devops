@@ -21,8 +21,12 @@ export default function ProductCard({ title, price, image, category }: ProductPr
             <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>{title}</h3>
 
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem', background: '#f8f8f8', minHeight: '200px' }}>
-                {/* Using a placeholder div for image if Next/Image src is missing */}
-                <div style={{ color: '#ccc' }}>Image: {category}</div>
+                {/* Render the actual product image */}
+                <img
+                    src={image}
+                    alt={title}
+                    style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                />
             </div>
 
             <div style={{ marginBottom: '0.5rem' }}>
