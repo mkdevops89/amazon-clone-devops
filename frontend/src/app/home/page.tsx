@@ -1,18 +1,28 @@
-import Navbar from '../components/Navbar';
-import Hero from '../components/Hero';
-import ProductCard from '../components/ProductCard';
+"use client";
+
+import { useEffect, useState } from 'react';
+import Navbar from '../../components/Navbar';
+import Hero from '../../components/Hero';
+import ProductCard from '../../components/ProductCard';
+
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  category: string;
+  imageUrl?: string;
+}
 
 export default function Home() {
-  const products = [
-    { id: 1, title: "Wireless Headphones", price: 299.99, category: "Electronics", image: "/headphones.jpg" },
-    { id: 2, title: "Smart Watch Series 7", price: 399.00, category: "Wearables", image: "/watch.jpg" },
-    { id: 3, title: "Gaming Laptop Pro", price: 1299.99, category: "Computers", image: "/laptop.jpg" },
-    { id: 4, title: "4K Monitor 27-inch", price: 349.50, category: "Monitors", image: "/monitor.jpg" },
-    { id: 5, title: "Mechanical Keyboard", price: 89.99, category: "Accessories", image: "/keyboard.jpg" },
-    { id: 6, title: "Ergonomic Office Chair", price: 199.99, category: "Furniture", image: "/chair.jpg" },
-    { id: 7, title: "Running Shoes", price: 59.99, category: "Fashion", image: "/shoes.jpg" },
-    { id: 8, title: "Electric Coffee Maker", price: 45.00, category: "Appliances", image: "/coffee.jpg" },
-  ];
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+    fetch(`${apiUrl}/products`)
+      .then(res => res.json())
+      .then(data => setProducts(data))
+      .catch(err => console.error("Failed to fetch products:", err));
+  }, []);
 
   return (
     <main style={{ minHeight: '100vh', paddingBottom: '2rem' }}>
@@ -26,15 +36,19 @@ export default function Home() {
           gap: '1.5rem',
           padding: '1rem'
         }}>
-          {products.map(product => (
-            <ProductCard
-              key={product.id}
-              title={product.title}
-              price={product.price}
-              category={product.category}
-              image={product.image}
-            />
-          ))}
+          {products.length === 0 ? (
+            <p className="text-center p-10">Loading products from API...</p>
+          ) : (
+            products.map(product => (
+              <ProductCard
+                key={product.id}
+                title={product.name}
+                price={product.price}
+                category={product.category}
+                image={product.imageUrl || "/images/default.jpg"}
+              />
+            ))
+          )}
         </div>
       </div>
     </main>
