@@ -9,13 +9,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://54.242.104.244:8080/api}
     container_name: amazon-frontend
     ports:
       - "3000:3000" # Maps host port 3000 to container port 3000
     environment:
       # URL for the backend API (accessible via browser/client-side)
       # URL for the backend API (accessible via browser/client-side)
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080/api}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://54.242.104.244:8080/api}
     depends_on:
       - backend # Ensures backend starts before frontend
     networks:
@@ -128,7 +130,7 @@ services:
     image: gcr.io/datadoghq/agent:7
     container_name: amazon-datadog
     environment:
-      - DD_API_KEY=your_api_key_here # Replace with your real API Key
+      - DD_API_KEY=${DD_API_KEY} # Set via .env file
       - DD_SITE=datadoghq.com
       - DD_DOCKER_LABELS_AS_TAGS=true
     volumes:

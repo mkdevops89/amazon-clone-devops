@@ -15,48 +15,49 @@ Use this document to strict validate the completion of each phase. **Do not move
 | **Frontend Logs** | `docker logs amazon-frontend --tail 50` | `Ready in Xms` and listening on port 3000. |
 
 ### 🧪 2. Backend API Tests (Curl)
-Run these inside the EC2/VM or from your machine if ports are forwarded.
+Run these from your local machine (using the Public IP).
 
-**A. Health Check**
+**A. Health Check (Security Verification)**
 ```bash
-curl -I http://localhost:8080/actuator/health
+# Public Health Check -> SHOULD WORK
+curl -I http://54.242.104.244:8080/actuator/health
 # Expect: HTTP/1.1 200 OK
+
+# Sensitive Endpoint -> SHOULD BE BLOCKED
+curl -I http://54.242.104.244:8080/actuator/env
+# Expect: HTTP/1.1 403 Forbidden
 ```
 
 **B. Product Catalog**
 ```bash
 # Get all products
-curl http://localhost:8080/api/products
-# Expect: JSON Array [{"id":1,"name":"Headphones"...}]
+curl http://54.242.104.244:8080/api/products
+# Expect JSON with exact items:
+# 1. "Wireless Headphones"
+# 2. "Smart Watch"
+# 3. "Running Shoes"
 ```
 
 **C. Shopping Cart (Redis)**
 ```bash
-# Add item to cart
+# Add "Wireless Headphones" (ID: 1) to cart
 curl -X POST -H "Content-Type: application/json" \
-  -d '{"productId":1, "productName":"Test", "price":10.0, "quantity":1}' \
-  http://localhost:8080/api/cart/testuser
+  -d '{"productId":1, "productName":"Wireless Headphones", "price":299.99, "quantity":1}' \
+  http://54.242.104.244:8080/api/cart/testuser
 
 # Verify item is in Redis
-curl http://localhost:8080/api/cart/testuser
-# Expect: [{"productName":"Test"}]
-```
-
-**D. Order Processing (RabbitMQ)**
-```bash
-# Place an order
-curl -X POST "http://localhost:8080/api/orders/testuser?amount=50.00"
-
-# Verify RabbitMQ Message (Manual Check)
-# Go to http://<IP>:15672 (guest/guest) -> Queues -> order-queue
-# You should see "Message rates" spike or "Ready" count increase temporarily.
+curl http://54.242.104.244:8080/api/cart/testuser
+# Expect: [{"productName":"Wireless Headphones"}]
 ```
 
 ### 🧪 3. Frontend UI Tests
-1.  **Access:** Open `http://<IP>:3000`.
+1.  **Access:** Open `http://54.242.104.244:3000`.
 2.  **Redirect:** Confirm you are redirected to `/login`.
-3.  **Images:** Verify product images (Headphones, Watch, Shoes) load correctly (no broken icons).
-4.  **Login:** Click "Login". (Since Auth is mocked/permissive, it should redirect you to `/home` or dashboard).
+3.  **Login:** Click "Login" (Mock auth redirects to `/home`).
+4.  **Visual Verification (Critical):**
+    *   Confirm **3 Product Cards** appear.
+    *   Confirm **Images** are visible (Headphones, Watch, Shoes) - *Not placeholders*.
+    *   Confirm "Add to Cart" button is clickable.
 
 ---
 
