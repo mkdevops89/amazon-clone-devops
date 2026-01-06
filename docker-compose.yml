@@ -130,7 +130,7 @@ services:
     image: gcr.io/datadoghq/agent:7
     container_name: amazon-datadog
     environment:
-      - DD_API_KEY=f4ef8b0b2b4c2119672d5da394989ded # Replace with your real API Key
+      - DD_API_KEY=${DD_API_KEY} # Set via .env file
       - DD_SITE=datadoghq.com
       - DD_DOCKER_LABELS_AS_TAGS=true
     volumes:

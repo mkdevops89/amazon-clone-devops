@@ -33,6 +33,35 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 echo "[Step 6] Adding user to 'docker' group (No Sudo)..."
 sudo usermod -aG docker $USER
 
+
+echo "[Step 7] Configuring Environment Variables (.env)..."
+# Fetch Public IP from AWS Metadata (IMDSv2 aware or fallback)
+PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || curl -s ifconfig.me)
+
+if [ -z "$PUBLIC_IP" ]; then
+    echo "⚠️  Could not detect Public IP. Using localhost."
+    PUBLIC_IP="localhost"
+else
+    echo "✅ Detected Public IP: $PUBLIC_IP"
+fi
+
+# Get DD API Key from Argument or Prompt
+DD_API_KEY="$1"
+if [ -z "$DD_API_KEY" ]; then
+    echo "⚠️  No Datadog API Key provided (optional). Usage: ./setup_ec2.sh <YOUR_KEY>"
+    DD_API_KEY="placeholder_key_replace_me"
+fi
+
+# Write to .env
+# Note: AWS IPs change on restart, so this overwrites .env each time script runs
+cat <<EOF > .env
+NEXT_PUBLIC_API_URL=http://$PUBLIC_IP:8080/api
+DD_API_KEY=$DD_API_KEY
+EOF
+
+echo "✅ Generated .env file:"
+echo "   NEXT_PUBLIC_API_URL=http://$PUBLIC_IP:8080/api"
+echo "   DD_API_KEY=********"
 echo "==================================================="
 echo "✅ Docker Setup Complete!"
 echo "Docker Version: $(docker --version)"

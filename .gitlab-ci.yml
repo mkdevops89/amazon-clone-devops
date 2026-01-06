@@ -1,0 +1,81 @@
+stages:
+  - test      # Unit tests and Code Quality
+  - security  # IaC and Security Scans
+  - build     # Compile code / Deploy Artifacts
+  - package   # Containerize
+  - deploy    # Deploy to Environment
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+# Cache dependencies to speed up builds
+cache:
+  paths:
+    - .m2/repository
+    - frontend/node_modules
+
+# ==========================================
+# Stage: Test (SonarQube)
+# ==========================================
+sonarqube-check:
+  stage: test
+  image: maven:3.8-openjdk-17
+  script:
+    - cd backend
+    - mvn verify sonar:sonar
+
+# ==========================================
+# Stage: Security (IaC)
+# ==========================================
+iac-scan:
+  stage: security
+  image: bridgecrew/checkov:latest
+  script:
+    # Scan Terraform files for misconfigurations (e.g., Public S3 buckets)
+    - checkov -d ops/terraform/aws
+    # Scan Kubernetes manifests
+    - checkov -d ops/k8s
+
+# ==========================================
+# Stage: Build (Backend)
+# ==========================================
+build-backend:
+  stage: build
+  image: maven:3.8-openjdk-17
+  script:
+    - cd backend
+    # Deploy to Nexus (only on main branch)
+    - mvn clean deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  artifacts:
+    paths:
+      - backend/target/*.jar
+
+# ==========================================
+# Stage: Build (Frontend)
+# ==========================================
+build-frontend:
+  stage: build
+  image: node:18
+  script:
+    - cd frontend
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/.next
+
+# ==========================================
+# Stage: Package (Docker)
+# ==========================================
+docker-build:
+  stage: package
+  image: docker:latest
+  services:
+    - docker:dind # Use Docker-in-Docker
+  script:
+    - docker build -t amazon-backend ./backend
+    - docker build -t amazon-frontend ./frontend
+    # Security: Scan built images with Trivy
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --exit-code 1 --severity CRITICAL amazon-backend:latest

@@ -82,3 +82,8 @@ id_ed25519.pub
 # Common secret files
 .env
 .env.*
+
+# ===========================
+# Local Environment Variables
+# ===========================
+.env
