@@ -19,7 +19,7 @@ RUN mvn clean package -DskipTests
 # Stage 2: Run Stage (Runtime)
 # ==========================================
 # Use a slim JRE (Java Runtime Environment) image to keep the final image size small
-FROM openjdk:17-jdk-slim
+FROM amazoncorretto:17
 WORKDIR /app
 
 # Copy only the compiled JAR from the build stage
