@@ -21,7 +21,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/products/**", "/api/cart/**", "/api/orders/**")
+                        .requestMatchers("/api/auth/**", "/api/products/**", "/api/cart/**", "/api/orders/**",
+                                "/actuator/health")
                         .permitAll() // Open all for Phase 1 demo
                         .anyRequest().authenticated());
         return http.build();
