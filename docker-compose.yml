@@ -14,7 +14,8 @@ services:
       - "3000:3000" # Maps host port 3000 to container port 3000
     environment:
       # URL for the backend API (accessible via browser/client-side)
-      - NEXT_PUBLIC_API_URL=http://localhost:8080/api
+      # URL for the backend API (accessible via browser/client-side)
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080/api}
     depends_on:
       - backend # Ensures backend starts before frontend
     networks:
