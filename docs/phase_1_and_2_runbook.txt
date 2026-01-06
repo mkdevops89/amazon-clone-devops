@@ -135,3 +135,37 @@ SOLUTION: The Backend takes ~15 seconds to start (Java is slow).
 ================================================================================
 END OF RUNBOOK
 ================================================================================
+
+--------------------------------------------------------------------------------
+OPTION 3: AWS EC2 (The Cloud Method)
+--------------------------------------------------------------------------------
+Goal: Use a real cloud server instead of Vagrant/VirtualBox. Cost: ~$0.01/hour.
+
+1. Launch Instance (AWS Console):
+   - Name: Amazon-Dev-Server
+   - OS: Ubuntu 22.04 LTS
+   - Instance Type: t3.small (t2.micro might freeze with Java)
+   - Key Pair: Create new (download the .pem file)
+   - Security Group: Allow Ports 22 (SSH), 3000 (Frontend), 8080 (Backend)
+
+2. Connect (SSH):
+   # From your laptop terminal
+   chmod 400 key.pem
+   ssh -i key.pem ubuntu@<PUBLIC-IP>
+
+3. Install Tools (Run on EC2):
+   # Update & Install Docker
+   sudo apt-get update
+   sudo apt-get install -y docker.io docker-compose git
+   
+   # Enable Docker for user 'ubuntu'
+   sudo usermod -aG docker ubuntu
+   newgrp docker
+
+4. Clone & Run:
+   git clone -b phase-1-source --single-branch https://github.com/mkdevops89/amazon-clone-devops.git
+   cd amazon-clone-devops
+   docker-compose up -d --build
+
+5. Access:
+   http://<PUBLIC-IP>:3000
