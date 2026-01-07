@@ -52,11 +52,28 @@ echo "[TASK 6] Installing Docker Compose"
 curl -L "https://github.com/docker/compose/releases/download/v2.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-# 7. Start the Application
+# 7. Configure Environment Variables
+# --------------------------------
+echo "[TASK 7] Configuring Environment Variables"
+cd /opt/amazonlikeapp || exit
+
+# Get DD_API_KEY from first argument, or default to placeholder
+DD_API_KEY=$1
+if [ -z "$DD_API_KEY" ]; then
+    DD_API_KEY="placeholder_key_replace_me"
+fi
+
+# Generate .env file
+cat <<EOF > .env
+NEXT_PUBLIC_API_URL=http://192.168.33.10:8080/api
+DD_API_KEY=$DD_API_KEY
+DOCKER_USERNAME=placeholder_user
+EOF
+
+# 8. Start the Application
 # ------------------------
 # Navigates to the shared folder (/opt/amazonlikeapp) and starts the stack.
-echo "[TASK 7] Starting the Application Stack"
-cd /opt/amazonlikeapp || exit
+echo "[TASK 8] Starting the Application Stack"
 
 # Run docker-compose in detached mode (-d)
 docker-compose up -d

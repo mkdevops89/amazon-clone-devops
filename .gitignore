@@ -12,7 +12,7 @@
 # Ignore markdown files and the docs folder (Local Only)
 /*.md
 # docs/ (Commented out to allow tracking)
-docs/interview_spill.md
+!testcases.md
 !docs/testcase.md
 git_commit.txt
 !README.md
@@ -89,3 +89,4 @@ id_ed25519.pub
 # ===========================
 .env
 mkdev
+!phase_1_and_2_walkthrough.md
