@@ -43,7 +43,26 @@ Use this document to strict validate the Terraform Provisioning in AWS.
 **Command:** `aws elasticache describe-replication-groups --replication-group-id amazon-redis`
 **Expected Output:**
 *   Status: `available`
-*   ClusterEnabled: `false` (Unless using clustered mode)
+*   ClusterEnabled: `false`
+
+### 🧪 5. Message Broker (Amazon MQ)
+**Command:** `aws mq list-brokers`
+**Expected Output:**
+*   BrokerName: `amazon-mq`
+*   BrokerState: `RUNNING`
+*   EngineType: `RABBITMQ`
+
+### 🧪 6. EKS Worker Nodes
+**Command:** `aws eks list-nodegroups --cluster-name amazon-eks-cluster`
+**Expected Output:**
+*   nodegroups: `["default-..."]` (Should show at least one node group)
+
+### 🧪 7. Connectivity & Security
+**Command:** `terraform output`
+**Expected Output:**
+*   `eks_cluster_endpoint`: Should be a URL starting with `https://`
+*   `rds_endpoint`: Should be a URL ending in `amazonaws.com:3306`
+*   `redis_endpoint`: Should be a URL ending in `cache.amazonaws.com`
 
 ---
 ## 🛑 Troubleshooting
