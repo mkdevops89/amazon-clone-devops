@@ -35,8 +35,16 @@ sudo usermod -aG docker $USER
 
 
 echo "[Step 7] Configuring Environment Variables (.env)..."
-# Fetch Public IP from AWS Metadata (IMDSv2 aware or fallback)
-PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || curl -s ifconfig.me)
+# Fetch Public IP from AWS Metadata (IMDSv2 compliant)
+echo "   Attempting to fetch Public IP (IMDSv2)..."
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" --fail --silent --connect-timeout 2)
+
+if [ -n "$TOKEN" ]; then
+    PUBLIC_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/public-ipv4)
+else
+    echo "   IMDSv2 token failed. Trying fallback methods..."
+    PUBLIC_IP=$(curl -s --connect-timeout 2 http://169.254.169.254/latest/meta-data/public-ipv4 || curl -s --connect-timeout 2 ifconfig.me)
+fi
 
 if [ -z "$PUBLIC_IP" ]; then
     echo "⚠️  Could not detect Public IP. Using localhost."
