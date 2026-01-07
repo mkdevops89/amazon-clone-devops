@@ -130,16 +130,34 @@ services:
     image: gcr.io/datadoghq/agent:7
     container_name: amazon-datadog
     environment:
-      - DD_API_KEY=${DD_API_KEY} # Set via .env file
+      - DD_API_KEY=${DD_API_KEY}
       - DD_SITE=us5.datadoghq.com
+      - DD_ENV=dev
+      # APM & StatsD (Receiver)
+      - DD_APM_ENABLED=true
+      - DD_APM_NON_LOCAL_TRAFFIC=true
+      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+      # Logs
       - DD_LOGS_ENABLED=true
       - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
-      - DD_DOCKER_LABELS_AS_TAGS=true
+      - DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION=true
+      - DD_CONTAINER_EXCLUDE_LOGS=name:amazon-datadog
+      # Profiling & System
+      - DD_PROFILING_ENABLED=auto
     volumes:
-      # Mount Docker socket to allow agent to collect metrics from containers
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    cap_add:
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - SYS_PTRACE
+      - NET_ADMIN
+      - NET_BROADCAST
+      - NET_RAW
+      - IPC_LOCK
+      - CHOWN
     networks:
       - app-network
 
