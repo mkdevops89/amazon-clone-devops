@@ -1,6 +1,6 @@
-# ✅ Project Test & Verification Plan
+# ✅ Project Test & Verification Plan (Phase 1 & 2)
 
-Use this document to strict validate the completion of each phase. **Do not move to the next phase until all tests pass.**
+Use this document to strict validate the completion of Phase 1 (Manual/VM) and Phase 2 (Docker).
 
 ---
 
@@ -10,7 +10,7 @@ Use this document to strict validate the completion of each phase. **Do not move
 ### 🧪 1. Infrastructure Checks
 | Check | Command | Expected Output |
 | :--- | :--- | :--- |
-| **Containers Running** | `docker-compose ps` | All services (`frontend`, `backend`, `mysql`, `redis`, `rabbitmq`) state is `Up (healthy)`. |
+| **Containers Running** | `docker-compose ps` | All services (`frontend`, `backend`, `mysql`, `redis`, `rabbitmq`, `datadog`) state is `Up (healthy)`. |
 | **Backend Logs** | `docker logs amazon-backend --tail 50` | `Started BackendApplication in X.XXX seconds` (No Stack Traces). |
 | **Frontend Logs** | `docker logs amazon-frontend --tail 50` | `Ready in Xms` and listening on port 3000. |
 
@@ -61,57 +61,32 @@ curl http://<PUBLIC-IP>:8080/api/cart/testuser
 
 ---
 
-## 🟠 Phase 3: Infrastructure as Code (Terraform)
-**Scope:** Validating AWS Cloud Resources.
+## � Datadog Observability Verification
+**Scope:** Verify that the Datadog Agent is correctly sending data to your Datadog Dashboard.
 
-### 🧪 1. Plan & Apply
-```bash
-# Verify no destructive changes
-terraform plan
-# Apply infrastructure
-terraform apply -auto-approve
-```
+### 🧪 1. Infrastructure & Containers
+1.  **Login to Datadog:** Go to https://app.datadoghq.com/.
+2.  **Navigate to:** `Infrastructure` -> `Containers`.
+3.  **Verify:** You should see a list of your running containers:
+    *   `amazon-backend`
+    *   `amazon-frontend`
+    *   `amazon-mysql`
+    *   `amazon-redis`
+    *   `amazon-rabbitmq`
 
-### 🧪 2. AWS Console Verification
-1.  **VPC:** Check a new VPC exists with correct CIDR (`10.0.0.0/16`).
-2.  **EKS:** Check Cluster status is `ACTIVE`.
-3.  **RDS:** Check MySQL instance status is `Available`.
-4.  **Internet:** Launch a test EC2 in "Public Subnet", SSH in, and ping `google.com`.
+### 🧪 2. Live Logs
+1.  **Navigate to:** `Logs` -> `Live Tail` (or `Search`).
+2.  **Filter:** Type `service:amazon-backend` in the search bar.
+3.  **Action:** Refresh your app website a few times.
+4.  **Verify:** You should see new log lines appearing in Datadog (e.g., "Fetching all products").
 
----
+### 🧪 3. Application Performance Monitoring (APM)
+*Note: APM requires the Java Agent/Node Tracer to be active inside the container code. If only Infrastructure monitoring is enabled, skip this.*
+1.  **Navigate to:** `APM` -> `Services`.
+2.  **Verify:** Look for services named `amazon-backend` or `amazon-frontend`.
+3.  **Trace:** Click on a service to see request throughput and latency graphs.
 
-## 🟣 Phase 4: CI/CD Pipeline
-**Scope:** Automation validation.
-
-### 🧪 1. Build Trigger
-1.  Make a small change to `README.md`.
-2.  `git commit` and `git push`.
-3.  **Result:** Jenkins/GitHub Actions should automatically start a new build job.
-
-### 🧪 2. Artifact Upload
-1.  Check Nexus/ECR.
-2.  **Verify:** A new Docker image tag (e.g., `v1.0.5-<commit_hash>`) exists.
-
----
-
-## ☸️ Phase 5: Kubernetes & GitOps
-**Scope:** Production Deployment.
-
-### 🧪 1. Deployment Status
-```bash
-kubectl get pods -n amazon-app
-# Expect: All pods Running (2/2)
-```
-
-### 🧪 2. Service Access
-```bash
-kubectl get svc -n amazon-app
-# Expect: External-IP (LoadBalancer) is provisioned.
-# Curl that IP:
-curl http://<LoadBalancer-IP>:80
-```
-
-### 🧪 3. Self-Healing (GitOps Test)
-1.  **Break it:** Manually delete a deployment: `kubectl delete deploy amazon-backend -n amazon-app`.
-2.  **Watch:** Wait 2 minutes.
-3.  **Verify:** ArgoCD should detect "Out of Sync" and automatically restore the deployment.
+### 🧪 4. Metrics
+1.  **Navigate to:** `Metrics` -> `Explorer`.
+2.  **Query:** Search for `docker.cpu.usage` or `docker.mem.rss`.
+3.  **Verify:** You should see a graph showing resource usage for your containers.
