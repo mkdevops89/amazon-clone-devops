@@ -54,6 +54,7 @@ See what will be created without billing you yet.
 # - EKS Cluster (Control Plane)
 # - RDS Instance (MySQL)
 # - ElastiCache (Redis)
+# - Amazon MQ (RabbitMQ Broker)
 
 --------------------------------------------------------------------------------
 STEP 3: APPLY (PROVISIONING)
