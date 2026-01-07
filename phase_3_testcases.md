@@ -11,11 +11,19 @@ Use this document to strict validate the Terraform Provisioning in AWS.
 **Command:** `aws ec2 describe-vpcs --filters Name=tag:Name,Values=amazon-vpc`
 **Expected Output:**
 *   State: `available`
-*   CidrBlock: `10.0.0.0/16` (or whatever is defined in variables.tf)
+*   CidrBlock: `10.0.0.0/16`
 
 **Command:** `aws ec2 describe-subnets --filters Name=vpc-id,Values=<VPC_ID>`
 **Expected Output:**
 *   Should list **Public** and **Private** subnets across multiple AZs.
+
+**Command:** `aws ec2 describe-nat-gateways --filter Name=vpc-id,Values=<VPC_ID>`
+**Expected Output:**
+*   State: `available` (Ensures private subnets can reach the internet).
+
+**Command:** `aws ec2 describe-internet-gateways --filters Name=attachment.vpc-id,Values=<VPC_ID>`
+**Expected Output:**
+*   Attachments: Should show the VPC ID (Ensures public subnets are reachable).
 
 ### 🧪 2. EKS Cluster
 **Command:** `aws eks describe-cluster --name amazon-eks-cluster`
