@@ -131,7 +131,7 @@ services:
     container_name: amazon-datadog
     environment:
       - DD_API_KEY=${DD_API_KEY} # Set via .env file
-      - DD_SITE=datadoghq.com
+      - DD_SITE=us5.datadoghq.com
       - DD_LOGS_ENABLED=true
       - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
       - DD_DOCKER_LABELS_AS_TAGS=true
