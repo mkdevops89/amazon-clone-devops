@@ -65,6 +65,20 @@ STEP 3: APPLY (PROVISIONING)
 - **Wait Time:** ~15-20 minutes (EKS and RDS take time to provision).
 
 --------------------------------------------------------------------------------
+STEP 4: VERIFY OUTPUTS
+--------------------------------------------------------------------------------
+Once `terraform apply` completes, you will see a green "Apply complete!" message along with the Outputs we configured.
+
+1. **Check Connectivity URLs:**
+   Look for the `Outputs:` section at the bottom of your terminal.
+   - `eks_cluster_endpoint`: The URL of your Kubernetes API.
+   - `rds_endpoint`: The address of your MySQL database.
+   - `redis_endpoint`: The address of your Redis cache.
+
+2. **Verify with Test Cases:**
+   Run the checks in `phase_3_testcases.md` to confirm everything is live.
+
+--------------------------------------------------------------------------------
 STEP 5: TEARDOWN (COST SAVING)
 --------------------------------------------------------------------------------
 ⚠️  CRITICAL: DO NOT LEAVE RUNNING OVERNIGHT unless you want a bill.
