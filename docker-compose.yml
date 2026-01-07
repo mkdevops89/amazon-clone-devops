@@ -6,12 +6,11 @@ services:
   # ==========================================
   frontend:
     # Build context points to the frontend directory containing Dockerfile
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://54.242.104.244:8080/api}
-    container_name: amazon-frontend
+    # CI/CD: Pull image from Docker Hub instead of building locally
+    # build:
+    #   context: ./frontend
+    #   dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/amazon-frontend:latest
     ports:
       - "3000:3000" # Maps host port 3000 to container port 3000
     environment:
@@ -27,9 +26,11 @@ services:
   # Backend Application (Spring Boot)
   # ==========================================
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    # CI/CD: Pull image from Docker Hub
+    # build:
+    #   context: ./backend
+    #   dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/amazon-backend:latest
     container_name: amazon-backend
     ports:
       - "8080:8080" # Maps host port 8080 to container port 8080

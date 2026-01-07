@@ -56,8 +56,16 @@ fi
 # Get DD API Key from Argument or Prompt
 DD_API_KEY="$1"
 if [ -z "$DD_API_KEY" ]; then
-    echo "⚠️  No Datadog API Key provided (optional). Usage: ./setup_ec2.sh <YOUR_KEY>"
+    echo "⚠️  No Datadog API Key provided (optional). Usage: ./setup_ec2.sh <DD_KEY> <DOCKER_USER>"
     DD_API_KEY="placeholder_key_replace_me"
+fi
+
+# Get Docker Username from Argument or Default to placeholder
+DOCKER_USERNAME="$2"
+if [ -z "$DOCKER_USERNAME" ]; then
+    echo "⚠️  No Docker Username provided. Defaulting to 'placeholder_user'."
+    echo "    (You will need to edit .env manually for CI/CD to work)"
+    DOCKER_USERNAME="placeholder_user"
 fi
 
 # Write to .env
@@ -65,11 +73,13 @@ fi
 cat <<EOF > .env
 NEXT_PUBLIC_API_URL=http://$PUBLIC_IP:8080/api
 DD_API_KEY=$DD_API_KEY
+DOCKER_USERNAME=$DOCKER_USERNAME
 EOF
 
 echo "✅ Generated .env file:"
 echo "   NEXT_PUBLIC_API_URL=http://$PUBLIC_IP:8080/api"
 echo "   DD_API_KEY=********"
+echo "   DOCKER_USERNAME=$DOCKER_USERNAME"
 echo "==================================================="
 echo "✅ Docker Setup Complete!"
 echo "Docker Version: $(docker --version)"
