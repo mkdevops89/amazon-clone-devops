@@ -1,24 +1,19 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.region
 }
 
 # ==========================================
 # VPC Module (Network Layer)
 # ==========================================
-# Creates the networking foundation:
-# - VPC with CIDR 10.0.0.0/16
-# - Public Subnets (for Load Balancers)
-# - Private Subnets (for Apps and Databases)
-# - NAT Gateway (allows private instances to access internet for updates)
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
-  name   = "amazon-vpc"
-  cidr   = "10.0.0.0/16"
+  name   = var.vpc_name
+  cidr   = var.vpc_cidr
 
-  azs             = ["us-east-1a", "us-east-1b"]
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
-  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
+  azs             = var.azs
+  private_subnets = var.private_subnets
+  public_subnets  = var.public_subnets
 
   enable_nat_gateway = true
 }
@@ -26,11 +21,10 @@ module "vpc" {
 # ==========================================
 # EKS Cluster (Compute Layer)
 # ==========================================
-# Provision Elastic Kubernetes Service
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
   version         = "~> 20.0"
-  cluster_name    = "amazon-cluster"
+  cluster_name    = var.cluster_name
   cluster_version = "1.27"
   vpc_id          = module.vpc.vpc_id
   subnet_ids      = module.vpc.private_subnets
@@ -46,32 +40,30 @@ module "eks" {
 # ==========================================
 # RDS MySQL (Database Layer)
 # ==========================================
-# Managed Relational Database Service
 module "db" {
   source  = "terraform-aws-modules/rds/aws"
   version = "~> 6.0"
-  identifier = "amazon-db"
+  identifier = var.db_name
   engine            = "mysql"
   engine_version    = "8.0"
   major_engine_version = "8.0"
   family            = "mysql8.0"
   instance_class    = "db.t3.micro" # Free tier eligible
   allocated_storage = 5
-  username = "admin"
+  username = var.db_username
   port     = 3306
-  subnet_ids = module.vpc.private_subnets # Securely placed in private subnet
+  subnet_ids = module.vpc.private_subnets
 }
 
 # ==========================================
 # ElastiCache Redis (Caching Layer)
 # ==========================================
-# Managed Redis for session storage and caching
 module "elasticache" {
   source  = "terraform-aws-modules/elasticache/aws"
   version = "~> 1.0"
   
-  cluster_id           = "amazon-redis"
-  replication_group_id = "amazon-redis-rep-group"
+  cluster_id           = var.redis_cluster_id
+  replication_group_id = "${var.redis_cluster_id}-rep-group"
   engine               = "redis"
   engine_version       = "6.x"
   node_type            = "cache.t3.micro"
@@ -84,8 +76,6 @@ module "elasticache" {
 # ==========================================
 # Amazon MQ (RabbitMQ)
 # ==========================================
-# Managed RabbitMQ service for message queuing
-# Replace module with direct resource due to registry issues
 resource "aws_mq_broker" "rabbitmq" {
   broker_name = "amazon-mq"
 
