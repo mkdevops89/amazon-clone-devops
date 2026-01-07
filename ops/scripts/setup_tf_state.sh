@@ -5,6 +5,9 @@ set -e
 REGION="us-east-1"
 DYNAMODB_TABLE="amazon-clone-tf-locks"
 
+# Robustly determine the script's directory
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
 # 1. Get AWS Account ID
 echo "Fetching AWS Account ID..."
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
@@ -48,7 +51,7 @@ fi
 
 # 6. Generate backend.tf
 echo "Generating backend.tf..."
-cat <<EOF > ../terraform/aws/backend.tf
+cat <<EOF > "$SCRIPT_DIR/../terraform/aws/backend.tf"
 terraform {
   backend "s3" {
     bucket         = "$BUCKET_NAME"
@@ -64,5 +67,5 @@ echo "----------------------------------------------------------------"
 echo "✅ Backend infrastructure ready!"
 echo "Bucket: $BUCKET_NAME"
 echo "Table:  $DYNAMODB_TABLE"
-echo "backend.tf has been generated."
+echo "File:   $SCRIPT_DIR/../terraform/aws/backend.tf"
 echo "----------------------------------------------------------------"
