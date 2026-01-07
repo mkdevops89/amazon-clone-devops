@@ -11,8 +11,9 @@ Vagrant.configure("2") do |config|
     vb.cpus = 2
   end
 
-  # Provision using Ansible
-  config.vm.provision "shell", path: "bootstrap.sh"
+  # Provision using configuration script
+  # We pass the DD_API_KEY from the host environment variable
+  config.vm.provision "shell", path: "bootstrap.sh", args: [ENV['DD_API_KEY']]
 
   # Mount the project root directory to /opt/amazonlikeapp
   config.vm.synced_folder "../../", "/opt/amazonlikeapp"
