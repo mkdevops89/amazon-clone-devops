@@ -20,18 +20,18 @@ Run these from your local machine (using the Public IP).
 **A. Health Check (Security Verification)**
 ```bash
 # Public Health Check -> SHOULD WORK
-curl -I http://54.242.104.244:8080/actuator/health
+curl -I http://<PUBLIC-IP>:8080/actuator/health
 # Expect: HTTP/1.1 200 OK
 
 # Sensitive Endpoint -> SHOULD BE BLOCKED
-curl -I http://54.242.104.244:8080/actuator/env
+curl -I http://<PUBLIC-IP>:8080/actuator/env
 # Expect: HTTP/1.1 403 Forbidden
 ```
 
 **B. Product Catalog**
 ```bash
 # Get all products
-curl http://54.242.104.244:8080/api/products
+curl http://<PUBLIC-IP>:8080/api/products
 # Expect JSON with exact items:
 # 1. "Wireless Headphones"
 # 2. "Smart Watch"
@@ -43,15 +43,15 @@ curl http://54.242.104.244:8080/api/products
 # Add "Wireless Headphones" (ID: 1) to cart
 curl -X POST -H "Content-Type: application/json" \
   -d '{"productId":1, "productName":"Wireless Headphones", "price":299.99, "quantity":1}' \
-  http://54.242.104.244:8080/api/cart/testuser
+  http://<PUBLIC-IP>:8080/api/cart/testuser
 
 # Verify item is in Redis
-curl http://54.242.104.244:8080/api/cart/testuser
+curl http://<PUBLIC-IP>:8080/api/cart/testuser
 # Expect: [{"productName":"Wireless Headphones"}]
 ```
 
 ### 🧪 3. Frontend UI Tests
-1.  **Access:** Open `http://54.242.104.244:3000`.
+1.  **Access:** Open `http://<PUBLIC-IP>:3000`.
 2.  **Redirect:** Confirm you are redirected to `/login`.
 3.  **Login:** Click "Login" (Mock auth redirects to `/home`).
 4.  **Visual Verification (Critical):**

@@ -41,7 +41,9 @@ INSTRUCTIONS:
    cd ops/vagrant
 
 3. Start the Virtual Machine:
-   vagrant up
+   # Pass your Datadog API Key (or ignore if not using Datadog)
+   DD_API_KEY=your_api_key_here vagrant up
+   
    # (This will take 5-10 minutes. It downloads Ubuntu, installs Docker, and starts the app automatically)
 
 4. Log into the Server:
@@ -160,7 +162,8 @@ Goal: Use a real cloud server instead of Vagrant/VirtualBox. Cost: ~$0.01/hour.
 
    # Run the Setup Script (Installs Docker Engine + Compose V2)
    chmod +x ops/scripts/setup_ec2.sh
-   ./ops/scripts/setup_ec2.sh
+   # Usage: ./ops/scripts/setup_ec2.sh <DD_API_KEY> <DOCKER_USERNAME>
+   ./ops/scripts/setup_ec2.sh your_datadog_key your_dockerhub_user
 
    # IMPORTANT: Log out and log back in for group changes to take effect!
    exit
