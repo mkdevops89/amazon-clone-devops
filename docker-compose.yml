@@ -6,9 +6,9 @@ services:
   frontend:
     # Build context points to the frontend directory containing Dockerfile
     # CI/CD: Pull image from Docker Hub instead of building locally
-    # build:
-    #   context: ./frontend
-    #   dockerfile: Dockerfile
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     image: ${DOCKER_USERNAME}/amazon-frontend:latest
     ports:
       - "3000:3000" # Maps host port 3000 to container port 3000
@@ -26,9 +26,9 @@ services:
   # ==========================================
   backend:
     # CI/CD: Pull image from Docker Hub
-    # build:
-    #   context: ./backend
-    #   dockerfile: Dockerfile
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     image: ${DOCKER_USERNAME}/amazon-backend:latest
     container_name: amazon-backend
     ports:
