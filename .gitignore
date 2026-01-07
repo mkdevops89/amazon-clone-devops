@@ -89,3 +89,4 @@ id_ed25519.pub
 # ===========================
 .env
 mkdev
+phase_1_and_2_walkthrough.md
