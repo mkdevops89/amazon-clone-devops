@@ -72,12 +72,12 @@ INSTRUCTIONS:
    cd ../..  # (If you were still in ops/vagrant)
 
 2. Build and Start the Containers:
-   docker-compose up -d --build
+   docker compose up -d --build
    # -d: Detached (Runs in background)
    # --build: Recompiles the Java/Node code if you changed it.
 
 3. Verify they are running:
-   docker-compose ps
+   docker compose ps
    # You should see 5 services:
    # - amazon-backend
    # - amazon-frontend
@@ -92,13 +92,13 @@ INSTRUCTIONS:
 
 5. VIEW LOGS (Debugging):
    # View Backend logs (Java Spring Boot)
-   docker-compose logs -f backend
+   docker compose logs -f backend
 
    # View Frontend logs (Next.js)
-   docker-compose logs -f frontend
+   docker compose logs -f frontend
 
 6. CLEANUP (Important!):
-   docker-compose down
+   docker compose down
    # This stops and removes the containers.
 
 --------------------------------------------------------------------------------
@@ -172,7 +172,7 @@ Goal: Use a real cloud server instead of Vagrant/VirtualBox. Cost: ~$0.01/hour.
 4. Clone & Run:
    git clone -b phase-1-source --single-branch https://github.com/mkdevops89/amazon-clone-devops.git
    cd amazon-clone-devops
-   docker-compose up -d --build
+   docker compose up -d --build
 
 5. Access:
    http://<PUBLIC-IP>:3000
