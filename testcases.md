@@ -40,7 +40,10 @@ curl http://<PUBLIC-IP>:8080/api/products
 
 **C. Shopping Cart (Redis)**
 ```bash
-# Add "Wireless Headphones" (ID: 1) to cart
+# 1. Identify the Product ID from Step B above (e.g., if "Wireless Headphones" is ID 5, use 5)
+# In a fresh DB, it is usually 1, but it might vary.
+
+# 2. Add "Wireless Headphones" (Assuming ID: 1) to cart
 curl -X POST -H "Content-Type: application/json" \
   -d '{"productId":1, "productName":"Wireless Headphones", "price":299.99, "quantity":1}' \
   http://<PUBLIC-IP>:8080/api/cart/testuser
