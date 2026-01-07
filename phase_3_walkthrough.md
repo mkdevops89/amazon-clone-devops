@@ -25,7 +25,7 @@ STEP 0: BACKEND STRAPPING (One Time Only)
 Before running Terraform, we need an S3 bucket to store the state.
 
 1. Run the setup script:
-   `./ops/scripts/setup_terraform_backend.sh`
+   `./ops/scripts/setup_tf_state.sh`
    # This creates the S3 Bucket and DynamoDB Table.
    # It also generates ops/terraform/aws/backend.tf automatically.
 

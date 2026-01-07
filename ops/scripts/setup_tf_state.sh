@@ -46,14 +46,23 @@ else
         --region "$REGION"
 fi
 
-# 6. Update versions.tf
-echo "Updating versions.tf with new bucket name..."
-# Use perl for cross-platform in-place editing (sed is different on Mac vs Linux)
-perl -i -pe "s/bucket\s*=\s*\".*\"/bucket = \"$BUCKET_NAME\"/" ../terraform/aws/versions.tf
+# 6. Generate backend.tf
+echo "Generating backend.tf..."
+cat <<EOF > ../terraform/aws/backend.tf
+terraform {
+  backend "s3" {
+    bucket         = "$BUCKET_NAME"
+    key            = "global/s3/terraform.tfstate"
+    region         = "$REGION"
+    dynamodb_table = "$DYNAMODB_TABLE"
+    encrypt        = true
+  }
+}
+EOF
 
 echo "----------------------------------------------------------------"
 echo "✅ Backend infrastructure ready!"
 echo "Bucket: $BUCKET_NAME"
 echo "Table:  $DYNAMODB_TABLE"
-echo "versions.tf has been updated."
+echo "backend.tf has been generated."
 echo "----------------------------------------------------------------"
