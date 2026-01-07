@@ -12,6 +12,7 @@
 # Ignore markdown files and the docs folder (Local Only)
 /*.md
 # docs/ (Commented out to allow tracking)
+docs/interview_spill.md
 !docs/testcase.md
 git_commit.txt
 !README.md
