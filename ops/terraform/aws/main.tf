@@ -84,7 +84,7 @@ resource "aws_mq_broker" "rabbitmq" {
   broker_name = "amazon-mq"
 
   engine_type        = "RabbitMQ"
-  engine_version     = "3.10.10"
+  engine_version     = "3.13"
   host_instance_type = "mq.t3.micro"
   
   publicly_accessible = false
