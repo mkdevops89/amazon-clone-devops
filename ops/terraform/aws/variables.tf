@@ -37,13 +37,13 @@ variable "private_subnets" {
 variable "cluster_name" {
   description = "EKS Cluster Name"
   type        = string
-  default     = "amazon-cluster"
+  default     = "amazon-cluster-v2"
 }
 
 variable "db_name" {
   description = "RDS Database Name"
   type        = string
-  default     = "amazon-db"
+  default     = "amazon-db-v2"
 }
 
 variable "db_username" {
@@ -56,5 +56,5 @@ variable "db_username" {
 variable "redis_cluster_id" {
   description = "Redis Cluster ID"
   type        = string
-  default     = "amazon-redis"
+  default     = "amazon-redis-v2"
 }
