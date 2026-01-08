@@ -80,8 +80,8 @@ module "elasticache" {
   subnet_ids           = module.vpc.private_subnets
   
   # Fix: Force creation of a unique subnet group for THIS VPC
-  # Fix: Force unique name to avoid conflict with old VPC resource
-  subnet_group_name   = "${var.redis_cluster_id}-subnet-group-v3"
+  create_subnet_group = true
+  subnet_group_name   = "${var.redis_cluster_id}-subnet-group"
 }
 
 # ==========================================
