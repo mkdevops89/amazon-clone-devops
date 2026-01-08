@@ -38,25 +38,70 @@ module "eks" {
 }
 
 # ==========================================
+# Security Groups (Explicitly for Custom VPC)
+# ==========================================
+resource "aws_security_group" "db_sg" {
+  name        = "${var.db_name}-sg"
+  description = "Security group for RDS"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr_block]
+  }
+}
+
+resource "aws_security_group" "redis_sg" {
+  name        = "${var.redis_cluster_id}-sg"
+  description = "Security group for Redis"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    from_port   = 6379
+    to_port     = 6379
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr_block]
+  }
+}
+
+resource "aws_security_group" "mq_sg" {
+  name        = "amazon-mq-sg"
+  description = "Security group for Amazon MQ"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    from_port   = 5671
+    to_port     = 5671
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr_block]
+  }
+}
+
+# ==========================================
 # RDS MySQL (Database Layer)
 # ==========================================
 module "db" {
   source  = "terraform-aws-modules/rds/aws"
   version = "~> 6.0"
   
-  # Fix: Ensure SG is created in Custom VPC
-  vpc_security_group_ids = [module.vpc.default_security_group_id]
-  
-  identifier = var.db_name
+  identifier        = var.db_name
   engine            = "mysql"
   engine_version    = "8.0"
   major_engine_version = "8.0"
   family            = "mysql8.0"
   instance_class    = "db.t3.micro" # Free tier eligible
   allocated_storage = 5
-  username = var.db_username
-  port     = 3306
-  subnet_ids = module.vpc.private_subnets
+  username          = var.db_username
+  port              = 3306
+  
+  # Network & Security
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
+  subnet_ids             = module.vpc.private_subnets
+  create_db_subnet_group = true
+  # Dynamic naming prevents collision with ghost resources
+  db_subnet_group_name   = "${var.db_name}-${module.vpc.vpc_id}-subnet-group"
 }
 
 # ==========================================
@@ -66,9 +111,6 @@ module "elasticache" {
   source  = "terraform-aws-modules/elasticache/aws"
   version = "~> 1.0"
   
-  
-  security_group_ids   = [module.vpc.default_security_group_id] # Fix: Ensure SG is created in Custom VPC
-  
   cluster_id           = var.redis_cluster_id
   replication_group_id = "${var.redis_cluster_id}-rep-group"
   engine               = "redis"
@@ -77,11 +119,16 @@ module "elasticache" {
   parameter_group_name = "default.redis6.x"
   num_cache_nodes      = 1
   port                 = 6379
-  subnet_ids           = module.vpc.private_subnets
   
-  # Fix: Force creation of a unique subnet group for THIS VPC
-  create_subnet_group = true
-  subnet_group_name   = "${var.redis_cluster_id}-subnet-group"
+  # Network & Security
+  vpc_id                = module.vpc.vpc_id
+  create_security_group = false
+  security_group_ids    = [aws_security_group.redis_sg.id]
+  
+  subnet_ids            = module.vpc.private_subnets
+  create_subnet_group   = true
+  # Dynamic naming prevents collision with ghost resources
+  subnet_group_name     = "${var.redis_cluster_id}-${module.vpc.vpc_id}-subnet-group"
 }
 
 # ==========================================
@@ -100,8 +147,8 @@ resource "aws_mq_broker" "rabbitmq" {
   publicly_accessible = false
   subnet_ids          = [module.vpc.private_subnets[0]]
   
-  # Fix: Must explicitly assign a Security Group from the SAME VPC
-  security_groups     = [module.vpc.default_security_group_id]
+  # Explicit Security Group
+  security_groups     = [aws_security_group.mq_sg.id]
 
   user {
     username = "admin"
