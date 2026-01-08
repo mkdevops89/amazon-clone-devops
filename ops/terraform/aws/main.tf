@@ -43,6 +43,10 @@ module "eks" {
 module "db" {
   source  = "terraform-aws-modules/rds/aws"
   version = "~> 6.0"
+  
+  # Fix: Ensure SG is created in Custom VPC
+  vpc_id = module.vpc.vpc_id
+  
   identifier = var.db_name
   engine            = "mysql"
   engine_version    = "8.0"
@@ -61,6 +65,8 @@ module "db" {
 module "elasticache" {
   source  = "terraform-aws-modules/elasticache/aws"
   version = "~> 1.0"
+  
+  vpc_id               = module.vpc.vpc_id # Fix: Ensure SG is created in Custom VPC
   
   cluster_id           = var.redis_cluster_id
   replication_group_id = "${var.redis_cluster_id}-rep-group"
