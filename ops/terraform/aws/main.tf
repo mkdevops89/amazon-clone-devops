@@ -25,7 +25,7 @@ module "eks" {
   source          = "terraform-aws-modules/eks/aws"
   version         = "~> 20.0"
   cluster_name    = var.cluster_name
-  cluster_version = "1.27"
+  cluster_version = "1.30"
   vpc_id          = module.vpc.vpc_id
   subnet_ids      = module.vpc.private_subnets
 
@@ -71,6 +71,10 @@ module "elasticache" {
   num_cache_nodes      = 1
   port                 = 6379
   subnet_ids           = module.vpc.private_subnets
+  
+  # Fix: Force creation of a unique subnet group for THIS VPC
+  create_subnet_group = true
+  subnet_group_name   = "${var.redis_cluster_id}-subnet-group"
 }
 
 # ==========================================
@@ -98,5 +102,6 @@ resource "aws_mq_broker" "rabbitmq" {
 
 resource "random_password" "mq_password" {
   length  = 16
-  special = true
+  special = false # Simplest fix: RabbitMQ allows alphanumeric without issues, or we can use specific allowed chars.
+  # If we really want special chars, we'd use: override_special = "_%@"
 }
