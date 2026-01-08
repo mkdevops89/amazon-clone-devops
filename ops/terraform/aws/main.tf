@@ -73,9 +73,8 @@ module "elasticache" {
   subnet_ids           = module.vpc.private_subnets
   
   # Fix: Force creation of a unique subnet group for THIS VPC
-  create_subnet_group = true
   # Fix: Force unique name to avoid conflict with old VPC resource
-  subnet_group_name   = "${var.redis_cluster_id}-subnet-group-v2"
+  subnet_group_name   = "${var.redis_cluster_id}-subnet-group-v3"
 }
 
 # ==========================================
@@ -93,6 +92,9 @@ resource "aws_mq_broker" "rabbitmq" {
   
   publicly_accessible = false
   subnet_ids          = [module.vpc.private_subnets[0]]
+  
+  # Fix: Must explicitly assign a Security Group from the SAME VPC
+  security_groups     = [module.vpc.default_security_group_id]
 
   user {
     username = "admin"
