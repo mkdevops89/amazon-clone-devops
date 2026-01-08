@@ -74,7 +74,8 @@ module "elasticache" {
   
   # Fix: Force creation of a unique subnet group for THIS VPC
   create_subnet_group = true
-  subnet_group_name   = "${var.redis_cluster_id}-subnet-group"
+  # Fix: Force unique name to avoid conflict with old VPC resource
+  subnet_group_name   = "${var.redis_cluster_id}-subnet-group-v2"
 }
 
 # ==========================================
@@ -86,6 +87,9 @@ resource "aws_mq_broker" "rabbitmq" {
   engine_type        = "RabbitMQ"
   engine_version     = "3.13"
   host_instance_type = "mq.t3.micro"
+  
+  # Required for RabbitMQ 3.13+
+  auto_minor_version_upgrade = true
   
   publicly_accessible = false
   subnet_ids          = [module.vpc.private_subnets[0]]
