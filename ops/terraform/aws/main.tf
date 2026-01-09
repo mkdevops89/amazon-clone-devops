@@ -106,6 +106,9 @@ module "db" {
   username          = var.db_username
   port              = 3306
   
+  # Fix: Skip snapshot on destroy for Dev environments to allow clean teardown
+  skip_final_snapshot = true
+  
   # Network & Security
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   subnet_ids             = module.vpc.private_subnets
