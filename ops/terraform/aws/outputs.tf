@@ -28,7 +28,16 @@ output "mq_broker_id" {
   value       = aws_mq_broker.rabbitmq.id
 }
 
-output "mq_console_url" {
   description = "Amazon MQ Web Console URL"
   value       = aws_mq_broker.rabbitmq.instances[0].console_url
+}
+
+output "ecr_backend_url" {
+  description = "ECR Repository URL for Backend"
+  value       = aws_ecr_repository.backend.repository_url
+}
+
+output "ecr_frontend_url" {
+  description = "ECR Repository URL for Frontend"
+  value       = aws_ecr_repository.frontend.repository_url
 }
