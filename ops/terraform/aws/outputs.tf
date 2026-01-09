@@ -28,6 +28,7 @@ output "mq_broker_id" {
   value       = aws_mq_broker.rabbitmq.id
 }
 
+output "mq_console_url" {
   description = "Amazon MQ Web Console URL"
   value       = aws_mq_broker.rabbitmq.instances[0].console_url
 }
