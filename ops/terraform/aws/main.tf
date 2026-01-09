@@ -45,20 +45,6 @@ module "eks" {
 
   # Fix: Grant Cluster Admin permissions to the current caller
   enable_cluster_creator_admin_permissions = true
-  access_entries = {
-    current_caller = {
-      principal_arn = data.aws_caller_identity.current.arn
-
-      policy_associations = {
-        admin = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-  }
 }
 
 # ==========================================
