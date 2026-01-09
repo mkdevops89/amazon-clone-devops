@@ -2,6 +2,9 @@ provider "aws" {
   region = var.region
 }
 
+# Used to dynamically fetch the current user's ARN for EKS Admin access
+data "aws_caller_identity" "current" {}
+
 # ==========================================
 # VPC Module (Network Layer)
 # ==========================================
@@ -37,6 +40,23 @@ module "eks" {
   eks_managed_node_groups = {
     default = {
       instance_types = ["t3.medium"] # Cost-effective instance type
+    }
+  }
+
+  # Fix: Grant Cluster Admin permissions to the current caller
+  enable_cluster_creator_admin_permissions = true
+  access_entries = {
+    current_caller = {
+      principal_arn = data.aws_caller_identity.current.arn
+
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
     }
   }
 }
