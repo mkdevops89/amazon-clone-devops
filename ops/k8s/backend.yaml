@@ -44,6 +44,24 @@ spec:
                   key: redis_host
             - name: SPRING_REDIS_PORT
               value: "6379"
+            # RabbitMQ Config
+            - name: SPRING_RABBITMQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: rabbitmq_host
+            - name: SPRING_RABBITMQ_PORT
+              value: "5671"
+            - name: SPRING_RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: rabbitmq_username
+            - name: SPRING_RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: rabbitmq_password
           resources:
             requests:
               memory: "512Mi"
