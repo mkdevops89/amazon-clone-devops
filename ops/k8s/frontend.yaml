@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amazon-frontend
+  labels:
+    app: amazon-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: amazon-frontend
+  template:
+    metadata:
+      labels:
+        app: amazon-frontend
+    spec:
+      containers:
+        - name: amazon-frontend
+          # User's Account ID: 406312601212
+          image: 406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            # Connects to the Backend Service via Internal K8s DNS
+            - name: NEXT_PUBLIC_API_URL
+              value: "http://amazon-backend:8080"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: amazon-frontend
+spec:
+  selector:
+    app: amazon-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: LoadBalancer # Public Access
