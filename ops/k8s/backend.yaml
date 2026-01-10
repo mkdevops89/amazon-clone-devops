@@ -62,6 +62,8 @@ spec:
                 secretKeyRef:
                   name: db-secrets
                   key: rabbitmq_password
+            - name: SPRING_RABBITMQ_SSL_ENABLED
+              value: "true"
           resources:
             requests:
               memory: "512Mi"
