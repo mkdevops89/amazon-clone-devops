@@ -81,4 +81,4 @@ spec:
     - protocol: TCP
       port: 8080
       targetPort: 8080
-  type: ClusterIP # Internal only, Frontend talks to this via internal DNS
+  type: LoadBalancer # Changed from ClusterIP to allow Public Access (Client-Side Fetch)
