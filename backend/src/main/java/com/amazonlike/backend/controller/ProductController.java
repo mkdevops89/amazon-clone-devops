@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping({ "/api/products", "/products" }) // Supports both standard and legacy paths
 public class ProductController {
 
     @Autowired
