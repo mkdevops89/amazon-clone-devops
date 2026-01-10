@@ -19,6 +19,15 @@ module "vpc" {
   public_subnets  = var.public_subnets
 
   enable_nat_gateway = true
+
+  # Tags required for EKS Load Balancer discovery
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
+  }
 }
 
 # ==========================================
