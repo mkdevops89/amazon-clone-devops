@@ -59,7 +59,7 @@ module "eks" {
   # Fix: Allow Inbound Traffic to Worker Nodes for NodePorts (Required for LoadBalancers)
   node_security_group_additional_rules = {
     ingress_allow_8080 = {
-      description = "Allow Inbound 8080 for Backend"
+      description = "Allow Inbound 8080 for Backend (Force Apply)"
       protocol    = "tcp"
       from_port   = 8080
       to_port     = 8080
