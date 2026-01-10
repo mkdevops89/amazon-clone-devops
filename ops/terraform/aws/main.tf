@@ -53,7 +53,28 @@ module "eks" {
   }
 
   # Fix: Grant Cluster Admin permissions to the current caller
+  # Fix: Grant Cluster Admin permissions to the current caller
   enable_cluster_creator_admin_permissions = true
+
+  # Fix: Allow Inbound Traffic to Worker Nodes for NodePorts (Required for LoadBalancers)
+  node_security_group_additional_rules = {
+    ingress_allow_8080 = {
+      description = "Allow Inbound 8080 for Backend"
+      protocol    = "tcp"
+      from_port   = 8080
+      to_port     = 8080
+      type        = "ingress"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+    ingress_allow_3000 = {
+      description = "Allow Inbound 3000 for Frontend"
+      protocol    = "tcp"
+      from_port   = 3000
+      to_port     = 3000
+      type        = "ingress"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
 }
 
 # ==========================================
