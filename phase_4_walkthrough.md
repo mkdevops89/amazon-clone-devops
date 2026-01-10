@@ -22,6 +22,12 @@
     *   `ecr_backend_url` (e.g., `123456789012.dkr.ecr.us-east-1.amazonaws.com/amazon-backend`)
     *   `ecr_frontend_url` (e.g., `123456789012.dkr.ecr.us-east-1.amazonaws.com/amazon-frontend`)
 
+5.  **Update Local Kubeconfig:**
+    Connect your `kubectl` to the new cluster.
+    ```bash
+    aws eks update-kubeconfig --region us-east-1 --name amazon-cluster
+    ```
+
 ---
 
 ## STEP 2: BUILD & PUSH DOCKER IMAGES
