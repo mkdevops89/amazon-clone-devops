@@ -62,9 +62,16 @@ aws ecr get-login-password --region us-east-1 | docker login --username AWS --pa
     ```
 
 ### 2.3 Build & Push Frontend
-1.  **Build Image:**
+1.  **Retrieve Backend LoadBalancer URL:**
+    If you haven't deployed the backend yet, you might need to do this later.
+    If you HAVE deployed the backend (Step 4), run `kubectl get svc amazon-backend` to get the URL.
+
+2.  **Build Image (With Backend URL):**
+    *Replace `<BACKEND_URL>` with your actual backend LB URL (e.g., `http://...elb.amazonaws.com:8080`).*
     ```bash
-    docker build -t amazon-frontend ./frontend
+    docker build \
+      --build-arg NEXT_PUBLIC_API_URL=<BACKEND_URL> \
+      -t amazon-frontend ./frontend
     ```
 2.  **Tag Image:**
     *Replace `<ECR_FRONTEND_URL>` with the value from Step 1.*
