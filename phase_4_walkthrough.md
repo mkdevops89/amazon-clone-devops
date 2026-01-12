@@ -11,28 +11,66 @@ To avoid the "Loading Products..." error, we must follow this **exact order**:
 
 ---
 
-## STEP 1: PREPARATION & ECR PROVISIONING
-**Goal:** Create the "Folders" (Repositories) in AWS to store your Docker images.
 
-1.  **Open Terminal** at the project root (`amazon-clone-devops`).
-2.  **Navigate to Terraform Directory:**
+## STEP 0: PREREQUISITES (CHECK YOUR TOOLS)
+Before we build anything, let's make sure your "Toolbox" is ready.
+
+1.  **Open Terminal** and check these commands:
+    ```bash
+    aws --version
+    terraform -v
+    docker --version
+    kubectl version --client
+    ```
+    *If any of these fail, please install the tool first.*
+
+2.  **Authenticate with AWS:**
+    Get your access keys ready and run:
+    ```bash
+    aws configure
+    # Region: us-east-1
+    # Output: json
+    ```
+    *This gives Terraform permission to build on your behalf.*
+
+---
+
+## STEP 1: PREPARATION & INFRASTRUCTURE
+**Goal:** We need to "Initialize" our project and create the repositories.
+
+1.  **Navigate to Terraform Directory:**
     ```bash
     cd ops/terraform/aws
     ```
-3.  **Provision ECR Repositories:**
-    Run Terraform to create the `amazon-backend` and `amazon-frontend` repositories defined in `ecr.tf`.
+
+2.  **Initialize Terraform:**
+    This downloads the AWS plugins needed to run the code.
+    ```bash
+    terraform init
+    ```
+    *(You should see a green "Terraform has been successfully initialized!" message).*
+
+3.  **Preview the Plan (Optional but Recommended):**
+    See what Terraform is *about* to build. It's like a blueprint check.
+    ```bash
+    terraform plan
+    ```
+    *(Scan the output. It should say it plans to add resources).*
+
+4.  **Provision ECR Repositories (Apply):**
+    Ready? Let's build the Docker Repositories.
     ```bash
     terraform apply
     ```
     *(Type `yes` when prompted)*.
 
-4.  **Capture Outputs:**
+5.  **Capture Outputs:**
     Look at the end of the output for these two values. **Copy them somewhere** (Notepad/Notes), you will need them!
     *   `ecr_backend_url`
     *   `ecr_frontend_url`
 
-5.  **Update Local Kubeconfig:**
-    Connect your `kubectl` to the new cluster.
+6.  **Update Kubeconfig (Connect to Cluster):**
+    Now that we are authenticated, let's tell `kubectl` which cluster to talk to.
     ```bash
     aws eks update-kubeconfig --region us-east-1 --name amazon-cluster
     ```
