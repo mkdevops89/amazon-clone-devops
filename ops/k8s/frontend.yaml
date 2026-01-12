@@ -24,7 +24,7 @@ spec:
           env:
             # Connects to the Backend Service via Public Internet (Required for Client-Side Fetch)
             - name: NEXT_PUBLIC_API_URL
-              value: "http://a8467c72da2394575823f74d83953f30-322468045.us-east-1.elb.amazonaws.com:8080"
+              value: "http://<BACKEND_LOADBALANCER_URL>:8080"
           resources:
             requests:
               memory: "256Mi"

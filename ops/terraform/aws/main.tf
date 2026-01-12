@@ -19,6 +19,7 @@ module "vpc" {
   public_subnets  = var.public_subnets
 
   enable_nat_gateway = true
+  single_nat_gateway = true # Cost Optimization: ~$32/month savings (1 NAT instead of 1 per AZ)
 
   # Tags required for EKS Load Balancer discovery
   public_subnet_tags = {
