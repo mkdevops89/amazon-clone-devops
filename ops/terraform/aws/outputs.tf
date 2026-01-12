@@ -1,6 +1,6 @@
 output "nameservers" {
   description = "Route53 Name Servers (Update your domain registrar with these)"
-  value       = aws_route53_zone.main.name_servers
+  value       = data.aws_route53_zone.main.name_servers
 }
 
 output "vpc_id" {
