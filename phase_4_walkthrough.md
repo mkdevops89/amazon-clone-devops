@@ -180,5 +180,12 @@ If you are done for the day:
 cd ops/terraform/aws
 terraform destroy
 # (Remember to empty ECR repos via console/script first if destroy fails)
+
+### 6.1 Clean Up Local Secrets
+Revert your Kubernetes manifest files to their safe placeholder state:
+```bash
+./ops/scripts/update_k8s_secrets.sh clean
+```
+*(This prevents you from accidentally committing secrets to Git).*
 ```
 
