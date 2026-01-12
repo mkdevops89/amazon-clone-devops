@@ -53,7 +53,13 @@ kubectl get pods -l app=amazon-backend
 # EXPECTED: Status 'Running', Ready 1/1.
 ```
 
-### 3.2 Frontend Status
+### 3.2 Secrets Verification
+```bash
+kubectl get secret db-secrets -o jsonpath='{.data.db_password}' | base64 --decode
+# EXPECTED: Should print your actual database password (not "placeholder").
+```
+
+### 3.3 Frontend Status
 ```bash
 kubectl get deployment amazon-frontend
 kubectl get pods -l app=amazon-frontend

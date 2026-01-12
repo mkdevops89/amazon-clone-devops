@@ -108,9 +108,18 @@ aws ecr get-login-password --region us-east-1 | docker login --username AWS --pa
 ## STEP 4: DEPLOY TO EKS
 **Goal:** Launch the application.
 
-1.  **Apply Secrets first:**
+1.  **Inject Secrets Automatically:**
+    We have created a script to read Terraform outputs and AWS Secrets Manager, then update `db-secrets.yaml` for you.
     ```bash
-    kubectl apply -f db-secrets.yaml
+    # Make sure you are in the project root
+    chmod +x ops/scripts/update_k8s_secrets.sh
+    ./ops/scripts/update_k8s_secrets.sh
+    ```
+    *   **Verify:** Check `ops/k8s/db-secrets.yaml` to see the values filled in.
+
+2.  **Apply Secrets:**
+    ```bash
+    kubectl apply -f ops/k8s/db-secrets.yaml
     ```
 2.  **Apply Backend:**
     ```bash
@@ -138,6 +147,20 @@ aws ecr get-login-password --region us-east-1 | docker login --username AWS --pa
     ```
 3.  **Visit in Browser:**
     Open the External IP in Chrome/Safari. You should see your Amazon Clone!
+
+## 7. Troubleshooting
+
+### Issue: Backend Crashes with "Access Denied"
+*   **Cause:** The password in `db-secrets.yaml` does not match the RDS instance.
+*   **Solution:** Retrieve the actual password from AWS Secrets Manager (`aws secretsmanager get-secret-value`) and update `db-secrets.yaml`.
+
+### Issue: Backend LoadBalancer returns "Empty Response"
+*   **Cause:** The EKS Node Security Group does not allow inbound traffic on port 8080.
+*   **Solution:** Update `main.tf` to add `ingress_allow_8080` to `node_security_group_additional_rules`.
+
+### Issue: Frontend Stuck on "Loading products..."
+*   **Cause:** The Frontend connects to `localhost:8080` because `NEXT_PUBLIC_API_URL` was not set during **Docker Build**.
+*   **Solution:** Rebuild the image using `--build-arg NEXT_PUBLIC_API_URL=...` (See Step 2.3).
 
 ---
 

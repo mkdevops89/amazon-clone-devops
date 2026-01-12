@@ -33,6 +33,17 @@ output "mq_console_url" {
   value       = aws_mq_broker.rabbitmq.instances[0].console_url
 }
 
+output "mq_endpoint" {
+  description = "Amazon MQ Endpoint (AMQPS)"
+  value       = aws_mq_broker.rabbitmq.instances[0].endpoints[0]
+}
+
+output "mq_password" {
+  description = "Amazon MQ Password"
+  value       = random_password.mq_password.result
+  sensitive   = true
+}
+
 output "ecr_backend_url" {
   description = "ECR Repository URL for Backend"
   value       = aws_ecr_repository.backend.repository_url
