@@ -49,6 +49,7 @@ backend/mvnw.cmd
 .terraform/
 .terraform.lock.hcl
 *.tfvars
+!terraform.tfvars
 .terragrunt-cache/
 
 # ===========================

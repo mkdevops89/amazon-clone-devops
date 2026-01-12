@@ -4,6 +4,11 @@ variable "region" {
   default     = "us-east-1"
 }
 
+variable "domain_name" {
+  description = "The domain name for the application (e.g. example.com)"
+  type        = string
+}
+
 variable "vpc_name" {
   description = "Name of the VPC"
   type        = string
