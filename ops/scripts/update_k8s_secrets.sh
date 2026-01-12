@@ -82,5 +82,19 @@ sed -i '' "s|rabbitmq_password:.*|rabbitmq_password: \"${ESCAPED_MQ_PASS}\"|" "$
 
 mv "$TEMP_FILE" "$SECRETS_FILE"
 
-echo "🎉 Secrets Updated Successfully!"
+# ==========================================
+# 2. Inject ECR URLs into Manifests
+# ==========================================
+BACKEND_FILE="$(dirname "$0")/../k8s/backend.yaml"
+FRONTEND_FILE="$(dirname "$0")/../k8s/frontend.yaml"
+
+echo "📝 Updating ECR URLs in Manifests..."
+
+# Update Backend Manifest
+sed -i '' "s|image: <ECR_BACKEND_URL>:latest|image: $ECR_BACKEND:latest|" "$BACKEND_FILE"
+
+# Update Frontend Manifest
+sed -i '' "s|image: <ECR_FRONTEND_URL>:latest|image: $ECR_FRONTEND:latest|" "$FRONTEND_FILE"
+
+echo "🎉 Secrets & Images Updated Successfully!"
 echo "➡️  Next Step: kubectl apply -f ops/k8s/db-secrets.yaml"

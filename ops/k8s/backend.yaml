@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
         - name: amazon-backend
-          # User's Account ID: 406312601212
-          image: 406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest
+          # User's Account ID: <REPLACED_BY_SCRIPT>
+          image: <ECR_BACKEND_URL>:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
