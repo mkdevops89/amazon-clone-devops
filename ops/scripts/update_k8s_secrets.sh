@@ -9,6 +9,34 @@ SECRETS_FILE="$SCRIPT_DIR/../k8s/db-secrets.yaml"
 BACKEND_FILE="$SCRIPT_DIR/../k8s/backend.yaml"
 FRONTEND_FILE="$SCRIPT_DIR/../k8s/frontend.yaml"
 
+# ==========================================
+# 0. Backup & Cleanup Logic
+# ==========================================
+FILES_TO_UPDATE=("$SECRETS_FILE" "$BACKEND_FILE" "$FRONTEND_FILE")
+
+if [[ "$1" == "clean" || "$1" == "--clean" ]]; then
+    echo "🧹 Cleaning up secrets and restoring templates..."
+    for file in "${FILES_TO_UPDATE[@]}"; do
+        if [[ -f "${file}.bak" ]]; then
+            mv "${file}.bak" "$file"
+            echo "✅ Restored $file"
+        else
+            echo "⚠️  No backup found for $file, skipping."
+        fi
+    done
+    exit 0
+fi
+
+# Create backups if they don't exist (Preserve Placeholders)
+echo "🛡️  Checking for backups..."
+for file in "${FILES_TO_UPDATE[@]}"; do
+    if [[ ! -f "${file}.bak" ]]; then
+        cp "$file" "${file}.bak"
+        echo "✅ Created backup: ${file}.bak"
+    fi
+done
+
+
 echo "🔍 Fetching Terraform Outputs..."
 cd "$TF_DIR"
 
