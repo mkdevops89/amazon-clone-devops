@@ -2,8 +2,12 @@
 set -e
 
 # Configuration
-TF_DIR="$(dirname "$0")/../terraform/aws"
-SECRETS_FILE="$(dirname "$0")/../k8s/db-secrets.yaml"
+# Resolve absolute path to script directory to handle 'cd' usage later
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TF_DIR="$SCRIPT_DIR/../terraform/aws"
+SECRETS_FILE="$SCRIPT_DIR/../k8s/db-secrets.yaml"
+BACKEND_FILE="$SCRIPT_DIR/../k8s/backend.yaml"
+FRONTEND_FILE="$SCRIPT_DIR/../k8s/frontend.yaml"
 
 echo "🔍 Fetching Terraform Outputs..."
 cd "$TF_DIR"
@@ -96,8 +100,7 @@ mv "$TEMP_FILE" "$SECRETS_FILE"
 # ==========================================
 # 2. Inject ECR URLs into Manifests
 # ==========================================
-BACKEND_FILE="$(dirname "$0")/../k8s/backend.yaml"
-FRONTEND_FILE="$(dirname "$0")/../k8s/frontend.yaml"
+# (Paths defined at top of script)
 
 echo "📝 Updating ECR URLs in Manifests..."
 
