@@ -70,32 +70,43 @@ DB_HOST=$(echo $RDS_ENDPOINT | cut -d: -f1)
 # MQ Endpoint comes as "amqps://host:port", we need "host"
 MQ_HOST=$(echo $MQ_ENDPOINT | sed 's/amqps:\/\///' | cut -d: -f1)
 
+# Function for cross-platform replacement
+# Usage: replace_in_file "search_pattern" "replacement" "file_path"
+replace_in_file() {
+    local pattern="$1"
+    local replacement="$2"
+    local file="$3"
+    local tmp_file="${file}.tmp"
+
+    # Use | as delimiter, assuming pattern/replacement don't contain it (except we escape it)
+    # quoting "$pattern" inside sed is tricky, so we rely on the caller providing a full s||| command or we construct it here.
+    # Simpler: Just run the sed command passed as argument $1
+    
+    # Actually, simpler approach: Just execute sed -> temp -> mv for each call inline to be clear.
+}
+
+# ... (Previous code) ...
+
 echo "📝 Updating $SECRETS_FILE..."
 
-# Use sed to replace values in db-secrets.yaml
-# We use a temp file to avoid race conditions/partial writes
-TEMP_FILE="${SECRETS_FILE}.tmp"
-cp "$SECRETS_FILE" "$TEMP_FILE"
+# We will apply all substitutions in one go or sequentially using a temp file logic
+# that works everywhere.
+TMP_SECRETS="${SECRETS_FILE}.tmp"
 
-# Replace DB URL
-sed -i '' "s|db_url:.*|db_url: \"jdbc:mysql://${RDS_ENDPOINT}/amazon_db?useSSL=false\&allowPublicKeyRetrieval=true\&createDatabaseIfNotExist=true\"|" "$TEMP_FILE"
-
-# Replace DB Password
-# Escape special chars in password for sed
+# Escape special chars for substitutions
 ESCAPED_DB_PASS=$(printf '%s\n' "$DB_PASSWORD" | sed -e 's/[\/&]/\\&/g')
-sed -i '' "s|db_password:.*|db_password: \"${ESCAPED_DB_PASS}\"|" "$TEMP_FILE"
-
-# Replace Redis Host
-sed -i '' "s|redis_host:.*|redis_host: \"${REDIS_ENDPOINT}\"|" "$TEMP_FILE"
-
-# Replace RabbitMQ Host
-sed -i '' "s|rabbitmq_host:.*|rabbitmq_host: \"${MQ_HOST}\"|" "$TEMP_FILE"
-
-# Replace RabbitMQ Password
 ESCAPED_MQ_PASS=$(printf '%s\n' "$MQ_PASSWORD" | sed -e 's/[\/&]/\\&/g')
-sed -i '' "s|rabbitmq_password:.*|rabbitmq_password: \"${ESCAPED_MQ_PASS}\"|" "$TEMP_FILE"
 
-mv "$TEMP_FILE" "$SECRETS_FILE"
+# Read original file, process with sed, write to temp.
+# We chain sed commands to avoid multiple I/O
+sed -e "s|db_url:.*|db_url: \"jdbc:mysql://${RDS_ENDPOINT}/amazon_db?useSSL=false\&allowPublicKeyRetrieval=true\&createDatabaseIfNotExist=true\"|" \
+    -e "s|db_password:.*|db_password: \"${ESCAPED_DB_PASS}\"|" \
+    -e "s|redis_host:.*|redis_host: \"${REDIS_ENDPOINT}\"|" \
+    -e "s|rabbitmq_host:.*|rabbitmq_host: \"${MQ_HOST}\"|" \
+    -e "s|rabbitmq_password:.*|rabbitmq_password: \"${ESCAPED_MQ_PASS}\"|" \
+    "$SECRETS_FILE" > "$TMP_SECRETS"
+
+mv "$TMP_SECRETS" "$SECRETS_FILE"
 
 # ==========================================
 # 2. Inject ECR URLs into Manifests
@@ -108,11 +119,15 @@ echo "📝 Updating ECR URLs in Manifests..."
 ESCAPED_ECR_BACKEND=$(printf '%s\n' "$ECR_BACKEND" | sed -e 's/[\/&]/\\&/g')
 ESCAPED_ECR_FRONTEND=$(printf '%s\n' "$ECR_FRONTEND" | sed -e 's/[\/&]/\\&/g')
 
-# Update Backend Manifest
-sed -i '' "s|image: <ECR_BACKEND_URL>:latest|image: ${ESCAPED_ECR_BACKEND}:latest|" "$BACKEND_FILE"
+# Backend
+TMP_BACKEND="${BACKEND_FILE}.tmp"
+sed "s|image: <ECR_BACKEND_URL>:latest|image: ${ESCAPED_ECR_BACKEND}:latest|" "$BACKEND_FILE" > "$TMP_BACKEND"
+mv "$TMP_BACKEND" "$BACKEND_FILE"
 
-# Update Frontend Manifest
-sed -i '' "s|image: <ECR_FRONTEND_URL>:latest|image: ${ESCAPED_ECR_FRONTEND}:latest|" "$FRONTEND_FILE"
+# Frontend
+TMP_FRONTEND="${FRONTEND_FILE}.tmp"
+sed "s|image: <ECR_FRONTEND_URL>:latest|image: ${ESCAPED_ECR_FRONTEND}:latest|" "$FRONTEND_FILE" > "$TMP_FRONTEND"
+mv "$TMP_FRONTEND" "$FRONTEND_FILE"
 
 echo "🎉 Secrets & Images Updated Successfully!"
 echo "➡️  Next Step: kubectl apply -f ops/k8s/db-secrets.yaml"
