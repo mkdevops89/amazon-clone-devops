@@ -5,7 +5,7 @@ yum install -y java-17-amazon-corretto-devel maven git
 
 # Clone Repository
 cd /home/ec2-user
-git clone https://github.com/mkdevops89/amazon-clone-devops.git
+git clone -b phase-0-ec2 https://github.com/mkdevops89/amazon-clone-devops.git
 cd amazon-clone-devops/backend
 
 # Configure Environment Variables (User MUST Replace These)
