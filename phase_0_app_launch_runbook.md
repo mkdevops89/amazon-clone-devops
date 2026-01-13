@@ -87,7 +87,10 @@ Defines "What" to launch.
 *   **Launch Template:** `lt-backend`
 *   **VPC:** `amazon-vpc-manual`
 *   **Subnets:** `private-subnet-1`, `private-subnet-2`
-*   **Load Balancing:** Attach to existing Target Group -> `tg-backend`.
+*   **Load Balancing:**
+    *   Select **"Attach to an existing load balancer"**.
+    *   **"Choose from your load balancer target groups"**.
+    *   Select **Existing Load Balancer Target Group** -> `tg-backend`.
 *   **Group Size:** Desired: 1, Min: 1, Max: 2.
 
 #### ASG 2: Frontend
@@ -95,7 +98,10 @@ Defines "What" to launch.
 *   **Launch Template:** `lt-frontend`
 *   **VPC:** `amazon-vpc-manual`
 *   **Subnets:** `private-subnet-1`, `private-subnet-2`
-*   **Load Balancing:** Attach to existing Target Group -> `tg-frontend`.
+*   **Load Balancing:**
+    *   Select **"Attach to an existing load balancer"**.
+    *   **"Choose from your load balancer target groups"**.
+    *   Select **Existing Load Balancer Target Group** -> `tg-frontend`.
 *   **Group Size:** Desired: 1, Min: 1, Max: 2.
 
 ---
