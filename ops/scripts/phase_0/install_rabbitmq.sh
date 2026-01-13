@@ -1,30 +1,75 @@
 #!/bin/bash
-# Install RabbitMQ on Amazon Linux 2023
+# Install RabbitMQ on Amazon Linux 2023 (AL2023)
+# Reference: https://www.rabbitmq.com/docs/install-rpm#amazon-linux
 
-# 1. Update and Install Erlang
-# AL2023 provides a compatible erlang version in default repos
+# 1. Update system
 dnf update -y
-dnf install -y erlang
 
-# 2. Install RabbitMQ Server
-# We use the RHEL/CentOS 9 (EL9) package as AL2023 is closer to EL9 userspace
-rpm --import https://github.com/rabbitmq/signing-keys/releases/download/2.0/rabbitmq-release-signing-key.asc
+# 2. Configure RabbitMQ YUM Repository (using EL9 packages which work for AL2023)
+cat <<EOF > /etc/yum.repos.d/rabbitmq.repo
+[modern-erlang]
+name=modern-erlang-el9
+baseurl=https://yum1.rabbitmq.com/erlang/el/9/\$basearch https://yum2.rabbitmq.com/erlang/el/9/\$basearch
+repo_gpgcheck=1
+enabled=1
+gpgkey=https://github.com/rabbitmq/signing-keys/releases/download/3.0/cloudsmith.rabbitmq-erlang.E495BB49CC4BBE5B.key
+gpgcheck=1
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+metadata_expire=300
+pkg_gpgcheck=1
+autorefresh=1
+type=rpm-md
 
-# Install RabbitMQ 3.12.x (Standard EL8/9 RPM)
-dnf install -y https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.12.12/rabbitmq-server-3.12.12-1.el8.noarch.rpm
+[rabbitmq-el9]
+name=rabbitmq-el9
+baseurl=https://yum2.rabbitmq.com/rabbitmq/el/9/\$basearch https://yum1.rabbitmq.com/rabbitmq/el/9/\$basearch
+repo_gpgcheck=1
+enabled=1
+gpgkey=https://github.com/rabbitmq/signing-keys/releases/download/3.0/cloudsmith.rabbitmq-server.9F4587F226208342.key https://github.com/rabbitmq/signing-keys/releases/download/3.0/rabbitmq-release-signing-key.asc
+gpgcheck=1
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+metadata_expire=300
+pkg_gpgcheck=1
+autorefresh=1
+type=rpm-md
 
-# 3. Start & Enable
-systemctl start rabbitmq-server
+[rabbitmq-el9-noarch]
+name=rabbitmq-el9-noarch
+baseurl=https://yum2.rabbitmq.com/rabbitmq/el/9/noarch https://yum1.rabbitmq.com/rabbitmq/el/9/noarch
+repo_gpgcheck=1
+enabled=1
+gpgkey=https://github.com/rabbitmq/signing-keys/releases/download/3.0/cloudsmith.rabbitmq-server.9F4587F226208342.key https://github.com/rabbitmq/signing-keys/releases/download/3.0/rabbitmq-release-signing-key.asc
+gpgcheck=1
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+metadata_expire=300
+pkg_gpgcheck=1
+autorefresh=1
+type=rpm-md
+EOF
+
+# 3. Clean cache and update
+dnf clean all
+dnf makecache
+
+# 4. Install Erlang and RabbitMQ
+# The RabbitMQ repo provides a modern Erlang version required by recent RabbitMQ
+dnf install -y erlang rabbitmq-server
+
+# 5. Start & Enable Service
 systemctl enable rabbitmq-server
+systemctl start rabbitmq-server
 
-# 4. Enable Management Plugin (Port 15672) & Fix Cookie
+# 6. Enable Management Plugin
 rabbitmq-plugins enable rabbitmq_management
 
-# 5. Create User
-# Wait for service to be fully ready
-sleep 5
+# 7. Create User
+# Waiting for service to be fully up
+sleep 10
 rabbitmqctl add_user admin password123
 rabbitmqctl set_user_tags admin administrator
 rabbitmqctl set_permissions -p / admin ".*" ".*" ".*"
 
-echo "RabbitMQ Installed and Configured"
+echo "RabbitMQ Installation Complete"
