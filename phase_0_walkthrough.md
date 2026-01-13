@@ -73,8 +73,8 @@ After they launch, write down their **Private IPs**. You CANNOT proceed without 
 
 ### 4.1. Load Balancer (ALB) Setup
 Create the ALB *before* the Auto Scaling Groups so we can point the Frontend to it.
-1.  Create Target Group `tg-backend` (Port 8080).
-2.  Create Target Group `tg-frontend` (Port 3000).
+1.  Create Target Group `tg-backend` (Port 8080). **Skip "Register Targets" step** (ASG will do it).
+2.  Create Target Group `tg-frontend` (Port 3000). **Skip "Register Targets" step** (ASG will do it).
 3.  Create ALB `amazon-alb` (Internet Facing, Public Subnets, `sg-alb`).
 4.  **Listeners:**
     *   Port 80 -> Default to `tg-frontend`.
@@ -104,6 +104,19 @@ Create the ALB *before* the Auto Scaling Groups so we can point the Frontend to 
 3.  **Troubleshooting:**
     *   If 502 Bad Gateway: Backend might be unhealthy (check `install_backend.sh` logs).
     *   If Frontend loads but no products: Database connection might be failing.
+    *   **If Target Group is empty:**
+        1.  Go to **EC2 -> Auto Scaling Groups**.
+        2.  Select your ASG (e.g., `asg-backend`).
+        3.  Scroll to the **"Load balancing"** section.
+    *   **If ASG has NO instances (Capacity is 0):**
+        1.  Go to the **"Activity"** tab in your ASG.
+        2.  Look at the **"Activity history"**.
+        3.  It will show a "Failed" status and a **Cause**.
+        4.  Common errors:
+            *   *Security group does not exist*: You might have typos in the Launch Template.
+            *   *Key Pair not found*: You selected a key that doesn't exist.
+            *   *Launch Template not found*: You didn't select a valid version.
+            *   *Subnet issue*: You selected the wrong VPC.
 
 ---
 **Congratulations!** You have manually built a production-style 3-tier architecture on AWS.

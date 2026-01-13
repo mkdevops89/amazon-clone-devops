@@ -1,18 +1,19 @@
 #!/bin/bash
-# Install MySQL 8
-yum update -y
-yum install -y mysql-server
+# Install MySQL (MariaDB) on Amazon Linux 2023
+# AL2023 uses MariaDB 10.5 as the default MySQL-compatible database.
+dnf update -y
+dnf install -y mariadb105-server
 
 # Start & Enable
-systemctl start mysqld
-systemctl enable mysqld
+# Service name is 'mariadb'
+systemctl start mariadb
+systemctl enable mariadb
 
-# Create Database and User (Hardcoded for Learning)
-# Using `mysql -e` to execute commands
+# Create Database and User
+# 'mysql' command is provided by mariadb-server
 mysql -e "CREATE DATABASE IF NOT EXISTS amazon_db;"
 mysql -e "CREATE USER IF NOT EXISTS 'admin'@'%' IDENTIFIED BY 'password123';"
 mysql -e "GRANT ALL PRIVILEGES ON amazon_db.* TO 'admin'@'%';"
 mysql -e "FLUSH PRIVILEGES;"
 
-# Note: In production you would run `mysql_secure_installation`
-echo "MySQL Installed and Configured"
+echo "MySQL (MariaDB) Installed and Configured"
