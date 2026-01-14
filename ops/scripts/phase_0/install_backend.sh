@@ -12,6 +12,7 @@ cd amazon-clone-devops/backend
 export SPRING_DATASOURCE_URL="jdbc:mysql://<REPLACE_WITH_RDS_ENDPOINT>:3306/amazon_db?createDatabaseIfNotExist=true"
 export SPRING_DATASOURCE_USERNAME="admin"
 export SPRING_DATASOURCE_PASSWORD="password123"
+# Note: For Redis, use the Primary Endpoint WITHOUT the port (e.g., amazon-redis.abcdef.0001.use1.cache.amazonaws.com)
 export SPRING_REDIS_HOST="<REPLACE_WITH_REDIS_ENDPOINT>"
 # Note: For AmazonMQ, use the Endpoint URL WITHOUT 'amqps://' and WITHOUT ':5671' (e.g., b-123...mq.us-east-1.amazonaws.com)
 export SPRING_RABBITMQ_HOST="<REPLACE_WITH_AMAZON_MQ_ENDPOINT>"
