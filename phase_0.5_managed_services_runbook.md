@@ -76,7 +76,7 @@ The Managed Services need to allow traffic from your App.
     *   **Broker instance type:** `mq.t3.micro`.
     *   **RabbitMQ Access:**
         *   **Username:** `admin`
-        *   **Password:** `password123`
+        *   **Password:** `password1234`
 5.  **Connectivity:**
     *   **Access type:** Private access.
     *   **VPC:** `amazon-vpc-manual`.
