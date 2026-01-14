@@ -4,6 +4,14 @@
 dnf update -y
 dnf install -y mariadb105-server
 
+# Install Git to fetch backup
+dnf install -y git
+
+# Setup working directory
+cd /home/ec2-user
+# Clone the repository (Phase 0 Branch)
+git clone -b phase-0-ec2 https://github.com/mkdevops89/amazon-clone-devops.git
+
 # Start & Enable
 # Service name is 'mariadb'
 systemctl start mariadb
@@ -15,5 +23,15 @@ mysql -e "CREATE DATABASE IF NOT EXISTS amazon_db;"
 mysql -e "CREATE USER IF NOT EXISTS 'admin'@'%' IDENTIFIED BY 'password123';"
 mysql -e "GRANT ALL PRIVILEGES ON amazon_db.* TO 'admin'@'%';"
 mysql -e "FLUSH PRIVILEGES;"
+
+# Import Data (If file exists)
+BACKUP_FILE="/home/ec2-user/amazon-clone-devops/backend/src/main/resources/db_backup.sql"
+if [ -f "$BACKUP_FILE" ]; then
+    echo "Importing $BACKUP_FILE..."
+    mysql -u root amazon_db < "$BACKUP_FILE"
+    echo "Data Import Successful"
+else
+    echo "WARNING: Backup file not found at $BACKUP_FILE"
+fi
 
 echo "MySQL (MariaDB) Installed and Configured"
