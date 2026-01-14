@@ -18,6 +18,11 @@ We need two "buckets" for our instances.
 *   **Protocol:** HTTP | **Port:** 8080
 *   **VPC:** `amazon-vpc-manual`
 *   **Health Check:** `/api/products` (CRITICAL: `/api/health` does not exist in Phase 0 code. Use `/api/products` which returns 200 OK).
+*   **Advanced Health Check Settings:**
+    *   **Healthy Threshold:** 2
+    *   **Unhealthy Threshold:** 2
+    *   **Timeout:** 5
+    *   **Interval:** 30
 
 ### TG 2: Frontend
 *   **Name:** `tg-frontend`
@@ -25,6 +30,12 @@ We need two "buckets" for our instances.
 *   **Protocol:** HTTP | **Port:** 3000
 *   **VPC:** `amazon-vpc-manual`
 *   **Health Check:** `/`
+*   **Advanced Health Check Settings:**
+    *   **Healthy Threshold:** 2
+    *   **Unhealthy Threshold:** 2
+    *   **Timeout:** 5
+    *   **Interval:** 30
+    *   **Success Codes:** `200-399` (To handle Next.js redirects)
 
 *(Skip "Register Targets" step for now, ASG will do it automatically).*
 
