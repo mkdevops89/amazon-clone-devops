@@ -19,6 +19,7 @@
 2.  **Instance Type:** `t3.micro`
 3.  **Advanced Details -> User Data:**
     *   Open `ops/scripts/phase_0/install_mysql.sh`
+    *   **Note:** This updated script now *automatically* installs Git, clones the repo, and imports `db_backup.sql`.
     *   Copy content -> Paste into User Data box.
 4.  **Launch Instance.**
 

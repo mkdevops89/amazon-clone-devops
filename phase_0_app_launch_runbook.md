@@ -17,7 +17,7 @@ We need two "buckets" for our instances.
 *   **Target Type:** Instances
 *   **Protocol:** HTTP | **Port:** 8080
 *   **VPC:** `amazon-vpc-manual`
-*   **Health Check:** `/api/health` (or `/` if actuator is not set up, try `/` first)
+*   **Health Check:** `/api/products` (CRITICAL: `/api/health` does not exist in Phase 0 code. Use `/api/products` which returns 200 OK).
 
 ### TG 2: Frontend
 *   **Name:** `tg-frontend`
@@ -66,8 +66,8 @@ Defines "What" to launch.
 *   **Subnets:** Select BOTH `public-subnet-1` and `public-subnet-2`.
 *   **Security Group:** `sg-alb`
 *   **Listeners:**
-    *   **HTTP:80** -> Default Action: Forward to `tg-frontend` (This makes Frontend the default).
-    *   **Add Rule:** If Host is `api.devcloudproject.com` -> Forward to `tg-backend`.
+    *   **HTTP:80** -> Default Action: Forward to `tg-frontend`.
+    *   **Add Rule:** If Path is `/api/*` OR `/products*` -> Forward to `tg-backend`.
 
 **Action:** Once created, copy the **DNS Name** (e.g., `amazon-alb-123.us-east-1.elb.amazonaws.com`).
 
@@ -92,6 +92,7 @@ Defines "What" to launch.
     *   **"Choose from your load balancer target groups"**.
     *   Select **Existing Load Balancer Target Group** -> `tg-backend`.
 *   **Group Size:** Desired: 1, Min: 1, Max: 2.
+    *   **Health Check Grace Period:** **300 seconds** (CRITICAL: Java takes time to start. Default 300s prevents premature termination).
 
 #### ASG 2: Frontend
 *   **Name:** `asg-frontend`
