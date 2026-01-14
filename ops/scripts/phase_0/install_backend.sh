@@ -9,11 +9,11 @@ git clone -b phase-0-ec2 https://github.com/mkdevops89/amazon-clone-devops.git
 cd amazon-clone-devops/backend
 
 # Configure Environment Variables (User MUST Replace These)
-export SPRING_DATASOURCE_URL="jdbc:mysql://<REPLACE_WITH_DB_PRIVATE_IP>:3306/amazon_db?createDatabaseIfNotExist=true"
+export SPRING_DATASOURCE_URL="jdbc:mysql://<REPLACE_WITH_RDS_ENDPOINT>:3306/amazon_db?createDatabaseIfNotExist=true"
 export SPRING_DATASOURCE_USERNAME="admin"
 export SPRING_DATASOURCE_PASSWORD="password123"
-export SPRING_REDIS_HOST="<REPLACE_WITH_REDIS_PRIVATE_IP>"
-export SPRING_RABBITMQ_HOST=${RABBITMQ_HOST}
+export SPRING_REDIS_HOST="<REPLACE_WITH_REDIS_ENDPOINT>"
+export SPRING_RABBITMQ_HOST="<REPLACE_WITH_AMAZON_MQ_ENDPOINT>"
 export SPRING_RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
 export SPRING_RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
 export SPRING_RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-password1234}
