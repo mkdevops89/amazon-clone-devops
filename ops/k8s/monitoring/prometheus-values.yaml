@@ -1,0 +1,10 @@
+grafana:
+  adminPassword: "password1234"
+  service:
+    type: LoadBalancer
+
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
