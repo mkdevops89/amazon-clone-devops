@@ -85,6 +85,7 @@ spec:
     app: amazon-backend
   ports:
     - protocol: TCP
+      name: http # Required for ServiceMonitor
       port: 8080
       targetPort: 8080
   type: LoadBalancer # Changed from ClusterIP to allow Public Access (Client-Side Fetch)
