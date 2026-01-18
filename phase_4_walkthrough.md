@@ -33,6 +33,35 @@ Before we build anything, let's make sure your "Toolbox" is ready.
     ```
     *This gives Terraform permission to build on your behalf.*
 
+    *This gives Terraform permission to build on your behalf.*
+
+---
+
+## STEP 0.5: CONFIGURE REMOTE STATE (S3)
+**Goal:** Store Terraform state securely in S3 instead of locally.
+
+**We have a script to automate this!**
+It will create your unique S3 Bucket, the DynamoDB Lock Table, and generate the `backend.tf` file for you.
+
+1.  **Run the Setup Script (From Project Root):**
+    Ensure you are in the root directory (where `ops/` is visible).
+    ```bash
+    chmod +x ops/scripts/setup_tf_state.sh
+    ./ops/scripts/setup_tf_state.sh
+    ```
+
+    *Expected Output:*
+    > ✅ Backend infrastructure ready!
+    > Bucket: amazon-clone-tfstate-123456789012
+    > Table:  amazon-clone-tf-locks
+    > File:   .../ops/terraform/aws/backend.tf
+
+2.  **Verify:**
+    Check that the file was created:
+    ```bash
+    cat ops/terraform/aws/backend.tf
+    ```
+
 ---
 
 ## STEP 1: PREPARATION & INFRASTRUCTURE
