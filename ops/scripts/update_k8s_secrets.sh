@@ -94,8 +94,8 @@ echo "📝 Updating $SECRETS_FILE..."
 TMP_SECRETS="${SECRETS_FILE}.tmp"
 
 # Escape special chars for substitutions
-ESCAPED_DB_PASS=$(printf '%s\n' "$DB_PASSWORD" | sed -e 's/[\/&]/\\&/g')
-ESCAPED_MQ_PASS=$(printf '%s\n' "$MQ_PASSWORD" | sed -e 's/[\/&]/\\&/g')
+ESCAPED_DB_PASS=$(printf '%s\n' "$DB_PASSWORD" | sed -e 's/[\/&|]/\\&/g')
+ESCAPED_MQ_PASS=$(printf '%s\n' "$MQ_PASSWORD" | sed -e 's/[\/&|]/\\&/g')
 
 # Read original file, process with sed, write to temp.
 # We chain sed commands to avoid multiple I/O
