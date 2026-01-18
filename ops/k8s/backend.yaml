@@ -78,8 +78,9 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata:
   name: amazon-backend
+  labels:
+    app: amazon-backend
 spec:
   selector:
     app: amazon-backend
