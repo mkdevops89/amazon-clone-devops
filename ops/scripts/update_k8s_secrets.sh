@@ -87,26 +87,22 @@ replace_in_file() {
 
 # ... (Previous code) ...
 
-echo "📝 Updating $SECRETS_FILE..."
+SECRETS_TEMPLATE="$SCRIPT_DIR/../k8s/db-secrets.template.yaml"
 
-# We will apply all substitutions in one go or sequentially using a temp file logic
-# that works everywhere.
-TMP_SECRETS="${SECRETS_FILE}.tmp"
+echo "📝 Generatng $SECRETS_FILE from template..."
 
-# Escape special chars for substitutions
+# Escape special chars for substitutions (Fix for delimiter collision)
 ESCAPED_DB_PASS=$(printf '%s\n' "$DB_PASSWORD" | sed -e 's/[\/&|]/\\&/g')
 ESCAPED_MQ_PASS=$(printf '%s\n' "$MQ_PASSWORD" | sed -e 's/[\/&|]/\\&/g')
 
-# Read original file, process with sed, write to temp.
-# We chain sed commands to avoid multiple I/O
-sed -e "s|db_url:.*|db_url: \"jdbc:mysql://${RDS_ENDPOINT}/amazon_db?useSSL=false\&allowPublicKeyRetrieval=true\&createDatabaseIfNotExist=true\"|" \
-    -e "s|db_password:.*|db_password: \"${ESCAPED_DB_PASS}\"|" \
-    -e "s|redis_host:.*|redis_host: \"${REDIS_ENDPOINT}\"|" \
-    -e "s|rabbitmq_host:.*|rabbitmq_host: \"${MQ_HOST}\"|" \
-    -e "s|rabbitmq_password:.*|rabbitmq_password: \"${ESCAPED_MQ_PASS}\"|" \
-    "$SECRETS_FILE" > "$TMP_SECRETS"
+# Read TEMPLATE, substitute, write to TARGET (db-secrets.yaml)
+sed -e "s|<RDS_ENDPOINT>|jdbc:mysql://${RDS_ENDPOINT}/amazon_db?useSSL=false\&allowPublicKeyRetrieval=true\&createDatabaseIfNotExist=true|g" \
+    -e "s|<RDS_PASSWORD>|${ESCAPED_DB_PASS}|g" \
+    -e "s|<REDIS_ENDPOINT>|${REDIS_ENDPOINT}|g" \
+    -e "s|<MQ_ENDPOINT>|${MQ_HOST}|g" \
+    -e "s|<MQ_PASSWORD>|${ESCAPED_MQ_PASS}|g" \
+    "$SECRETS_TEMPLATE" > "$SECRETS_FILE"
 
-mv "$TMP_SECRETS" "$SECRETS_FILE"
 
 # ==========================================
 # 2. Inject ECR URLs into Manifests
