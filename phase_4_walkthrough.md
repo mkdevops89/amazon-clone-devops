@@ -219,11 +219,52 @@ kubectl apply -f ops/k8s/frontend.yaml
 
 ---
 
-## STEP 6: TEARDOWN
-If you are done for the day:
+## STEP 6: COMPREHENSIVE TEARDOWN (CLEANUP)
+**Goal:** Completely remove all resources to avoid AWS costs and reset your environment.
+
+### 6.1 Delete Kubernetes Resources
+First, we remove the application from the cluster to stop the Load Balancers (which cost money).
+```bash
+# Delete all manifests we applied
+kubectl delete -f ops/k8s/
+```
+*Verify:* Run `kubectl get svc` and ensure no LoadBalancers are listed.
+
+### 6.2 Destroy AWS Infrastructure (Terraform)
+Now we destroy the underlying infrastructure (EKS, VPC, RDS, etc.).
+
+**⚠️ CRITICAL: Empty your ECR Repositories first!**
+Terraform cannot delete a non-empty ECR repository. Run this command manually for both repos, or Terraform destroy will fail:
+```bash
+# Empty Backend Repo
+aws ecr list-images --repository-name amazon-backend --query 'imageIds[*]' --output json | jq -c '.[]' | while read imageId; do aws ecr batch-delete-image --repository-name amazon-backend --image-ids "$imageId"; done
+
+# Empty Frontend Repo
+aws ecr list-images --repository-name amazon-frontend --query 'imageIds[*]' --output json | jq -c '.[]' | while read imageId; do aws ecr batch-delete-image --repository-name amazon-frontend --image-ids "$imageId"; done
+```
+
+**Now run destroy:**
 ```bash
 cd ops/terraform/aws
 terraform destroy
-# (Remember to empty ECR repos via console/script first if destroy fails)
+# Type 'yes' when prompted
 ```
 
+### 6.3 Cleanup Local State & Revert Secrets
+To reset your local files (so `db-secrets.yaml` goes back to placeholders for next time):
+
+```bash
+# 1. Revert the secrets file to its original state (with <placeholders>)
+# (Assuming you haven't committed the actual secrets to git!)
+git checkout ops/k8s/db-secrets.yaml
+git checkout ops/k8s/backend.yaml
+git checkout ops/k8s/frontend.yaml
+
+# 2. Remove the generated Terraform Backend config
+rm backend.tf
+```
+
+### 6.4 (Manual) Delete Persistent S3 State
+The S3 Bucket and DynamoDB Lock Table created by `setup_tf_state.sh` are **NOT** deleted by Terraform (to protect your state from accidental deletion).
+*   **Go to AWS Console > S3:** Delete the `amazon-clone-tfstate-xxxx` bucket (Empty it first).
+*   **Go to AWS Console > DynamoDB:** Delete the `amazon-clone-tf-locks` table.
