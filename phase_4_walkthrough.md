@@ -117,8 +117,17 @@ aws ecr get-login-password --region us-east-1 | docker login --username AWS --pa
 ### 2.2 Build & Push Backend Environment
 1.  **Return to Project Root:** `cd ../../..`
 2.  **Build & Push:**
+    **NOTE: Are you on a Mac (M1/M2/M3)?**
+    If so, you MUST add `--platform linux/amd64` to force compatibility with AWS.
+    If you are on Windows/Linux (Intel/AMD), you can omit it.
+
     ```bash
-    docker build -t amazon-backend ./backend
+    # For Mac (Apple Silicon):
+    docker build --platform linux/amd64 -t amazon-backend ./backend
+
+    # For Windows/Linux (Intel/AMD):
+    # docker build -t amazon-backend ./backend
+
     docker tag amazon-backend:latest <ECR_BACKEND_URL>:latest
     docker push <ECR_BACKEND_URL>:latest
     ```
@@ -157,9 +166,16 @@ You **MUST** provide the Backend URL here. If you skip this, the app will fail t
 *Replace `<BACKEND_LB_URL>` with the EXTERNAL-IP from Step 2.3 (including port 8080 if applicable, e.g., `http://...:8080`).*
 
 ```bash
+# For Mac (Apple Silicon) - ADD THIS FLAG:
 docker build \
+  --platform linux/amd64 \
   --build-arg NEXT_PUBLIC_API_URL=http://<BACKEND_LB_URL>:8080 \
   -t amazon-frontend ./frontend
+
+# For Windows/Linux (Standard):
+# docker build \
+#   --build-arg NEXT_PUBLIC_API_URL=http://<BACKEND_LB_URL>:8080 \
+#   -t amazon-frontend ./frontend
 ```
 
 **Tag & Push:**
