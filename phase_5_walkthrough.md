@@ -118,7 +118,53 @@ If the app is "Spinning" or "Status DOWN", check these common issues we resolved
 
 ---
 
-## 🧹 Step 6: Teardown (Clean Up)
-1.  **Delete Kubernetes Resources:** `kubectl delete -f ops/k8s/ingress.yaml ...`
-2.  **Destroy Terraform:** `terraform destroy`
-3.  **Clean Manual Records:** Delete CNAMEs in Route53 and Manual SG Rules.
+## 🧹 Step 6: Detailed Cleanup (Teardown)
+To completely remove all resources and stop billing, follow this exact order.
+
+### 1. De-provision Load Balancer (CRITICAL)
+You **must** delete the Ingress first. If you destroy the cluster while the Ingress exists, the AWS ALB will be orphaned and you will continue to be billed for it.
+
+```bash
+# Delete Ingress Resources
+kubectl delete -f ops/k8s/ingress.yaml
+kubectl delete -f ops/k8s/ingress-grafana.yaml
+kubectl delete -f ops/k8s/grafana-bridge.yaml
+
+# Wait for ALB to disappear (Check AWS Console -> EC2 -> Load Balancers)
+echo "Waiting for ALB deletion..."
+```
+
+### 2. Uninstall Controller & Apps
+```bash
+# Uninstall LB Controller
+helm uninstall aws-load-balancer-controller -n kube-system
+
+# Delete Workloads
+kubectl delete -f ops/k8s/backend.yaml
+kubectl delete -f ops/k8s/frontend.yaml
+```
+
+### 3. Destroy Infrastructure (Terraform)
+This removes EKS, RDS, Redis, MQ, VPC, and ACM Certificate.
+```bash
+cd ops/terraform/aws
+terraform destroy
+# Type 'yes' to confirm
+```
+
+### 4. Manual Cleanup (Leftovers)
+Some resources created via scripts or console must be deleted manually:
+
+1.  **Route53 Records:**
+    *   Go to Hosted Zone `devcloudproject.com`.
+    *   Delete the CNAME records (`www`, `api`, `grafana`) you created manually.
+2.  **IAM Policy:**
+    *   Go to **IAM -> Policies**.
+    *   Search for `AWSLoadBalancerControllerIAMPolicy`.
+    *   Delete it. (Created by `install_lb_controller.sh`).
+3.  **CloudWatch Logs:**
+    *   Go to **CloudWatch -> Log Groups**.
+    *   Delete `/aws/eks/amazon-cluster/...` log groups if they exist.
+4.  **Security Group Rules:**
+    *   Check your RDS/Redis Security Groups.
+    *   If `terraform destroy` fails to delete them because of "Dependency Violation" (common if rules refer to deleted groups), manually delete the Inbound Rules permitting traffic from the EKS Worker Nodes.
