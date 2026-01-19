@@ -94,3 +94,6 @@ mkdev
 !phase_4.5_walkthrough.md
 !phase_4.5_testcases.md
 ops/k8s/db-secrets.yaml
+!phase_5_walkthrough.md
+!phase_5_testcases.md
+!docs/phase_5_domains.md

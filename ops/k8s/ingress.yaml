@@ -1,0 +1,50 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amazon-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    # SSL Configuration (Run update_ingress_cert.sh to inject your ARN)
+    alb.ingress.kubernetes.io/certificate-arn: "<INSERT_YOUR_ACM_ARN>"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # Health Checks
+    alb.ingress.kubernetes.io/healthcheck-path: "/"
+spec:
+  rules:
+    # Frontend (Store)
+    - host: www.devcloudproject.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: amazon-frontend
+                port:
+                  number: 80
+    # Backend (API)
+    - host: api.devcloudproject.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: amazon-backend
+                port:
+                  name: http
+    # Grafana (Monitoring)
+    - host: grafana.devcloudproject.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana-bridge
+                port:
+                  number: 80

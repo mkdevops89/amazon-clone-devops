@@ -53,3 +53,8 @@ output "ecr_frontend_url" {
   description = "ECR Repository URL for Frontend"
   value       = aws_ecr_repository.frontend.repository_url
 }
+
+output "acm_certificate_arn" {
+  description = "The ARN of the SSL Certificate"
+  value       = module.acm.acm_certificate_arn
+}

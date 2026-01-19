@@ -209,3 +209,11 @@ resource "random_password" "mq_password" {
   special = false # Simplest fix: RabbitMQ allows alphanumeric without issues, or we can use specific allowed chars.
   # If we really want special chars, we'd use: override_special = "_%@"
 }
+
+# ==========================================
+# Phase 5: ACM (SSL Certificate)
+# ==========================================
+module "acm" {
+  source      = "../modules/acm"
+  domain_name = "devcloudproject.com"
+}
