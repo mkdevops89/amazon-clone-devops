@@ -9,7 +9,7 @@ export default function LoginPage() {
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         // Simulate login
-        router.push('/');
+        router.push('/home');
     };
 
     return (
@@ -41,7 +41,6 @@ export default function LoginPage() {
                         <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '0.3rem' }}>Username</label>
                         <input
                             type="text"
-                            defaultValue="admin"
                             style={{
                                 width: '100%',
                                 padding: '0.6rem',
@@ -59,7 +58,6 @@ export default function LoginPage() {
                         </div>
                         <input
                             type="password"
-                            defaultValue="admin"
                             style={{
                                 width: '100%',
                                 padding: '0.6rem',
