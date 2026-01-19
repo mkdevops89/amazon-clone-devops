@@ -11,8 +11,10 @@ resource "aws_acm_certificate" "this" {
   }
 }
 
-resource "aws_route53_zone" "this" {
-  name = var.domain_name
+# CHANGED: Use data source to find EXISTING zone instead of creating new one
+data "aws_route53_zone" "this" {
+  name         = var.domain_name
+  private_zone = false
 }
 
 resource "aws_route53_record" "cert_validation" {
@@ -25,7 +27,8 @@ resource "aws_route53_record" "cert_validation" {
   records         = [each.value.resource_record_value]
   ttl             = 60
   type            = each.value.resource_record_type
-  zone_id         = aws_route53_zone.this.zone_id
+  # Reference the DATA source ID not resource ID
+  zone_id         = data.aws_route53_zone.this.zone_id
 }
 
 resource "aws_acm_certificate_validation" "this" {
