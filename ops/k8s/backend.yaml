@@ -41,12 +41,12 @@ spec:
                 secretKeyRef:
                   name: db-secrets
                   key: db_password
-            - name: SPRING_REDIS_HOST
+            - name: SPRING_DATA_REDIS_HOST
               valueFrom:
                 secretKeyRef:
                   name: db-secrets
                   key: redis_host
-            - name: SPRING_REDIS_PORT
+            - name: SPRING_DATA_REDIS_PORT
               value: "6379"
             # RabbitMQ Config
             - name: SPRING_RABBITMQ_HOST
