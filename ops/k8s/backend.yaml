@@ -20,8 +20,8 @@ spec:
     spec:
       containers:
         - name: amazon-backend
-          # User's Account ID: <REPLACED_BY_SCRIPT>
-          image: <ECR_BACKEND_URL>:latest
+          # User's Account ID: 406312601212
+          image: 406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
@@ -48,6 +48,8 @@ spec:
                   key: redis_host
             - name: SPRING_DATA_REDIS_PORT
               value: "6379"
+            - name: SPRING_DATA_REDIS_SSL_ENABLED
+              value: "true"
             # RabbitMQ Config
             - name: SPRING_RABBITMQ_HOST
               valueFrom:

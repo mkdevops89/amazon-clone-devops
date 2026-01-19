@@ -16,15 +16,15 @@ spec:
     spec:
       containers:
         - name: amazon-frontend
-          # User's Account ID: <REPLACED_BY_SCRIPT>
-          image: <ECR_FRONTEND_URL>:latest
+          # User's Account ID: 406312601212
+          image: 406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-frontend:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:
             # Connects to the Backend Service via Public Internet (Required for Client-Side Fetch)
             - name: NEXT_PUBLIC_API_URL
-              value: "http://<BACKEND_LOADBALANCER_URL>:8080"
+              value: "https://api.devcloudproject.com"
           resources:
             requests:
               memory: "256Mi"
