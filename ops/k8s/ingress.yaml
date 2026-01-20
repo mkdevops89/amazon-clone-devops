@@ -17,7 +17,7 @@ metadata:
 spec:
   rules:
     # Frontend (Store)
-    - host: www.devcloudproject.com
+    - host: www.${DOMAIN_NAME}
       http:
         paths:
           - path: /
@@ -28,7 +28,7 @@ spec:
                 port:
                   number: 80
     # Backend (API)
-    - host: api.devcloudproject.com
+    - host: api.${DOMAIN_NAME}
       http:
         paths:
           - path: /

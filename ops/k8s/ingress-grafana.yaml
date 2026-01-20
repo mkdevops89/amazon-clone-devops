@@ -16,7 +16,7 @@ metadata:
     alb.ingress.kubernetes.io/success-codes: "200"
 spec:
   rules:
-    - host: grafana.devcloudproject.com
+    - host: grafana.${DOMAIN_NAME}
       http:
         paths:
           - path: /
