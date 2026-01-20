@@ -35,13 +35,30 @@ terraform apply
     Connect your local `kubectl` to the new EKS cluster.
     ```bash
     aws eks update-kubeconfig --region us-east-1 --name amazon-cluster
-    kubectl get nodes
     # Should show "Ready" nodes
     ```
 
 ---
 
-## 📦 Step 2: Build & Push Images
+## 🔐 Step 2: Configure Secrets
+We need to fetch the Database passwords (from Terraform/Secrets Manager) and inject them into Kubernetes.
+
+1.  **Run Secrets Script:**
+    This script reads Terraform outputs and creates `ops/k8s/db-secrets.yaml`.
+    ```bash
+    cd ../../../ # Go to project root if not already there
+    chmod +x ops/scripts/update_k8s_secrets.sh
+    ./ops/scripts/update_k8s_secrets.sh
+    ```
+2.  **Apply Secrets:**
+    ```bash
+    kubectl apply -f ops/k8s/db-secrets.yaml
+    ```
+    *   *Result:* A secret named `db-secrets` is created in your cluster.
+
+---
+
+## 📦 Step 3: Build & Push Images
 We need to push your code to **AWS ECR**.
 
 1.  **Login to ECR:**
@@ -69,7 +86,7 @@ We need to push your code to **AWS ECR**.
 
 ---
 
-## 🚀 Step 3: Deploy to Kubernetes
+## 🚀 Step 4: Deploy to Kubernetes
 **CRITICAL:** Do NOT use `kubectl apply -f ...` manually.
 We have parameterized the manifests to use your Account ID. Use the script:
 
@@ -83,7 +100,7 @@ We have parameterized the manifests to use your Account ID. Use the script:
 
 ---
 
-## 🔍 Step 4: Verification
+## 🔍 Step 5: Verification
 1.  **Check Pods:**
     ```bash
     kubectl get pods
