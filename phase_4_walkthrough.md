@@ -15,15 +15,22 @@ This phase moves your application from Docker Compose to **AWS EKS** (Elastic Ku
 ## 🏗️ Step 1: Infrastructure (Terraform)
 We use Terraform to provision the VPC, EKS Cluster, RDS, Redis, and MQ.
 
-1.  **Initialize S3 Backend (State Management):**
-    *   Ensure the S3 bucket `amazonlike-terraform-state-michael` exists (see previous instructions).
-2.  **Apply Infrastructure:**
-    ```bash
-    cd ops/terraform/aws
-    terraform init
-    terraform apply
-    # Type 'yes' to confirm
-    ```
+### 1. Initialize S3 Backend (Scripted)
+Instead of manual setup, run this script to create the S3 Bucket, DynamoDB Table, and generate `backend.tf`:
+```bash
+chmod +x ops/scripts/setup_tf_state.sh
+./ops/scripts/setup_tf_state.sh
+```
+*   *Verification:* Check `ops/terraform/aws/backend.tf` to see your new configuration.
+
+### 2. Apply Infrastructure
+Now that the backend is configured, deploy the resources:
+```bash
+cd ops/terraform/aws
+terraform init
+terraform apply
+# Type 'yes' to confirm
+```
 3.  **Configure Kubectl:**
     Connect your local `kubectl` to the new EKS cluster.
     ```bash
