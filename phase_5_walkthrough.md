@@ -106,16 +106,19 @@ helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
 ## 🧹 Step 6: Detailed Cleanup (Teardown)
 
 ### 1. De-provision Load Balancer (CRITICAL)
+Use `kubectl delete` by name to ensure clean removal even if files contain variables.
 ```bash
-kubectl delete -f ops/k8s/ingress.yaml
-kubectl delete -f ops/k8s/ingress-grafana.yaml
+kubectl delete ingress amazon-ingress
+kubectl delete ingress grafana-ingress
 ```
 
 ### 2. Uninstall Controller & Apps
 ```bash
 helm uninstall aws-load-balancer-controller -n kube-system
-kubectl delete -f ops/k8s/backend.yaml
-kubectl delete -f ops/k8s/frontend.yaml
+
+# Delete Deployments and Services
+kubectl delete deployment amazon-backend amazon-frontend
+kubectl delete service amazon-backend amazon-frontend
 ```
 
 ### 3. Destroy Infrastructure (Terraform)
