@@ -63,7 +63,8 @@ We modified the Backend to speak "Prometheus". Let's verify it locally or in clu
 3.  **Visit Endpoint:**
     Open browser to: `http://localhost:8080/actuator/prometheus`
     *   **Success:** You see a wall of text starting with `# HELP jvm_memory_used_bytes...`
-    *   **Fail:** You see 404. (Did you rebuild the image with the new Pom.xml?)
+    *   **Fail:** You see 404.
+        > **⚠️ Important:** If you need to rebuild/redeploy the application (e.g. to enable Prometheus metrics), you MUST use `./ops/scripts/deploy_k8s.sh` instead of `kubectl apply` directly. The manifests now use environment variables (`${AWS_ACCOUNT_ID}`) which the script handles for you.
 
 ## Step 3: Access Grafana (The Dashboard)
 Now let's see the pretty graphs.
