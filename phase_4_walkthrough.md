@@ -1,11 +1,11 @@
 # Phase 4: Kubernetes & EKS Deployment ☸️
 
-This phase moves your application from Docker Compose to **AWS EKS** (Elastic Kubernetes Service).
+This phase transitions the application from Docker Compose to **AWS EKS** (Elastic Kubernetes Service).
 
 ---
 
 ## 🛠️ Prerequisites
-1.  **AWS CLI** configured.
+1.  **AWS CLI** configured (`aws configure`).
 2.  **Terraform** installed.
 3.  **Kubectl** installed.
 4.  **Docker** running.
@@ -13,71 +13,77 @@ This phase moves your application from Docker Compose to **AWS EKS** (Elastic Ku
 ---
 
 ## 🏗️ Step 1: Infrastructure (Terraform)
-We use Terraform to provision the VPC, EKS Cluster, RDS, Redis, and MQ.
+Provision the VPC, EKS Cluster, RDS, Redis, and MQ using Terraform.
 
 ### 1. Initialize S3 Backend (Scripted)
-Instead of manual setup, run this script to create the S3 Bucket, DynamoDB Table, and generate `backend.tf`:
+Run the automated setup script to detect your Account ID, create a unique S3 Bucket and DynamoDB Lock Table, and generate the `backend.tf` configuration file:
 ```bash
 chmod +x ops/scripts/setup_tf_state.sh
 ./ops/scripts/setup_tf_state.sh
 ```
-*   *Verification:* Check `ops/terraform/aws/backend.tf` to see your new configuration.
+*   *Verification:* Inspect `ops/terraform/aws/backend.tf` to confirm the configuration.
 
 ### 2. Apply Infrastructure
-Now that the backend is configured, deploy the resources:
+Deploy the infrastructure resources:
 ```bash
 cd ops/terraform/aws
 terraform init
 terraform apply
-# Type 'yes' to confirm
+# Type 'yes' to confirm when prompted
 ```
-3.  **Configure Kubectl:**
-    Connect your local `kubectl` to the new EKS cluster.
-    ```bash
-    aws eks update-kubeconfig --region us-east-1 --name amazon-cluster
-    # Should show "Ready" nodes
-    ```
+
+### 3. Configure Kubectl
+Connect the local `kubectl` client to the newly created EKS cluster:
+```bash
+aws eks update-kubeconfig --region us-east-1 --name amazon-cluster
+```
 
 ---
 
 ## 🔐 Step 2: Configure Secrets
-We need to fetch the Database passwords (from Terraform/Secrets Manager) and inject them into Kubernetes.
+Fetch the Database passwords (managed by Terraform/Secrets Manager) and inject them into Kubernetes as a Secret.
 
 1.  **Run Secrets Script:**
-    This script reads Terraform outputs and creates `ops/k8s/db-secrets.yaml`.
+    Execute the helper script to read Terraform outputs and create the `ops/k8s/db-secrets.yaml` manifest:
     ```bash
-    cd ../../../ # Go to project root if not already there
+    cd ../../../ # Navigate to project root
     chmod +x ops/scripts/update_k8s_secrets.sh
     ./ops/scripts/update_k8s_secrets.sh
     ```
 2.  **Apply Secrets:**
+    Apply the generated secret to the cluster:
     ```bash
     kubectl apply -f ops/k8s/db-secrets.yaml
     ```
-    *   *Result:* A secret named `db-secrets` is created in your cluster.
+    *   *Result:* A Kubernetes Secret named `db-secrets` is created.
 
 ---
 
 ## 📦 Step 3: Build & Push Images
-We need to push your code to **AWS ECR**.
+Compile the application code and push the Docker images to **AWS ECR**.
 
 1.  **Export Account ID:**
+    Export the AWS Account ID to an environment variable for use in subsequent commands:
     ```bash
     export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
     ```
+
 2.  **Login to ECR:**
+    Authenticate the Docker client with the AWS Elastic Container Registry:
     ```bash
     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com
     ```
+
 3.  **Build & Push (Backend):**
     ```bash
-    cd ../../../backend # Go to root/backend
+    cd ../../../backend # Navigate to root/backend
     mvn clean package -DskipTests
     docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest .
     docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest
     ```
+
 4.  **Build & Push (Frontend):**
-    *Note: In Phase 4, we don't have a Domain yet. The Frontend will try to reach the Backend via `localhost` or a placeholder. We will update this after deployment if needed.*
+    *Note: In Phase 4, the correct Domain Name is not yet configured. The Frontend will attempt to connect via placeholders. This will be updated in Phase 5.*
     ```bash
     cd ../frontend
     docker build --platform linux/amd64 -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-frontend:latest .
@@ -88,34 +94,40 @@ We need to push your code to **AWS ECR**.
 
 ## 🚀 Step 4: Deploy to Kubernetes
 **CRITICAL:** Do NOT use `kubectl apply -f ...` manually.
-We have parameterized the manifests to use your Account ID. Use the script:
+The manifests utilize environment variables (e.g., `${AWS_ACCOUNT_ID}`) which must be substituted before application.
 
 1.  **Run Deployment Script:**
+    Execute the deployment script to substitute variables and apply the manifests:
     ```bash
-    cd ../ # Go to project root
+    cd ../ # Navigate to project root
     chmod +x ops/scripts/deploy_k8s.sh
     ./ops/scripts/deploy_k8s.sh
     ```
-    *   *Result:* This replaces `${AWS_ACCOUNT_ID}` in your YAMLs and deploys them.
+    *   *Result:* The script replaces placeholders with actual values and deploys the resources to the cluster.
 
 ---
 
 ## 🔍 Step 5: Verification
 1.  **Check Pods:**
+    Verify that all pods are in the 'Running' state:
     ```bash
     kubectl get pods
-    # Status should be 'Running'
     ```
+
 2.  **Get Load Balancer URL:**
+    Retrieve the external address of the Frontend service:
     ```bash
     kubectl get svc amazon-frontend
     ```
-    *   Copy the `EXTERNAL-IP` (it looks like `a1b2c...us-east-1.elb.amazonaws.com`).
-3.  **Test:** Open that URL in your browser.
+    *   Copy the `EXTERNAL-IP` (format: `a1b2c...us-east-1.elb.amazonaws.com`).
+
+3.  **Test:**
+    Open the copied URL in a web browser to verify the application is accessible.
 
 ---
 
 ## 🧹 Cleanup
+To avoid incurring unnecessary costs, destroy the infrastructure when finished:
 ```bash
 kubectl delete deployment amazon-backend amazon-frontend
 kubectl delete service amazon-backend amazon-frontend
