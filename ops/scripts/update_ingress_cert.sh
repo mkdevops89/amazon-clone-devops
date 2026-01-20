@@ -3,6 +3,11 @@ set -e
 
 # Define paths
 TF_DIR="ops/terraform/aws"
+# Fetch ARN from Terraform
+echo "🔍 Fetching Certificate ARN from Terraform..."
+CERT_ARN=$(cd $TF_DIR && terraform output -raw acm_certificate_arn)
+echo "   Found ARN: $CERT_ARN"
+
 # Loop through all ingress files
 FILES=("ops/k8s/ingress.yaml" "ops/k8s/ingress-grafana.yaml")
 

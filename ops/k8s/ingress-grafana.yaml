@@ -7,7 +7,7 @@ metadata:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-east-1:406312601212:certificate/1c7ca38b-5d5b-49cf-a147-48ca405985e9"
+    alb.ingress.kubernetes.io/certificate-arn: "<INSERT_YOUR_ACM_ARN>"
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
     # Group: Joins the existing ALB created by amazon-ingress
