@@ -61,13 +61,13 @@ We need to fetch the Database passwords (from Terraform/Secrets Manager) and inj
 ## 📦 Step 3: Build & Push Images
 We need to push your code to **AWS ECR**.
 
-1.  **Login to ECR:**
-    ```bash
-    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 406312601212.dkr.ecr.us-east-1.amazonaws.com
-    ```
-2.  **Export Account ID:**
+1.  **Export Account ID:**
     ```bash
     export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+    ```
+2.  **Login to ECR:**
+    ```bash
+    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com
     ```
 3.  **Build & Push (Backend):**
     ```bash
