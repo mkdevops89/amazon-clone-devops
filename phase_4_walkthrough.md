@@ -78,7 +78,7 @@ Compile the application code and push the Docker images to **AWS ECR**.
     ```bash
     cd ../../../backend # Navigate to root/backend
     mvn clean package -DskipTests
-    docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest .
+    docker build --platform linux/amd64 -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest .
     docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest
     ```
 
