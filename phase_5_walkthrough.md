@@ -70,11 +70,18 @@ Connect your Domain to the new Load Balancer created by the Ingress.
     *   *Copy the ADDRESS* (e.g., `k8s-default-amazonin-....us-east-1.elb.amazonaws.com`).
 
 2.  **Update Route53 Records:**
-    *   Go to AWS Console -> Route53 -> Hosted Zones.
-    *   **Record 1:** `A` Record for `devcloudproject.com` -> Alias to ALB.
-    *   **Record 2:** `A` Record for `www.devcloudproject.com` -> Alias to ALB.
-    *   **Record 3:** `A` Record for `api.devcloudproject.com` -> Alias to ALB.
-    *   **Record 4:** `A` Record for `grafana.devcloudproject.com` -> Alias to ALB.
+    *   Go to **AWS Console -> Route53 -> Hosted Zones** -> Click your domain (`devcloudproject.com`).
+    *   Click **Create Record**:
+        *   **Record Name:** (Leave Empty for root domain).
+        *   **Record Type:** `A`
+        *   **Alias:** Toggle **ON** (Blue Switch).
+        *   **Route traffic to:**
+            1.  Choose **Alias to Application and Classic Load Balancer**.
+            2.  Choose Region: **US East (N. Virginia)** `us-east-1`.
+            3.  Search/Select your load balancer (e.g., `k8s-amazongroup...`).
+        *   Click **Create records**.
+    *   **Repeat for Subdomains (`www`, `api`, `grafana`):**
+        *   Follow the same steps, but enter `www`, `api`, or `grafana` in the **Record Name**.
 
 ---
 
