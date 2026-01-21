@@ -83,7 +83,6 @@ Compile the application code and push the Docker images to **AWS ECR**.
     ```
 
 4.  **Build & Push (Frontend):**
-    *Note: In Phase 4, the correct Domain Name is not yet configured. The Frontend will attempt to connect via placeholders. This will be updated in Phase 5.*
     ```bash
     cd ../frontend
     docker build --platform linux/amd64 -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-frontend:latest .
@@ -94,7 +93,12 @@ Compile the application code and push the Docker images to **AWS ECR**.
 
 ## 🚀 Step 4: Deploy to Kubernetes
 **CRITICAL:** Do NOT use `kubectl apply -f ...` manually.
-The manifests utilize environment variables (e.g., `${AWS_ACCOUNT_ID}`) which must be substituted before application.
+
+We use a smart deployment script that:
+1.  Deploys the Backend.
+2.  **Waits** for the Load Balancer to come online.
+3.  **Automatically wires** the Backend's URL into the Frontend configuration.
+4.  Deploys the Frontend.
 
 1.  **Run Deployment Script:**
     Execute the deployment script to substitute variables and apply the manifests:
