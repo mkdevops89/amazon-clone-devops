@@ -3,96 +3,77 @@
 This phase secures your application using **AWS Certificate Manager (ACM)** and **Route53**.
 It relies on the **AWS Load Balancer Controller** to bridge Kubernetes Ingress with AWS ALBs.
 
-**IMPROVEMENT:** Refactored to use variables (`${AWS_ACCOUNT_ID}`, `${DOMAIN_NAME}`) instead of hardcoded values.
-
 ---
 
-## 🛠️ Prerequisites (Critical)
+## 🛠️ Prerequisites
+1.  **Cluster & Backend/Frontend deployed** (or ready to deploy).
+2.  **Helm Installed**.
 
 ### 1. Install Load Balancer Controller
+Ensure the controller is installed (it allows `Ingress` to create ALBs).
 ```bash
 ./ops/scripts/install_lb_controller.sh
 ```
 
-### 2. Set Monitoring Password
-Using helm:
-```bash
-helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
-  --namespace monitoring \
-  --values ops/k8s/monitoring/prometheus-values.yaml \
-  --set grafana.adminPassword="YOUR_SECURE_PASSWORD"
-```
-
 ---
 
-## 🏗️ Step 1: Provision SSL Certificate (Terraform)
-1.  **Initialize & Apply:**
+## 🏗️ Step 1: Provision SSL Certificate
+Use Terraform to request a free SSL Certificate from AWS ACM.
+
+1.  **Apply Terraform:**
     ```bash
     cd ops/terraform/aws
     terraform init
     terraform apply
+    # Type 'yes' to confirm
     ```
+    *   *Result:* This requests a certificate for `*.devcloudproject.com`.
 
 ---
 
-## 📦 Step 2: Build Frontend Application
-**Crucial Step:** The Frontend is a Next.js application. Configuration is **baked in** at build time.
+## 🔐 Step 2: Inject Certificate ARN
+We need to tell Kubernetes which Certificate to use. We have a script that fetches the ARN from Terraform and updates your manifests.
 
-1.  **Export Variables:**
+1.  **Run Update Script:**
     ```bash
-    export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-    export AWS_REGION="us-east-1"
-    export DOMAIN_NAME="devcloudproject.com"
-    ```
-
-2.  **Build & Push Docker Image:**
-    ```bash
-    cd frontend
-    
-    # Build using variables
-    docker build --platform linux/amd64 \
-      --build-arg NEXT_PUBLIC_API_URL=https://api.${DOMAIN_NAME} \
-      -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-frontend:latest .
-    
-    # Push to ECR
-    docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-frontend:latest
-    ```
-
----
-
-## ☸️ Step 3: Configure Kubernetes Ingress
-
-1.  **Inject Certificate ARN:**
-    Run the script to inject your specific ACM Certificate ARN from Terraform:
-    ```bash
-    cd ../  # Return to root
+    cd ../../../  # Return to project root
     chmod +x ops/scripts/update_ingress_cert.sh
     ./ops/scripts/update_ingress_cert.sh
     ```
+    *   *Result:* `ops/k8s/ingress.yaml` now contains your specific ACM ARN.
 
-2.  **Deploy Ingress & Bridge (New Script):**
-    We created a script to handle variable substitution (`envsubst`) for Domain and Account IDs.
+---
+
+## 🚀 Step 3: Deploy & Build (Automated)
+We have a unified script `deploy_k8s.sh` that handles:
+1.  **Building the Frontend** (baking in `https://api.devcloudproject.com`).
+2.  **Pushing to ECR**.
+3.  **Deploying to EKS** (Frontend, Backend, Ingress, Monitoring).
+
+1.  **Run Deployment:**
     ```bash
     chmod +x ops/scripts/deploy_k8s.sh
     ./ops/scripts/deploy_k8s.sh
     ```
-    *   **What this does:** Replaces `${DOMAIN_NAME}` and `${AWS_ACCOUNT_ID}` in your YAML files and applies them to the cluster.
+    *   *Time:* ~3-5 minutes (Docker build + Push).
 
 ---
 
 ## 🌐 Step 4: Update DNS (Route53)
-1.  **Get Load Balancer Hostname:** `kubectl get ingress amazon-ingress`
-2.  **Update Route53:** Create CNAME records pointing to the ALB Address.
+Connect your Domain to the new Load Balancer created by the Ingress.
 
----
+1.  **Get Load Balancer Address:**
+    ```bash
+    kubectl get ingress amazon-ingress
+    ```
+    *   *Copy the ADDRESS* (e.g., `k8s-default-amazonin-....us-east-1.elb.amazonaws.com`).
 
-## 🔧 Troubleshooting & Fixes
-
-### 1. Security Groups
-*   **Fix:** Authorized Worker Node Security Group on the RDS/Redis SGs to fix Database timeouts.
-
-### 2. Redis SSL
-*   **Fix:** Enabled `SPRING_DATA_REDIS_SSL_ENABLED="true"` in `backend.yaml` to match AWS ElastiCache setting.
+2.  **Update Route53 Records:**
+    *   Go to AWS Console -> Route53 -> Hosted Zones.
+    *   **Record 1:** `A` Record for `devcloudproject.com` -> Alias to ALB.
+    *   **Record 2:** `A` Record for `www.devcloudproject.com` -> Alias to ALB.
+    *   **Record 3:** `A` Record for `api.devcloudproject.com` -> Alias to ALB.
+    *   **Record 4:** `A` Record for `grafana.devcloudproject.com` -> Alias to ALB.
 
 ---
 
@@ -103,29 +84,16 @@ helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
 
 ---
 
-## 🧹 Step 6: Detailed Cleanup (Teardown)
-
-### 1. De-provision Load Balancer (CRITICAL)
-Use `kubectl delete` by name to ensure clean removal even if files contain variables.
+## 🧹 Cleanup
+To saves resources:
 ```bash
-kubectl delete ingress amazon-ingress
-kubectl delete ingress grafana-ingress
-```
+# 1. Delete Ingress (Deletes ALB)
+kubectl delete ingress amazon-ingress grafana-ingress
 
-### 2. Uninstall Controller & Apps
-```bash
+# 2. Uninstall Controller
 helm uninstall aws-load-balancer-controller -n kube-system
 
-# Delete Deployments and Services
-kubectl delete deployment amazon-backend amazon-frontend
-kubectl delete service amazon-backend amazon-frontend
-```
-
-### 3. Destroy Infrastructure (Terraform)
-```bash
+# 3. Destroy Terraform
 cd ops/terraform/aws
 terraform destroy
 ```
-
-### 4. Manual Cleanup
-*   Route53 Records, IAM Policy, CloudWatch Logs.
