@@ -10,7 +10,7 @@ This phase enables full-stack monitoring using the industry-standard **Kube Prom
 3.  **Helm Installed**:
     *   **Mac:** `brew install helm`
     *   **Linux:** `curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash`
-
+    
 ---
 
 ## 📍 Setup: Environment
@@ -46,13 +46,46 @@ Use **Helm** (Kubernetes Package Manager) to install the monitoring stack.
 
 ---
 
-## 🔍 Step 2: Verify Instrumentation
+## � Step 2: Configure Service Monitor
+We need to explicitly tell Prometheus which services to scrape using a `ServiceMonitor`.
 
-(Steps 1-3 remain the same)
+1.  **Apply ServiceMonitor:**
+    ```bash
+    kubectl apply -f ops/k8s/monitoring/backend-monitor.yaml
+    ```
+    *   *Result:* Prometheus will detect the `amazon-backend` within 30 seconds.
 
 ---
 
-## 📈 Step 3: Access Grafana Dashboard
+## 🔍 Step 3: Verify Instrumentation
+Verify the Backend application is exposing metrics on `/actuator/prometheus`.
+
+1.  **Check Monitoring Pods:**
+    ```bash
+    kubectl get pods -n monitoring
+    # Expected: alertmanager, grafana, prometheus, operator
+    ```
+
+2.  **Port Forward Backend:**
+    Connect locally to the backend pod to check the metric endpoint:
+    ```bash
+    kubectl port-forward svc/amazon-backend 8080:8080
+    ```
+
+3.  **Visit Endpoint:**
+    Open `http://localhost:8080/actuator/prometheus` in your browser.
+    *   **Success:** You see raw metric data (e.g., `# HELP jvm_memory_used_bytes...`).
+    *   **Fail:** You see a 404 error.
+        
+    > **⚠️ Critical Note:** If the endpoint is missing or returns 403, you must redeploy the latest backend code. Run:
+    > ```bash
+    > ./ops/scripts/deploy_k8s.sh
+    > ```
+    > This script automatically rebuilds the Backend (if needed) and Frontend, handling all URL wiring.
+
+---
+
+## 📈 Step 4: Access Grafana Dashboard
 Access the visual dashboard to view the metrics.
 
 1.  **Get Admin Password:**
@@ -73,7 +106,7 @@ Access the visual dashboard to view the metrics.
 
 ---
 
-## 🖥️ Step 4: Import Spring Boot Dashboard
+## 🖥️ Step 5: Import Spring Boot Dashboard
 1.  In Grafana, go to **Dashboards -> New -> Import**.
 2.  Enter Dashboard ID: **4701** (Standard JVM Dashboard).
 3.  Click **Load**.
@@ -82,7 +115,7 @@ Access the visual dashboard to view the metrics.
 
 ---
 
-## 👁️ Step 5: "Eyes on Glass"
+## 👁️ Step 6: "Eyes on Glass"
 1.  Observe the live graphs for Heap Memory, CPU, and Uptime.
 2.  Refresh your **Frontend Application** (the LoadBalancer URL) multiple times.
 3.  Watch the "HTTP Requests" graph spike in Grafana!
@@ -91,7 +124,7 @@ Access the visual dashboard to view the metrics.
 
 ## ❓ Troubleshooting
 *   **"No Data" in Grafana?**
-    1.  Port-forward Prometheus: `kubectl port-forward svc/kube-prom-stack-prometheus-operated 9090:9090 -n monitoring`.
+    1.  Port-forward Prometheus: `kubectl port-forward svc/kube-prom-stack-kube-prome-prometheus 9090:9090 -n monitoring`.
     2.  Check Targets at `http://localhost:9090/targets`. Is `amazon-backend` listed?
     3.  If not, checking the `Service` labels in `ops/k8s/backend.yaml`.
 
