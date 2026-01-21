@@ -47,30 +47,8 @@ Use **Helm** (Kubernetes Package Manager) to install the monitoring stack.
 ---
 
 ## 🔍 Step 2: Verify Instrumentation
-Verify the Backend application is exposing metrics on `/actuator/prometheus`.
 
-1.  **Check Monitoring Pods:**
-    ```bash
-    kubectl get pods -n monitoring
-    # Expected: alertmanager, grafana, prometheus, operator
-    ```
-
-2.  **Port Forward Backend:**
-    Connect locally to the backend pod to check the metric endpoint:
-    ```bash
-    kubectl port-forward svc/amazon-backend 8080:8080
-    ```
-
-3.  **Visit Endpoint:**
-    Open `http://localhost:8080/actuator/prometheus` in your browser.
-    *   **Success:** You see raw metric data (e.g., `# HELP jvm_memory_used_bytes...`).
-    *   **Fail:** You see a 404 error.
-        
-    > **⚠️ Critical Note:** If the endpoint is missing, you must redeploy the latest backend code. Run:
-    > ```bash
-    > ./ops/scripts/deploy_k8s.sh
-    > ```
-    > This script automatically rebuilds the Backend (if needed) and Frontend, handling all URL wiring.
+(Steps 1-3 remain the same)
 
 ---
 
@@ -78,7 +56,7 @@ Verify the Backend application is exposing metrics on `/actuator/prometheus`.
 Access the visual dashboard to view the metrics.
 
 1.  **Get Admin Password:**
-    Retrieve the generated password (or use `password1234` if configured in `prometheus-values.yaml`):
+    Since we didn't set a password, Helm generated a secure one. Let's retrieve it:
     ```bash
     kubectl get secret -n monitoring kube-prom-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
     ```
@@ -91,7 +69,7 @@ Access the visual dashboard to view the metrics.
 3.  **Login:**
     *   **URL:** `http://localhost:3000`
     *   **User:** `admin`
-    *   **Password:** (From Step 1)
+    *   **Password:** (The one you just retrieved)
 
 ---
 
