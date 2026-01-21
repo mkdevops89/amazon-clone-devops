@@ -4,7 +4,7 @@ metadata:
   name: amazon-ingress
   namespace: default
   annotations:
-    kubernetes.io/ingress.class: alb
+
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     # SSL Configuration (Run update_ingress_cert.sh to inject your ARN)
@@ -15,6 +15,7 @@ metadata:
     # Health Checks
     alb.ingress.kubernetes.io/healthcheck-path: "/"
 spec:
+  ingressClassName: alb
   rules:
     # Frontend (Store)
     - host: www.${DOMAIN_NAME}
