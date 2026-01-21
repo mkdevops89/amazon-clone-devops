@@ -12,6 +12,7 @@ It relies on the **AWS Load Balancer Controller** to bridge Kubernetes Ingress w
 ### 1. Install Load Balancer Controller
 Ensure the controller is installed (it allows `Ingress` to create ALBs).
 ```bash
+chmod +x ops/scripts/install_lb_controller.sh
 ./ops/scripts/install_lb_controller.sh
 ```
 
