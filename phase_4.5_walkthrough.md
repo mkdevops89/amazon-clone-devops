@@ -47,8 +47,30 @@ Use **Helm** (Kubernetes Package Manager) to install the monitoring stack.
 ---
 
 ## 🔍 Step 2: Verify Instrumentation
+Verify the Backend application is exposing metrics on `/actuator/prometheus`.
 
-(Steps 1-3 remain the same)
+1.  **Check Monitoring Pods:**
+    ```bash
+    kubectl get pods -n monitoring
+    # Expected: alertmanager, grafana, prometheus, operator
+    ```
+
+2.  **Port Forward Backend:**
+    Connect locally to the backend pod to check the metric endpoint:
+    ```bash
+    kubectl port-forward svc/amazon-backend 8080:8080
+    ```
+
+3.  **Visit Endpoint:**
+    Open `http://localhost:8080/actuator/prometheus` in your browser.
+    *   **Success:** You see raw metric data (e.g., `# HELP jvm_memory_used_bytes...`).
+    *   **Fail:** You see a 404 error.
+        
+    > **⚠️ Critical Note:** If the endpoint is missing or returns 403, you must redeploy the latest backend code. Run:
+    > ```bash
+    > ./ops/scripts/deploy_k8s.sh
+    > ```
+    > This script automatically rebuilds the Backend (if needed) and Frontend, handling all URL wiring.
 
 ---
 
