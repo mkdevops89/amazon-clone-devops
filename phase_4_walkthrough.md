@@ -82,12 +82,10 @@ Compile the application code and push the Docker images to **AWS ECR**.
     docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest
     ```
 
-4.  **Build & Push (Frontend):**
-    ```bash
-    cd ../frontend
-    docker build --platform linux/amd64 -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-frontend:latest .
-    docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-frontend:latest
-    ```
+4.  **Skipping Frontend Build:**
+    *   **Note:** We do **NOT** build the Frontend image here manually.
+    *   The deployment script (`deploy_k8s.sh`) will automatically build the Frontend image in the next step, once it knows the Backend URL.
+    *   This ensures the Frontend knows exactly where to connect.
 
 ---
 
