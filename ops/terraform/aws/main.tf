@@ -58,9 +58,10 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
   # Fix: Allow Inbound Traffic to Worker Nodes for NodePorts (Required for LoadBalancers)
+  # AND Outbound/Inbound for DB Connectivity
   node_security_group_additional_rules = {
     ingress_allow_8080 = {
-      description = "Allow Inbound 8080 for Backend (Force Apply)"
+      description = "Allow Inbound 8080 for Backend"
       protocol    = "tcp"
       from_port   = 8080
       to_port     = 8080

@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: amazon-backend
-          # User's Account ID: 406312601212
+          # Image parameterized with Account ID and Region
           image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-backend:latest
           imagePullPolicy: Always
           ports:
@@ -89,7 +89,7 @@ spec:
     app: amazon-backend
   ports:
     - protocol: TCP
-      name: http # Required for ServiceMonitor
+      name: http
       port: 8080
       targetPort: 8080
-  type: LoadBalancer # Changed from ClusterIP to allow Public Access (Client-Side Fetch)
+  type: ClusterIP # Changed to ClusterIP for Ingress routing

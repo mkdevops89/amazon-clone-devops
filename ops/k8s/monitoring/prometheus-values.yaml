@@ -1,5 +1,5 @@
 grafana:
-  adminPassword: "<PROMETHEUS_PASSWORD>"
+
   service:
     type: LoadBalancer
 

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: amazon-frontend
-          # User's Account ID: 406312601212
+          # Image parameterized with Account ID and Region
           image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-frontend:latest
           imagePullPolicy: Always
           ports:
@@ -44,4 +44,4 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 3000
-  type: LoadBalancer # Public Access
+  type: ClusterIP # Changed to ClusterIP for Ingress routing
