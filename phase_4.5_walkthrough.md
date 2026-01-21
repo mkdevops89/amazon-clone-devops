@@ -113,7 +113,7 @@ Access the visual dashboard to view the metrics.
 
 ## ❓ Troubleshooting
 *   **"No Data" in Grafana?**
-    1.  Port-forward Prometheus: `kubectl port-forward svc/kube-prom-stack-prometheus-operated 9090:9090 -n monitoring`.
+    1.  Port-forward Prometheus: `kubectl port-forward svc/kube-prom-stack-kube-prome-prometheus 9090:9090 -n monitoring`.
     2.  Check Targets at `http://localhost:9090/targets`. Is `amazon-backend` listed?
     3.  If not, checking the `Service` labels in `ops/k8s/backend.yaml`.
 
