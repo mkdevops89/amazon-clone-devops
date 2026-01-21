@@ -104,26 +104,5 @@ sed -e "s|<RDS_ENDPOINT>|jdbc:mysql://${RDS_ENDPOINT}/amazon_db?useSSL=false\&al
     "$SECRETS_TEMPLATE" > "$SECRETS_FILE"
 
 
-# ==========================================
-# 2. Inject ECR URLs into Manifests
-# ==========================================
-# (Paths defined at top of script)
-
-echo "📝 Updating ECR URLs in Manifests..."
-
-# Escaping slashes in ECR URLs for sed
-ESCAPED_ECR_BACKEND=$(printf '%s\n' "$ECR_BACKEND" | sed -e 's/[\/&]/\\&/g')
-ESCAPED_ECR_FRONTEND=$(printf '%s\n' "$ECR_FRONTEND" | sed -e 's/[\/&]/\\&/g')
-
-# Backend
-TMP_BACKEND="${BACKEND_FILE}.tmp"
-sed "s|image: <ECR_BACKEND_URL>:latest|image: ${ESCAPED_ECR_BACKEND}:latest|" "$BACKEND_FILE" > "$TMP_BACKEND"
-mv "$TMP_BACKEND" "$BACKEND_FILE"
-
-# Frontend
-TMP_FRONTEND="${FRONTEND_FILE}.tmp"
-sed "s|image: <ECR_FRONTEND_URL>:latest|image: ${ESCAPED_ECR_FRONTEND}:latest|" "$FRONTEND_FILE" > "$TMP_FRONTEND"
-mv "$TMP_FRONTEND" "$FRONTEND_FILE"
-
-echo "🎉 Secrets & Images Updated Successfully!"
+echo "🎉 Secrets Updated Successfully!"
 echo "➡️  Next Step: kubectl apply -f ops/k8s/db-secrets.yaml"

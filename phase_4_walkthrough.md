@@ -1,270 +1,138 @@
-# Phase 4: Kubernetes Deployment Walkthrough
+# Phase 4: Kubernetes & EKS Deployment ☸️
 
-**Objective:** Deploy the Amazon Clone microservices (Frontend & Backend) onto the EKS Cluster created in Phase 3.
-
-## ⚠️ CRITICAL DEPENDENCY ORDER
-To avoid the "Loading Products..." error, we must follow this **exact order**:
-1.  Provision Infrastructure (Terraform).
-2.  Deploy **Backend** first (to get the LoadBalancer URL).
-3.  Build **Frontend** (baking in the Backend URL).
-4.  Deploy **Frontend**.
+This phase transitions the application from Docker Compose to **AWS EKS** (Elastic Kubernetes Service).
 
 ---
 
-
-## STEP 0: PREREQUISITES (CHECK YOUR TOOLS)
-Before we build anything, let's make sure your "Toolbox" is ready.
-
-1.  **Open Terminal** and check these commands:
-    ```bash
-    aws --version
-    terraform -v
-    docker --version
-    kubectl version --client
-    ```
-    *If any of these fail, please install the tool first.*
-
-2.  **Authenticate with AWS:**
-    Get your access keys ready and run:
-    ```bash
-    aws configure
-    # Region: us-east-1
-    # Output: json
-    ```
-    *This gives Terraform permission to build on your behalf.*
-
-    *This gives Terraform permission to build on your behalf.*
+## 🛠️ Prerequisites
+1.  **AWS CLI** configured (`aws configure`).
+2.  **Terraform** installed.
+3.  **Kubectl** installed.
+4.  **Docker** running.
 
 ---
 
-## STEP 0.5: CONFIGURE REMOTE STATE (S3)
-**Goal:** Store Terraform state securely in S3 instead of locally.
+## 🏗️ Step 1: Infrastructure (Terraform)
+Provision the VPC, EKS Cluster, RDS, Redis, and MQ using Terraform.
 
-**We have a script to automate this!**
-It will create your unique S3 Bucket, the DynamoDB Lock Table, and generate the `backend.tf` file for you.
-
-1.  **Run the Setup Script (From Project Root):**
-    Ensure you are in the root directory (where `ops/` is visible).
-    ```bash
-    chmod +x ops/scripts/setup_tf_state.sh
-    ./ops/scripts/setup_tf_state.sh
-    ```
-
-    *Expected Output:*
-    > ✅ Backend infrastructure ready!
-    > Bucket: amazon-clone-tfstate-123456789012
-    > Table:  amazon-clone-tf-locks
-    > File:   .../ops/terraform/aws/backend.tf
-
-2.  **Verify:**
-    Check that the file was created:
-    ```bash
-    cat ops/terraform/aws/backend.tf
-    ```
-
----
-
-## STEP 1: PREPARATION & INFRASTRUCTURE
-**Goal:** We need to "Initialize" our project and create the repositories.
-
-1.  **Navigate to Terraform Directory:**
-    ```bash
-    cd ops/terraform/aws
-    ```
-
-2.  **Initialize Terraform:**
-    This downloads the AWS plugins needed to run the code.
-    ```bash
-    terraform init
-    ```
-    *(You should see a green "Terraform has been successfully initialized!" message).*
-
-3.  **Preview the Plan (Optional but Recommended):**
-    See what Terraform is *about* to build. It's like a blueprint check.
-    ```bash
-    terraform plan
-    ```
-    *(Scan the output. It should say it plans to add resources).*
-
-4.  **Provision ECR Repositories (Apply):**
-    Ready? Let's build the Docker Repositories.
-    ```bash
-    terraform apply
-    ```
-    *(Type `yes` when prompted)*.
-
-5.  **Capture Outputs:**
-    Look at the end of the output for these two values. **Copy them somewhere** (Notepad/Notes), you will need them!
-    *   `ecr_backend_url`
-    *   `ecr_frontend_url`
-
-6.  **Update Kubeconfig (Connect to Cluster):**
-    Now that we are authenticated, let's tell `kubectl` which cluster to talk to.
-    ```bash
-    aws eks update-kubeconfig --region us-east-1 --name amazon-cluster
-    ```
-
----
-
-## STEP 2: DEPLOY BACKEND (Database & API)
-**Goal:** specific goal. Get the Backend running so we can generate its Public URL.
-
-### 2.1 Authenticate Docker
+### 1. Initialize S3 Backend (Scripted)
+Run the automated setup script to detect your Account ID, create a unique S3 Bucket and DynamoDB Lock Table, and generate the `backend.tf` configuration file:
 ```bash
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <YOUR_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+chmod +x ops/scripts/setup_tf_state.sh
+./ops/scripts/setup_tf_state.sh
+```
+*   *Verification:* Inspect `ops/terraform/aws/backend.tf` to confirm the configuration.
+
+### 2. Apply Infrastructure
+Deploy the infrastructure resources:
+```bash
+cd ops/terraform/aws
+terraform init
+terraform apply
+# Type 'yes' to confirm when prompted
 ```
 
-### 2.2 Build & Push Backend Environment
-1.  **Return to Project Root:** `cd ../../..`
-2.  **Build & Push:**
-    **NOTE: Are you on a Mac (M1/M2/M3)?**
-    If so, you MUST add `--platform linux/amd64` to force compatibility with AWS.
-    If you are on Windows/Linux (Intel/AMD), you can omit it.
+### 3. Configure Kubectl
+Connect the local `kubectl` client to the newly created EKS cluster:
+```bash
+aws eks update-kubeconfig --region us-east-1 --name amazon-cluster
+```
 
+---
+
+## 🔐 Step 2: Configure Secrets
+Fetch the Database passwords (managed by Terraform/Secrets Manager) and inject them into Kubernetes as a Secret.
+
+1.  **Run Secrets Script:**
+    Execute the helper script to read Terraform outputs and create the `ops/k8s/db-secrets.yaml` manifest:
     ```bash
-    # For Mac (Apple Silicon):
-    docker build --platform linux/amd64 -t amazon-backend ./backend
-
-    # For Windows/Linux (Intel/AMD):
-    # docker build -t amazon-backend ./backend
-
-    docker tag amazon-backend:latest <ECR_BACKEND_URL>:latest
-    docker push <ECR_BACKEND_URL>:latest
-    ```
-
-### 2.3 Inject Secrets & Deploy
-1.  **Automated Secret Injection:**
-    Use our helper script to read Terraform outputs and AWS Secrets Manager (Real Password):
-    ```bash
+    cd ../../../ # Navigate to project root
     chmod +x ops/scripts/update_k8s_secrets.sh
     ./ops/scripts/update_k8s_secrets.sh
     ```
-    *(Check `ops/k8s/db-secrets.yaml` to confirm it is filled).*
-
-2.  **Deploy to Kubernetes:**
+2.  **Apply Secrets:**
+    Apply the generated secret to the cluster:
     ```bash
     kubectl apply -f ops/k8s/db-secrets.yaml
-    kubectl apply -f ops/k8s/backend.yaml
     ```
+    *   *Result:* A Kubernetes Secret named `db-secrets` is created.
 
-3.  **Wait for Backend LoadBalancer:**
-    It takes roughly 2-3 minutes for AWS to assign a URL.
+---
+
+## 📦 Step 3: Build & Push Images
+Compile the application code and push the Docker images to **AWS ECR**.
+
+1.  **Export Account ID:**
+    Export the AWS Account ID to an environment variable for use in subsequent commands:
     ```bash
-    kubectl get svc amazon-backend
+    export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
     ```
-    **COPY the `EXTERNAL-IP`** (e.g., `a846...elb.amazonaws.com`).
-    *Note: The script output usually has port 8080.*
+
+2.  **Login to ECR:**
+    Authenticate the Docker client with the AWS Elastic Container Registry:
+    ```bash
+    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com
+    ```
+
+3.  **Build & Push (Backend):**
+    ```bash
+    cd ../../../backend # Navigate to root/backend
+    mvn clean package -DskipTests
+    docker build --platform linux/amd64 -t ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest .
+    docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest
+    ```
+
+4.  **Skipping Frontend Build:**
+    *   **Note:** We do **NOT** build the Frontend image here manually.
+    *   The deployment script (`deploy_k8s.sh`) will automatically build the Frontend image in the next step, once it knows the Backend URL.
+    *   This ensures the Frontend knows exactly where to connect.
 
 ---
 
-## STEP 3: DEPLOY FRONTEND (UI)
-**Goal:** Build the UI with the *correct* Backend connection.
+## 🚀 Step 4: Deploy to Kubernetes
+**CRITICAL:** Do NOT use `kubectl apply -f ...` manually.
 
-### 3.1 Build & Push Frontend (Crucial Step)
-You **MUST** provide the Backend URL here. If you skip this, the app will fail to load products.
+We use a smart deployment script that:
+1.  Deploys the Backend.
+2.  **Waits** for the Load Balancer to come online.
+3.  **Automatically wires** the Backend's URL into the Frontend configuration.
+4.  Deploys the Frontend.
 
-*Replace `<BACKEND_LB_URL>` with the EXTERNAL-IP from Step 2.3 (including port 8080 if applicable, e.g., `http://...:8080`).*
-
-```bash
-# For Mac (Apple Silicon) - ADD THIS FLAG:
-docker build \
-  --platform linux/amd64 \
-  --build-arg NEXT_PUBLIC_API_URL=http://<BACKEND_LB_URL>:8080 \
-  -t amazon-frontend ./frontend
-
-# For Windows/Linux (Standard):
-# docker build \
-#   --build-arg NEXT_PUBLIC_API_URL=http://<BACKEND_LB_URL>:8080 \
-#   -t amazon-frontend ./frontend
-```
-
-**Tag & Push:**
-```bash
-docker tag amazon-frontend:latest <ECR_FRONTEND_URL>:latest
-docker push <ECR_FRONTEND_URL>:latest
-```
-
-### 3.2 Deploy Frontend
-```bash
-kubectl apply -f ops/k8s/frontend.yaml
-```
+1.  **Run Deployment Script:**
+    Execute the deployment script to substitute variables and apply the manifests:
+    ```bash
+    cd ../ # Navigate to project root
+    chmod +x ops/scripts/deploy_k8s.sh
+    ./ops/scripts/deploy_k8s.sh
+    ```
+    *   *Result:* The script replaces placeholders with actual values and deploys the resources to the cluster.
 
 ---
 
-## STEP 4: VERIFICATION
-**Goal:** Confirm it works.
+## 🔍 Step 5: Verification
+1.  **Check Pods:**
+    Verify that all pods are in the 'Running' state:
+    ```bash
+    kubectl get pods
+    ```
 
-1.  **Get Public URL:**
+2.  **Get Load Balancer URL:**
+    Retrieve the external address of the Frontend service:
     ```bash
     kubectl get svc amazon-frontend
     ```
-2.  **Visit in Browser:**
-    Open the External IP. You should see your Amazon Clone with **Products Loaded**!
+    *   Copy the `EXTERNAL-IP` (format: `a1b2c...us-east-1.elb.amazonaws.com`).
+
+3.  **Test:**
+    Open the copied URL in a web browser to verify the application is accessible.
 
 ---
 
-## 5. Troubleshooting / Post-Mortem
-
-### Q: "Loading products..." forever?
-*   **Cause:** The frontend image was built *without* the `NEXT_PUBLIC_API_URL` or with the wrong one.
-*   **Fix:** Re-run Step 3.1 with the correct URL.
-
-### Q: Backend LoadBalancer "Empty Response"?
-*   **Cause:** Security Group blocking Port 8080.
-*   **Fix:** Ensure your Terraform `main.tf` has the `ingress_allow_8080` rule applying to the **Node Group** (not just the Service). (We fixed this in `phase-4-k8s`).
-
-### Q: "403 Forbidden" or "404 Not Found" on `/products`?
-*   **Cause:** Path mismatch. Frontend calls `/products`, Backend expected `/api/products`.
-*   **Status:** **FIXED**. We updated `ProductController.java` to accept both paths.
-
----
-
-## STEP 6: COMPREHENSIVE TEARDOWN (CLEANUP)
-**Goal:** Completely remove all resources to avoid AWS costs and reset your environment.
-
-### 6.1 Delete Kubernetes Resources
-First, we remove the application from the cluster to stop the Load Balancers (which cost money).
+## 🧹 Cleanup
+To avoid incurring unnecessary costs, destroy the infrastructure when finished:
 ```bash
-# Delete all manifests we applied
-kubectl delete -f ops/k8s/
-```
-*Verify:* Run `kubectl get svc` and ensure no LoadBalancers are listed.
-
-### 6.2 Destroy AWS Infrastructure (Terraform)
-Now we destroy the underlying infrastructure (EKS, VPC, RDS, etc.).
-
-**⚠️ CRITICAL: Empty your ECR Repositories first!**
-Terraform cannot delete a non-empty ECR repository. Run this command manually for both repos, or Terraform destroy will fail:
-```bash
-# Empty Backend Repo
-aws ecr list-images --repository-name amazon-backend --query 'imageIds[*]' --output json | jq -c '.[]' | while read imageId; do aws ecr batch-delete-image --repository-name amazon-backend --image-ids "$imageId"; done
-
-# Empty Frontend Repo
-aws ecr list-images --repository-name amazon-frontend --query 'imageIds[*]' --output json | jq -c '.[]' | while read imageId; do aws ecr batch-delete-image --repository-name amazon-frontend --image-ids "$imageId"; done
-```
-
-**Now run destroy:**
-```bash
+kubectl delete deployment amazon-backend amazon-frontend
+kubectl delete service amazon-backend amazon-frontend
 cd ops/terraform/aws
 terraform destroy
-# Type 'yes' when prompted
 ```
-
-### 6.3 Cleanup Local State & Revert Secrets
-To reset your local files (so `db-secrets.yaml` goes back to placeholders for next time):
-
-```bash
-# 1. Revert the secrets file to its original state (with <placeholders>)
-# (Assuming you haven't committed the actual secrets to git!)
-git checkout ops/k8s/db-secrets.yaml
-git checkout ops/k8s/backend.yaml
-git checkout ops/k8s/frontend.yaml
-
-# 2. Remove the generated Terraform Backend config
-rm backend.tf
-```
-
-### 6.4 (Manual) Delete Persistent S3 State
-The S3 Bucket and DynamoDB Lock Table created by `setup_tf_state.sh` are **NOT** deleted by Terraform (to protect your state from accidental deletion).
-*   **Go to AWS Console > S3:** Delete the `amazon-clone-tfstate-xxxx` bucket (Empty it first).
-*   **Go to AWS Console > DynamoDB:** Delete the `amazon-clone-tf-locks` table.
