@@ -14,17 +14,9 @@ spec:
       command:
         - cat
       tty: true
-      resources:
-        requests:
-          cpu: "100m"
-          memory: "256Mi"
       volumeMounts:
         - name: nvd-cache
           mountPath: /var/maven/odc-data
-  volumes:
-    - name: nvd-cache
-      persistentVolumeClaim:
-        claimName: jenkins-nvd-cache
     - name: docker
       image: docker:dind
       securityContext:
@@ -45,6 +37,10 @@ spec:
         requests:
           cpu: "100m"
           memory: "256Mi"
+  volumes:
+    - name: nvd-cache
+      persistentVolumeClaim:
+        claimName: jenkins-nvd-cache
 '''
         }
     }
