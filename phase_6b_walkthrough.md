@@ -21,10 +21,12 @@ chmod +x ops/scripts/install_ebs_driver.sh
 ```
 *(This will check your account ID, create the IAM Role if missing, and install the driver.)*
 
-### 2. Deploy StorageClass (gp3) 💾
-Now that the driver is installed, we need to create a Kubernetes "StorageClass" that knows how to talk to it.
+### 2. Infrastructure Setup (Namespace & Storage) 💾
+First, create the namespace and the storage class.
+**IMPORTANT:** Do not skip this!
 
 ```bash
+kubectl apply -f ops/k8s/namespace.yaml
 kubectl apply -f ops/k8s/storage-class.yaml
 ```
 
