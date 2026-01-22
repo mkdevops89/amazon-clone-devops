@@ -14,6 +14,10 @@ spec:
       command:
         - cat
       tty: true
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
     - name: docker
       image: docker:dind
       securityContext:
@@ -21,11 +25,19 @@ spec:
       command:
         - cat
       tty: true
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
     - name: tools
       image: ubuntu:latest
       command:
         - cat
       tty: true
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "128Mi"
 '''
         }
     }
