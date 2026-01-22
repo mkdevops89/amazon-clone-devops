@@ -181,20 +181,20 @@ EOF
         success {
             container('tools') {
                withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-                   sh '''
+                   sh """
                        apt-get update && apt-get install -y curl
-                       curl -X POST -H 'Content-type: application/json' --data '{"text":"✅ *Build Succeeded!* \\nProject: ${JOB_NAME} \\nBuild Number: ${BUILD_NUMBER} \\nURL: ${BUILD_URL}"}' ${SLACK_URL}
-                   '''
+                       curl -X POST -H 'Content-type: application/json' --data '{"text":"✅ *Build Succeeded!* \\nProject: ${JOB_NAME} \\nBuild Number: ${BUILD_NUMBER} \\nURL: ${BUILD_URL}"}' \${SLACK_URL}
+                   """
                }
             }
         }
         failure {
             container('tools') {
                withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-                   sh '''
+                   sh """
                        apt-get update && apt-get install -y curl
-                       curl -X POST -H 'Content-type: application/json' --data '{"text":"❌ *Build Failed!* \\nProject: ${JOB_NAME} \\nBuild Number: ${BUILD_NUMBER} \\nURL: ${BUILD_URL}"}' ${SLACK_URL}
-                   '''
+                       curl -X POST -H 'Content-type: application/json' --data '{"text":"❌ *Build Failed!* \\nProject: ${JOB_NAME} \\nBuild Number: ${BUILD_NUMBER} \\nURL: ${BUILD_URL}"}' \${SLACK_URL}
+                   """
                }
             }
         }
