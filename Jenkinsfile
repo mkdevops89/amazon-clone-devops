@@ -45,6 +45,11 @@ spec:
         }
     }
 
+    options {
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -55,7 +60,7 @@ spec:
         stage('Security: Secrets') {
             steps {
                 container('tools') {
-                    sh 'trufflehog git file:///home/jenkins/agent/workspace/amazone-clone --only-verified'
+                    sh 'trufflehog git file:///home/jenkins/agent/workspace/${JOB_NAME} --only-verified'
                 }
             }
         }
@@ -67,22 +72,29 @@ spec:
                         withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
                             sh '''
                                 set -euo pipefail
-                                
-                                # Debug: Verify Key Check
+
                                 if [ -z "${NVD_KEY:-}" ]; then
                                   echo "ERROR: NVD_KEY is empty - Jenkins credential injection failed."
                                   exit 1
                                 fi
                                 echo "NVD_KEY injected (length=${#NVD_KEY})"
 
-                                # Use persistent cache to avoid re-downloading
-                                ODC_DATA_DIR="/var/maven/odc-data"
+                                # Validate NVD key + egress from this K8s agent
+                                CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                                  "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=1&apiKey=${NVD_KEY}")
+                                echo "NVD HTTP status: $CODE"
+                                if [ "$CODE" != "200" ]; then
+                                  echo "ERROR: NVD API not reachable or key invalid (status=$CODE)"
+                                  exit 1
+                                fi
+
+                                # Use persistent cache (PVC) - job-scoped folder reduces corruption collisions
+                                ODC_DATA_DIR="/var/maven/odc-data/${JOB_NAME}"
                                 mkdir -p "$ODC_DATA_DIR"
 
-                                # Run Scan with Caching
-                                mvn dependency-check:check \
+                                mvn -B org.owasp:dependency-check-maven:9.0.9:check \
                                   -DnvdApiKey="${NVD_KEY}" \
-                                  -DnvdApiDelay=16000 \
+                                  -DnvdApiDelay=25000 \
                                   -DdataDirectory="$ODC_DATA_DIR"
                             '''
                         }
