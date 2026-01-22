@@ -225,4 +225,28 @@ kubectl scale deployment -n default --all --replicas=1
 
 > [!TIP]
 > **I've optimized your `Jenkinsfile`:**
-> I've already updated your `Jenkinsfile` to use very low resource requests (100m CPU). This should allow builds to run even when the cluster is somewhat busy.
+
+---
+
+## ⚡ Step 8: Automate with GitHub Webhook
+Instead of clicking "Build" manually, let's make Jenkins build automatically whenever you push code!
+
+### 1. Configure GitHub (The Sender)
+1.  Go to your GitHub Repository: `mkdevops89/amazon-clone-devops`.
+2.  Click **Settings** -> **Webhooks** -> **Add webhook**.
+3.  **Payload URL:** `https://jenkins.devcloudproject.com/github-webhook/`
+    *   *Note: Ensure you use HTTPS to avoid 301 Redirect errors.*
+4.  **Content type:** `application/json`.
+5.  **Secret:** (Leave empty).
+6.  **Which events?** Just the `push` event.
+7.  Click **Add webhook**.
+
+### 2. Configure Jenkins (The Receiver)
+1.  Go to your Jenkins Job (`amazon-clone`).
+2.  Click **Configure**.
+3.  Scroll down to **Build Triggers**.
+4.  Check the box: **GitHub hook trigger for GITScm polling**.
+5.  Click **Save**.
+
+### 3. Verify
+Make a small change to a file (like `README.md`) and push it. A new build should start automatically! 🚀
