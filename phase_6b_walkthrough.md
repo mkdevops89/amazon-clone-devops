@@ -135,3 +135,37 @@ We need to tell Jenkins how to talk to Kubernetes to spawn "Agent" pods for buil
 1.  Click **Build Now**.
 2.  Click the flashing **#1** in Build History.
 3.  Click **Console Output** to watch the magic!
+
+---
+
+## 📦 Step 7: Configure Nexus Repositories
+Now that Nexus is running, you need to create the places where your code artifacts and Docker images will "live".
+
+### 1. Create a Maven Repository (for .jar files)
+1.  Log in to Nexus as `admin`.
+2.  Click the **Settings (Gear icon)** at the top.
+3.  Go to **Repository** -> **Repositories**.
+4.  Click **Create repository** -> select **maven2 (hosted)**.
+5.  **Name:** `amazon-maven-releases`.
+6.  **Deployment Policy:** Allow redeploy (for development) or Disable redeploy (for strict releases).
+7.  Click **Create repository**.
+
+### 2. Create a Docker Repository (for Images)
+1.  Click **Create repository** -> select **docker (hosted)**.
+2.  **Name:** `amazon-docker-repo`.
+3.  **HTTP Connector:** Check "HTTP" and enter port `8082` (Note: You may need to update the Kubernetes Service/Ingress later if you want to push directly via this port).
+4.  **Enable Docker V1 API:** Optional.
+5.  Click **Create repository**.
+
+### 3. Setup Credentials in Jenkins
+To allow Jenkins to push to Nexus:
+1.  Go to Jenkins -> **Manage Jenkins** -> **Credentials**.
+2.  (global) -> **Add Credentials**.
+3.  **Kind:** Username with password.
+4.  **Username:** `admin` (or create a specific `deployment` user in Nexus).
+5.  **Password:** Your Nexus admin password.
+6.  **ID:** `nexus-credentials`.
+7.  Click **Create**.
+
+> [!TIP]
+> **Next Level:** In a real production setup, you would create a "Group" repository in Nexus that combines your hosted code and a "Proxy" to Maven Central, so developers only need one URL for everything.
