@@ -28,36 +28,146 @@ You need a GitHub repository and accounts for the security tools.
 
 ---
 
-### 🔐 Step 1: Configure Secrets
-Add these secrets to your GitHub Repository so the pipeline can access them safely.
+### 📝 Step 1: Create DevSecOps Pipeline
+First, we will create the **Continuous Integration (CI)** pipeline that scans for security issues.
 
-1.  Go to **GitHub Repo** -> **Settings** -> **Secrets and variables** -> **Actions**.
-2.  Click **New repository secret**.
-3.  Add the following:
-    *   `SNYK_TOKEN`: (Your Snyk API Key)
-    *   `SONAR_TOKEN`: (Your SonarCloud Token)
-    *   `AWS_ACCESS_KEY_ID`: (Your AWS Access Key)
-    *   `AWS_SECRET_ACCESS_KEY`: (Your AWS Secret Key)
+1.  **Create file:** `.github/workflows/devsecops-ci.yaml`
+2.  **Paste content:**
+    ```yaml
+    name: DevSecOps CI
+
+    on:
+      workflow_dispatch: # Manual trigger only
+
+    jobs:
+      security-checks:
+        name: DevSecOps Pipeline
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout Code
+            uses: actions/checkout@v3
+            with:
+              fetch-depth: 0 # Required for TruffleHog
+
+          # 1. Secret Scanning (TruffleHog)
+          - name: Secret Scanning (TruffleHog)
+            uses: tricot-io/trufflehog-github-action@master
+            with:
+              path: ./
+              base: ${{ github.event.repository.default_branch }}
+              head: HEAD
+              extra_args: --debug --only-verified
+
+          # 2. SCA - Dependency Scanning (Snyk)
+          # (Commented out to save costs)
+          # - name: Snyk Monitor (Backend)
+          #   ...
+          #   ...
+
+          # 3. SAST - Static Analysis (SonarCloud)
+          - name: SonarCloud Scan
+            uses: SonarSource/sonarcloud-github-action@master
+            continue-on-error: true
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+          # 4. Container Scanning (Trivy)
+          - name: Run Trivy Scanner
+            uses: aquasecurity/trivy-action@master
+            with:
+              scan-type: 'fs'
+              scan-ref: '.'
+              format: 'table'
+              ignore-unfixed: true
+    ```
 
 ---
 
-### 🚀 Step 2: Push & Trigger CI
-The **DevSecOps CI** pipeline triggers automatically on every push.
+### 📝 Step 2: Create Deployment Pipeline
+Next, create the **Continuous Delivery (CD)** pipeline that deploys the app to EKS.
 
-1.  **Push the code:**
-    ```bash
-    git add .
-    git commit -m "feat: Add DevSecOps pipelines"
-    git push origin phase-6a-githubactions
+1.  **Create file:** `.github/workflows/deploy-app.yaml`
+2.  **Paste content:**
+    ```yaml
+    name: Deploy App to EKS
+
+    on:
+      workflow_dispatch: # Manual trigger
+      release:
+        types: [published]
+
+    permissions:
+      id-token: write
+      contents: read
+
+    jobs:
+      deploy:
+        name: Deploy to EKS
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout Code
+            uses: actions/checkout@v3
+          
+          - name: Configure AWS Credentials
+            uses: aws-actions/configure-aws-credentials@v1
+            with:
+              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws-region: us-east-1
+
+          - name: Update Kubeconfig
+            run: aws eks update-kubeconfig --name amazon-cluster --region us-east-1
+
+          - name: Login to Amazon ECR
+            id: login-ecr
+            uses: aws-actions/amazon-ecr-login@v1
+
+          - name: Deploy using Script
+            env:
+              AWS_ACCOUNT_ID: ${{ steps.login-ecr.outputs.registry }}
+              DOMAIN_NAME: devcloudproject.com
+            run: |
+                chmod +x ops/scripts/deploy_k8s.sh
+                ./ops/scripts/deploy_k8s.sh
+
+      dast-scan:
+        name: DAST (OWASP ZAP)
+        needs: deploy
+        runs-on: ubuntu-latest
+        steps:
+          - name: ZAP Baseline Scan
+            uses: zaproxy/action-baseline@v0.7.0
+            with:
+              target: 'https://www.devcloudproject.com'
+              cmd_options: '-a'
     ```
-2.  **Monitor the Run:**
-    *   Go to **Actions** tab in GitHub.
-    *   Click on the **DevSecOps CI** workflow.
-    *   Watch the steps:
-        *   **TruffleHog:** Scans for leaked secrets in git history.
-        *   **Snyk:** Checks `pom.xml` and `package.json` for vulnerable libraries.
-        *   **SonarCloud:** Analyzes code quality and bugs.
-        *   **Trivy:** Scans the file system for container vulnerabilities.
+
+---
+
+### 🔐 Step 3: Configure Secrets
+Add these secrets to your GitHub Repo so the pipelines work.
+
+1.  Go to **GitHub Repo** -> **Settings** -> **Secrets and variables** -> **Actions**.
+2.  Click **New repository secret**.
+3.  Add:
+    *   `SONAR_TOKEN`: (SonarCloud Token)
+    *   `AWS_ACCESS_KEY_ID`: (AWS Access Key)
+    *   `AWS_SECRET_ACCESS_KEY`: (AWS Secret Key)
+    *   *(Snyk Token optional since we disabled it)*
+
+---
+
+### 🚀 Step 4: Run the Pipelines
+Since we set them to **Manual Only**, you must trigger them yourself.
+
+1.  **Run Security Checks:**
+    *   Go to **Actions** tab -> **DevSecOps CI**.
+    *   Click **Run workflow**.
+
+2.  **Run Deployment:**
+    *   Go to **Actions** tab -> **Deploy App to EKS**.
+    *   Click **Run workflow**.
 
 ---
 
