@@ -62,9 +62,11 @@ spec:
         stage('Security: SCA') {
             steps {
                 container('maven') {
-                    // Placeholder: Snyk CLI would be installed here
-                    sh 'echo "Scanning dependencies..."'
-                    // sh 'snyk test'
+                    dir('backend') {
+                        // Placeholder: Snyk CLI would be installed here
+                        sh 'echo "Scanning dependencies..."'
+                        // sh 'snyk test'
+                    }
                 }
             }
         }
@@ -72,7 +74,9 @@ spec:
         stage('Build & Unit Test') {
             steps {
                 container('maven') {
-                    sh 'mvn clean install -DskipTests=true'
+                    dir('backend') {
+                        sh 'mvn clean install -DskipTests=true'
+                    }
                 }
             }
         }
@@ -80,9 +84,11 @@ spec:
         stage('Security: SAST') {
             steps {
                 container('maven') {
-                    // Placeholder: SonarScanner
-                    sh 'echo "Scanning code quality..."'
-                    // sh 'mvn sonar:sonar'
+                    dir('backend') {
+                        // Placeholder: SonarScanner
+                        sh 'echo "Scanning code quality..."'
+                        // sh 'mvn sonar:sonar'
+                    }
                 }
             }
         }
@@ -90,10 +96,12 @@ spec:
         stage('Upload to Nexus') {
             steps {
                 container('maven') {
-                    // Uses 'nexus-credentials' created in Walkthrough Step 7
-                    withCredentials([usernamePassword(credentialsId: 'nexus-credentials', passwordVariable: 'NEXUS_PWD', usernameVariable: 'NEXUS_USER')]) {
-                        sh 'echo "Uploading artifact to Nexus: https://nexus.devcloudproject.com/repository/amazon-maven-releases/"'
-                        // sh "mvn deploy -DaltDeploymentRepository=nexus::default::https://nexus.devcloudproject.com/repository/amazon-maven-releases/"
+                    dir('backend') {
+                        // Uses 'nexus-credentials' created in Walkthrough Step 7
+                        withCredentials([usernamePassword(credentialsId: 'nexus-credentials', passwordVariable: 'NEXUS_PWD', usernameVariable: 'NEXUS_USER')]) {
+                            sh 'echo "Uploading artifact to Nexus: https://nexus.devcloudproject.com/repository/amazon-maven-releases/"'
+                            // sh "mvn deploy -DaltDeploymentRepository=nexus::default::https://nexus.devcloudproject.com/repository/amazon-maven-releases/"
+                        }
                     }
                 }
             }
