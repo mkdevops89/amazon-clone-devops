@@ -68,17 +68,132 @@ Since we set them to **Manual Only**, you must trigger them yourself.
 
 ---
 
-### 🚀 Step 3: Trigger Deployment (Continuous Delivery)
-The **Deploy App** pipeline is manual (for safety) or triggered on release.
+## 🚨 Troubleshooting: Restoring Deleted Workflows
+If you accidentally delete the workflow files, you can recreate them by copying the code below.
 
-1.  Go to **Actions** tab.
-2.  Select **Deploy App to EKS**.
-3.  Click **Run workflow** -> **Run workflow**.
-4.  **Process:**
-    *   Logs into AWS ECR.
-    *   Builds & Pushes Docker Images.
-    *   Deploys to EKS using `deploy_k8s.sh`.
-    *   **DAST:** Runs **OWASP ZAP** against the live site (`https://www.devcloudproject.com`).
+### 1. DevSecOps CI
+**File:** `.github/workflows/devsecops-ci.yaml`
+```yaml
+name: DevSecOps CI
+
+on:
+  workflow_dispatch: # Manual trigger only
+
+jobs:
+  security-checks:
+    name: DevSecOps Pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Required for TruffleHog git history scan
+
+      # 1. Secret Scanning (TruffleHog)
+      - name: Secret Scanning (TruffleHog)
+        uses: tricot-io/trufflehog-github-action@master
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+      # 2. SCA - Dependency Scanning (Snyk)
+      # Checks Maven (Backend) and Node keys (Frontend)
+      # - name: Snyk Monitor (Backend)
+      #   uses: snyk/actions/maven@master
+      #   continue-on-error: true # Warning only for demo
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   with:
+      #     args: --file=backend/pom.xml
+
+      # - name: Snyk Monitor (Frontend)
+      #   uses: snyk/actions/node@master
+      #   continue-on-error: true
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   with:
+      #     args: --file=frontend/package.json
+
+      # 3. SAST - Static Analysis (SonarCloud)
+      # Requires SONAR_TOKEN and a project set up in SonarCloud
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # 4. Container Scanning (Trivy)
+      # Scans the repo for Docker-related vulnerabilities
+      - name: Run Trivy Vulnerability Scanner (Repo Mode)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          trivy-config: trivy.yaml
+          format: 'table'
+          exit-code: '0' # Don't fail for now
+          ignore-unfixed: true
+```
+
+### 2. Deploy App
+**File:** `.github/workflows/deploy-app.yaml`
+```yaml
+name: Deploy App to EKS
+
+on:
+  workflow_dispatch: # Manual trigger for safety
+  release:
+    types: [published]
+
+permissions:
+  id-token: write # Required for requesting the JWT
+  contents: read  # Required for actions/checkout
+
+jobs:
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Update Kubeconfig
+        run: aws eks update-kubeconfig --name amazon-cluster --region us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Deploy using Script
+        # Assumes runner has docker, kubectl, envsubst
+        env:
+          AWS_ACCOUNT_ID: ${{ steps.login-ecr.outputs.registry }} # Use registry ID from login step
+          DOMAIN_NAME: devcloudproject.com
+        run: |
+            chmod +x ops/scripts/deploy_k8s.sh
+            ./ops/scripts/deploy_k8s.sh
+
+  dast-scan:
+    name: DAST (OWASP ZAP)
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.7.0
+        with:
+          target: 'https://www.devcloudproject.com'
+          cmd_options: '-a' # Include alpha rules
+```
 
 ---
 
