@@ -30,14 +30,14 @@ spec:
           cpu: "100m"
           memory: "256Mi"
     - name: tools
-      image: ubuntu:latest
+      image: trufflesecurity/trufflehog:latest
       command:
         - cat
       tty: true
       resources:
         requests:
-          cpu: "50m"
-          memory: "128Mi"
+          cpu: "100m"
+          memory: "256Mi"
 '''
         }
     }
@@ -52,9 +52,7 @@ spec:
         stage('Security: Secrets') {
             steps {
                 container('tools') {
-                    // Placeholder: In a real environment, install trufflehog binary
-                    sh 'echo "Scanning for secrets..."'
-                    // sh 'trufflehog --only-verified git+file://.' 
+                    sh 'trufflehog git file:///home/jenkins/agent/workspace/amazone-clone --only-verified'
                 }
             }
         }
@@ -63,9 +61,7 @@ spec:
             steps {
                 container('maven') {
                     dir('backend') {
-                        // Placeholder: Snyk CLI would be installed here
-                        sh 'echo "Scanning dependencies..."'
-                        // sh 'snyk test'
+                        sh 'mvn dependency-check:check'
                     }
                 }
             }
@@ -75,7 +71,8 @@ spec:
             steps {
                 container('maven') {
                     dir('backend') {
-                        sh 'mvn clean install -DskipTests=true'
+                        // Removed -DskipTests to run real unit tests
+                        sh 'mvn clean install'
                     }
                 }
             }
@@ -85,9 +82,7 @@ spec:
             steps {
                 container('maven') {
                     dir('backend') {
-                        // Placeholder: SonarScanner
-                        sh 'echo "Scanning code quality..."'
-                        // sh 'mvn sonar:sonar'
+                        sh 'mvn spotbugs:check'
                     }
                 }
             }
