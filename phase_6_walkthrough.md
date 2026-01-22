@@ -55,16 +55,34 @@ Add these secrets to your GitHub Repo so the pipelines work.
 
 ---
 
-### 🚀 Step 4: Run the Pipelines
-Since we set them to **Manual Only**, you must trigger them yourself.
+### 🚀 Step 2: Trigger the Pipelines (Automated or Manual)
 
-1.  **Run Security Checks:**
-    *   Go to **Actions** tab -> **DevSecOps CI**.
-    *   Click **Run workflow**.
+**Option A: Automated (Recommended)**
+Simply push your code to the branch. This will trigger **BOTH** the DevSecOps CI (Security) and Deploy App (CD) pipelines.
+```bash
+git add .
+git commit -m "feat: My amazing changes"
+git push origin phase-6a-githubactions
+```
 
-2.  **Run Deployment:**
-    *   Go to **Actions** tab -> **Deploy App to EKS**.
-    *   Click **Run workflow**.
+**Option B: Manual (If needed)**
+You can still run them manually from the GitHub Actions tab.
+
+**To Run Security Checks:**
+1.  Go to the **Actions** tab in your GitHub Repository.
+2.  Select **DevSecOps CI**.
+3.  Click **Run workflow** -> **Run workflow**.
+
+**To Run Deployment:**
+1.  Go to the **Actions** tab.
+2.  Select **Deploy App to EKS**.
+3.  Click **Run workflow** -> **Run workflow**.
+
+**What Happens Next:**
+*   **Green Check:** Success!
+*   **Red X:** Failure (Click to see logs).
+    *   **CI Fail:** Means secrets leaked, vulnerability found, or tests failed.
+    *   **Deploy Fail:** Means AWS permissions issue OR ZAP found a critical vulnerability.
 
 ---
 
