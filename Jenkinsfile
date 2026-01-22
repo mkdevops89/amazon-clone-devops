@@ -18,6 +18,13 @@ spec:
         requests:
           cpu: "100m"
           memory: "256Mi"
+      volumeMounts:
+        - name: nvd-cache
+          mountPath: /var/maven/odc-data
+  volumes:
+    - name: nvd-cache
+      persistentVolumeClaim:
+        claimName: jenkins-nvd-cache
     - name: docker
       image: docker:dind
       securityContext:
@@ -59,13 +66,29 @@ spec:
 
         stage('Security: SCA') {
             steps {
-                retry(3) {
-                    container('maven') {
-                        dir('backend') {
-                            // Pass NVD API Key with extra delay to avoid 403 rate limiting
-                            withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
-                                sh "mvn dependency-check:check -DnvdApiKey=${NVD_KEY} -DnvdApiDelay=8000"
-                            }
+                container('maven') {
+                    dir('backend') {
+                        withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
+                            sh '''
+                                set -euo pipefail
+                                
+                                # Debug: Verify Key Check
+                                if [ -z "${NVD_KEY:-}" ]; then
+                                  echo "ERROR: NVD_KEY is empty - Jenkins credential injection failed."
+                                  exit 1
+                                fi
+                                echo "NVD_KEY injected (length=${#NVD_KEY})"
+
+                                # Use persistent cache to avoid re-downloading
+                                ODC_DATA_DIR="/var/maven/odc-data"
+                                mkdir -p "$ODC_DATA_DIR"
+
+                                # Run Scan with Caching
+                                mvn dependency-check:check \
+                                  -DnvdApiKey="${NVD_KEY}" \
+                                  -DnvdApiDelay=16000 \
+                                  -DdataDirectory="$ODC_DATA_DIR"
+                            '''
                         }
                     }
                 }
