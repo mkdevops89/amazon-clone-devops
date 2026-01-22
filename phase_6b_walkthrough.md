@@ -26,7 +26,19 @@ envsubst < ops/k8s/nexus/nexus.yaml | kubectl apply -f -
 envsubst < ops/k8s/jenkins/jenkins.yaml | kubectl apply -f -
 ```
 
-### 2. Verify Pods
+### 2. Configure Route53 DNS (Shared ALB) ☁️
+Since we configured Jenkins and Nexus to join the existing "amazon-group" load balancer, **you do NOT need a new Load Balancer**.
+They will share the same ALB as your main app, saving you money! 💰
+
+1.  Go to **AWS Console** -> **EC2** -> **Load Balancers**.
+2.  Find the `k8s-amazon-group-...` Load Balancer.
+3.  Copy its **DNS Name**.
+4.  Go to **Route53** -> **Hosted Zones**.
+5.  Create two new records:
+    *   **Name:** `jenkins.devcloudproject.com` -> **Value:** (Paste ALB DNS Name). Select "Alias" -> Yes.
+    *   **Name:** `nexus.devcloudproject.com` -> **Value:** (Paste ALB DNS Name). Select "Alias" -> Yes.
+
+### 3. Verify Pods
 Wait for the pods to be `Running`. This might take 2-3 minutes.
 ```bash
 kubectl get pods -n devsecops
