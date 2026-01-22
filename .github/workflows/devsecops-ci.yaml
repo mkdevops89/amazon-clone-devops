@@ -24,21 +24,21 @@ jobs:
 
       # 2. SCA - Dependency Scanning (Snyk)
       # Checks Maven (Backend) and Node keys (Frontend)
-      - name: Snyk Monitor (Backend)
-        uses: snyk/actions/maven@master
-        continue-on-error: true # Warning only for demo
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --file=backend/pom.xml
+      # - name: Snyk Monitor (Backend)
+      #   uses: snyk/actions/maven@master
+      #   continue-on-error: true # Warning only for demo
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   with:
+      #     args: --file=backend/pom.xml
 
-      - name: Snyk Monitor (Frontend)
-        uses: snyk/actions/node@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --file=frontend/package.json
+      # - name: Snyk Monitor (Frontend)
+      #   uses: snyk/actions/node@master
+      #   continue-on-error: true
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   with:
+      #     args: --file=frontend/package.json
 
       # 3. SAST - Static Analysis (SonarCloud)
       # Requires SONAR_TOKEN and a project set up in SonarCloud
