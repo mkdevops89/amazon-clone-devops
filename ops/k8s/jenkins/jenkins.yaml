@@ -73,11 +73,8 @@ spec:
               cpu: "2000m"
       volumes:
         - name: jenkins-data
-          emptyDir: {}
-# ---
-# NOTE: PVC removed for simulation speed
-# apiVersion: v1
-# kind: PersistentVolumeClaim
+          persistentVolumeClaim:
+            claimName: jenkins-pvc
 ---
 apiVersion: v1
 kind: Service
