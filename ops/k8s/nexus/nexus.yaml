@@ -9,6 +9,7 @@ metadata:
   name: nexus-pvc
   namespace: devsecops
 spec:
+  storageClassName: gp3
   accessModes:
     - ReadWriteOnce
   resources:
