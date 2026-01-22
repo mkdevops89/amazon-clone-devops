@@ -29,6 +29,15 @@ spec:
           cpu: "100m"
           memory: "256Mi"
     - name: tools
+      image: ubuntu:latest
+      command:
+        - cat
+      tty: true
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "128Mi"
+    - name: security
       image: trufflesecurity/trufflehog:latest
       command:
         - cat
@@ -59,7 +68,7 @@ spec:
 
         stage('Security: Secrets') {
             steps {
-                container('tools') {
+                container('security') {
                     sh 'trufflehog git file:///home/jenkins/agent/workspace/${JOB_NAME} --only-verified'
                 }
             }
@@ -173,6 +182,7 @@ EOF
             container('tools') {
                withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
                    sh '''
+                       apt-get update && apt-get install -y curl
                        curl -X POST -H 'Content-type: application/json' --data '{"text":"✅ *Build Succeeded!* \\nProject: ${JOB_NAME} \\nBuild Number: ${BUILD_NUMBER} \\nURL: ${BUILD_URL}"}' ${SLACK_URL}
                    '''
                }
@@ -182,6 +192,7 @@ EOF
             container('tools') {
                withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
                    sh '''
+                       apt-get update && apt-get install -y curl
                        curl -X POST -H 'Content-type: application/json' --data '{"text":"❌ *Build Failed!* \\nProject: ${JOB_NAME} \\nBuild Number: ${BUILD_NUMBER} \\nURL: ${BUILD_URL}"}' ${SLACK_URL}
                    '''
                }
