@@ -59,11 +59,13 @@ spec:
 
         stage('Security: SCA') {
             steps {
-                container('maven') {
-                    dir('backend') {
-                        // Pass NVD API Key to avoid 403 rate limiting
-                        withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
-                            sh 'mvn dependency-check:check -DnvdApiKey=${NVD_KEY}'
+                retry(3) {
+                    container('maven') {
+                        dir('backend') {
+                            // Pass NVD API Key with extra delay to avoid 403 rate limiting
+                            withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
+                                sh "mvn dependency-check:check -DnvdApiKey=${NVD_KEY} -DnvdApiDelay=8000"
+                            }
                         }
                     }
                 }
