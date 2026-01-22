@@ -110,7 +110,7 @@ We need to tell Jenkins how to talk to Kubernetes to spawn "Agent" pods for buil
     *   Add a new cloud -> **Kubernetes**.
     *   **Kubernetes URL:** `https://kubernetes.default.svc`
     *   **Kubernetes Namespace:** `devsecops`
-    *   **Jenkins URL:** `http://jenkins.devsecops.svc.cluster.local:8080`
+    *   **Jenkins URL:** `http://jenkins.devsecops.svc.cluster.local`
     *   **Jenkins Tunnel:** `jenkins.devsecops.svc.cluster.local:50000`
     *   Test Connection.
 
