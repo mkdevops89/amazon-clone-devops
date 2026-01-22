@@ -125,6 +125,15 @@ Due to NIST rate limiting, the **OWASP Dependency-Check** requires an API key.
     *   **ID:** `nvd-api-key`.
     *   Click **Create**.
 
+### 4. Setup Slack Notifications (Optional)
+Receive real-time build updates in your Slack channel.
+1.  Go to Jenkins -> **Manage Jenkins** -> **Credentials**.
+2.  (global) -> **Add Credentials**.
+3.  **Kind:** Secret text.
+4.  **Secret:** (Paste your Slack Webhook URL).
+5.  **ID:** `slack-webhook`.
+6.  Click **Create**.
+
 ---
 
 ## 📝 Step 5: Create the Pipeline

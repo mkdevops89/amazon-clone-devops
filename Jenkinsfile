@@ -167,4 +167,25 @@ EOF
             }
         }
     }
+
+    post {
+        success {
+            container('tools') {
+               withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+                   sh '''
+                       curl -X POST -H 'Content-type: application/json' --data '{"text":"✅ *Build Succeeded!* \\nProject: ${JOB_NAME} \\nBuild Number: ${BUILD_NUMBER} \\nURL: ${BUILD_URL}"}' ${SLACK_URL}
+                   '''
+               }
+            }
+        }
+        failure {
+            container('tools') {
+               withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+                   sh '''
+                       curl -X POST -H 'Content-type: application/json' --data '{"text":"❌ *Build Failed!* \\nProject: ${JOB_NAME} \\nBuild Number: ${BUILD_NUMBER} \\nURL: ${BUILD_URL}"}' ${SLACK_URL}
+                   '''
+               }
+            }
+        }
+    }
 }
