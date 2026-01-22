@@ -47,8 +47,11 @@ spec:
               cpu: "2000m"
       volumes:
         - name: nexus-data
-          persistentVolumeClaim:
-            claimName: nexus-pvc
+          emptyDir: {}
+# ---
+# NOTE: PVC removed for simulation speed (avoids EBS setup)
+# apiVersion: v1
+# kind: PersistentVolumeClaim
 ---
 apiVersion: v1
 kind: Service
@@ -72,6 +75,8 @@ metadata:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # Shared ALB Group
+    alb.ingress.kubernetes.io/group.name: "amazon-group"
     # IMPORTANT: Replace with your actual ACM ARN
     alb.ingress.kubernetes.io/certificate-arn: '${ACM_CERTIFICATE_ARN}'
 spec:
