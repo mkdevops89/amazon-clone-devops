@@ -32,22 +32,24 @@ kubectl apply -f ops/k8s/storage-class.yaml
 
 ### 3. Update Certificate ARN & Deploy Apps
 Now deploy the apps (which will use the new `gp3` storage).
+
+> [!IMPORTANT]
+> **Resource Optimization Applied:**
+> Due to the cluster running on a single small node (t3.medium or similar), I've reduced the Jenkins and Nexus memory requests to **512Mi** each. 
+> I also scaled down system components like `coredns` and `aws-load-balancer-controller` to 1 replica to free up "pod slots" on the node.
+
 Run this command to replace the placeholders:
 ```bash
-export ACM_ARN=$(terraform -chdir=ops/terraform/aws output -raw acm_certificate_arn)
-
-# Troubleshooting: Missing ARN?
-# If the above is empty, find it in AWS Console -> Certificate Manager (ACM).
+# Set the ACM ARN found in your AWS Console
+export ACM_CERTIFICATE_ARN="arn:aws:acm:us-east-1:406312601212:certificate/9e3aa5f9-1cec-488b-943c-6994089e3775"
 
 envsubst < ops/k8s/nexus/nexus.yaml | kubectl apply -f -
 envsubst < ops/k8s/jenkins/jenkins.yaml | kubectl apply -f -
 ```
 
-### 4. Verify Pods
-Wait for the pods to be `Running`. This might take 2-3 minutes.
-```bash
-kubectl get pods -n devsecops
-```
+> [!TIP]
+> **Troubleshooting: Permission Denied on Volumes?**
+> I've added `initContainers` to both `jenkins.yaml` and `nexus.yaml` that automatically run `chown` on the mount points. This fixes the common "Permission Denied" error when mounting EBS volumes as a non-root user.
 
 ---
 
@@ -60,7 +62,7 @@ Run this command in your terminal:
 ```bash
 kubectl get ingress -n default amazon-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
 ```
-*(Copy the output. It should look like `k8s-amazon-group-xxxx.us-east-1.elb.amazonaws.com`)*
+*(Result: `k8s-amazongroup-629b6c7264-839863946.us-east-1.elb.amazonaws.com`)*
 
 1.  Go to **Route53** -> **Hosted Zones**.
 2.  Create two new records:
@@ -73,10 +75,7 @@ kubectl get ingress -n default amazon-ingress -o jsonpath='{.status.loadBalancer
 
 ### Unlock Jenkins
 1.  **URL:** Go to `https://jenkins.devcloudproject.com`
-2.  **Get Initial Password:**
-    ```bash
-    kubectl exec -it -n devsecops deployment/jenkins -- cat /var/jenkins_home/secrets/initialAdminPassword
-    ```
+2.  **Initial Password:** `497e1b2074af4579a7ed29d00af0ff05` (Retrieved via `kubectl exec`)
 3.  **Setup Wizard:**
     *   Paste the password.
     *   Select **"Install Suggested Plugins"**.
@@ -87,11 +86,17 @@ kubectl get ingress -n default amazon-ingress -o jsonpath='{.status.loadBalancer
 1.  **URL:** Go to `https://nexus.devcloudproject.com`
 2.  Click **Sign In** (top right).
 3.  **Username:** `admin`
-4.  **Get Initial Password:**
-    ```bash
-    kubectl exec -it -n devsecops deployment/nexus -- cat /nexus-data/admin.password
-    ```
+4.  **Initial Password:** `2e840eff-a549-488c-9f82-bfdcce38b389` (Retrieved via `kubectl exec`)
 5.  Follow the wizard (Change password, allow anonymous access for now).
+
+---
+
+## 🛠️ Infrastructure Fixes Applied (Post-Mortem)
+During deployment, we encountered and fixed several real-world production issues:
+1.  **Storage Engine:** Installed AWS EBS CSI Driver and configured `gp3` StorageClass for dynamic provisioning.
+2.  **Volume Permissions:** Added `initContainers` to handle `chown` for Jenkins (UID 1000) and Nexus (UID 200).
+3.  **Resource Constraints:** Downsized system components and application requests to fit on a single-node cluster.
+4.  **Ingress Group Conflicts:** Patched existing Ingresses (`amazon-ingress`, `grafana-ingress`) that had invalid placeholders, which was blocking the entire ALB Group from reconciling.
 
 ---
 

@@ -55,6 +55,13 @@ spec:
         app: jenkins
     spec:
       serviceAccountName: jenkins-sa
+      initContainers:
+        - name: fix-permissions
+          image: busybox
+          command: ["sh", "-c", "chown -R 1000:1000 /var/jenkins_home"]
+          volumeMounts:
+            - name: jenkins-data
+              mountPath: /var/jenkins_home
       containers:
         - name: jenkins
           # Use JDK 17 for modern Jenkins
@@ -67,7 +74,7 @@ spec:
               mountPath: /var/jenkins_home
           resources:
             requests:
-              memory: "1Gi"
+              memory: "512Mi"
               cpu: "500m"
             limits:
               memory: "2Gi"

@@ -26,6 +26,13 @@ spec:
       labels:
         app: nexus
     spec:
+      initContainers:
+        - name: fix-permissions
+          image: busybox
+          command: ["sh", "-c", "chown -R 200:200 /nexus-data"]
+          volumeMounts:
+            - name: nexus-data
+              mountPath: /nexus-data
       containers:
         - name: nexus
           image: sonatype/nexus3:latest
@@ -36,7 +43,7 @@ spec:
               mountPath: /nexus-data
           resources:
             requests:
-              memory: "1Gi"
+              memory: "512Mi"
               cpu: "500m"
             limits:
               memory: "2Gi"
