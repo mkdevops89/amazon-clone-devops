@@ -11,25 +11,15 @@ Instead of using Cloud SaaS (GitHub Actions), we deploy our own **Jenkins** serv
 Since you want to use the **"Right Resources"** (Persistent Volumes), we need to install the storage driver on your cluster.
 Without this, your pods will stay `Pending` because they can't create disks!
 
-Run these commands (Takes ~3 minutes):
-```bash
-# 1. Create IAM Role for the Driver
-eksctl create iamserviceaccount \
-  --name ebs-csi-controller-sa \
-  --namespace kube-system \
-  --cluster amazon-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
-  --approve \
-  --role-only \
-  --role-name AmazonEKS_EBS_CSI_DriverRole
+**The Easy Way (Scripted):**
+I've created a script to handle the IAM Role and Add-on installation automatically.
 
-# 2. Add the EBS Addon
-eksctl create addon \
-  --name aws-ebs-csi-driver \
-  --cluster amazon-cluster \
-  --service-account-role-arn arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/AmazonEKS_EBS_CSI_DriverRole \
-  --force
+Run this:
+```bash
+chmod +x ops/scripts/install_ebs_driver.sh
+./ops/scripts/install_ebs_driver.sh
 ```
+*(This will check your account ID, create the IAM Role if missing, and install the driver.)*
 
 ### 2. Update Certificate ARN
 Now deploy the apps (which request 10GB disks each).
