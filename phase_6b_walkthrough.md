@@ -114,6 +114,17 @@ We need to tell Jenkins how to talk to Kubernetes to spawn "Agent" pods for buil
     *   **Jenkins Tunnel:** `jenkins.devsecops.svc.cluster.local:50000`
     *   Test Connection.
 
+### 3. Setup NVD API Key (for Security Scans)
+Due to NIST rate limiting, the **OWASP Dependency-Check** requires an API key. 
+1.  Request a free key here: [https://nvd.nist.gov/developers/request-an-api-key](https://nvd.nist.gov/developers/request-an-api-key)
+2.  Once you get it via email:
+    *   Go to Jenkins -> **Manage Jenkins** -> **Credentials**.
+    *   (global) -> **Add Credentials**.
+    *   **Kind:** Secret text.
+    *   **Secret:** (Paste your NVD API Key).
+    *   **ID:** `nvd-api-key`.
+    *   Click **Create**.
+
 ---
 
 ## 📝 Step 5: Create the Pipeline

@@ -61,7 +61,10 @@ spec:
             steps {
                 container('maven') {
                     dir('backend') {
-                        sh 'mvn dependency-check:check'
+                        // Pass NVD API Key to avoid 403 rate limiting
+                        withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
+                            sh 'mvn dependency-check:check -DnvdApiKey=${NVD_KEY}'
+                        }
                     }
                 }
             }

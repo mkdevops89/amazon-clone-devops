@@ -92,6 +92,7 @@
                 <configuration>
                     <format>HTML</format>
                     <failBuildOnCVSS>7</failBuildOnCVSS> <!-- Fail build if high severity vuln found -->
+                    <nvdApiKey>${nvdApiKey}</nvdApiKey>
                 </configuration>
             </plugin>
             <!-- SpotBugs (SAST) -->
