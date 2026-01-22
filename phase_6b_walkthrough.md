@@ -39,8 +39,8 @@ export ACM_ARN=$(terraform -chdir=ops/terraform/aws output -raw acm_certificate_
 # Troubleshooting: Missing ARN?
 # If the above is empty, find it in AWS Console -> Certificate Manager (ACM).
 
-envsubst < ops/k8s/nexus/nexus.yaml | kubectl replace --force -f -
-envsubst < ops/k8s/jenkins/jenkins.yaml | kubectl replace --force -f -
+envsubst < ops/k8s/nexus/nexus.yaml | kubectl apply -f -
+envsubst < ops/k8s/jenkins/jenkins.yaml | kubectl apply -f -
 ```
 
 ### 4. Verify Pods
