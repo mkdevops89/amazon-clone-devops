@@ -167,5 +167,35 @@ To allow Jenkins to push to Nexus:
 6.  **ID:** `nexus-credentials`.
 7.  Click **Create**.
 
+---
+
+## 🛠️ Troubleshooting: "Insufficient CPU" or "Node NotReady"
+If your Jenkins build is stuck in `Pending` or your cluster feels laggy:
+
+> [!CAUTION]
+> **Single Node Limits:** Your cluster is running on a single AWS node. Kubernetes needs some "breathing room" to manage itself. If you run the App + Monitoring + Jenkins + Nexus + Build Agents all at once, the node will lock up.
+
+### How to free up space for a Build:
+If Jenkins says `Insufficient CPU`, run these commands to temporarily "pause" the monitoring stack:
+```bash
+# Scale down monitoring to 0
+kubectl scale deployment -n monitoring --all --replicas=0
+kubectl scale statefulset -n monitoring --all --replicas=0
+
+# Scale down the main app to 0
+kubectl scale deployment -n default --all --replicas=0
+```
+
+### How to bring everything back:
+```bash
+# Re-scale monitoring
+kubectl scale deployment -n monitoring --all --replicas=1 # Or original replica count
+kubectl scale statefulset -n monitoring --all --replicas=1
+
+# Re-scale the app
+kubectl scale deployment -n default --all --replicas=1
+```
+
 > [!TIP]
-> **Next Level:** In a real production setup, you would create a "Group" repository in Nexus that combines your hosted code and a "Proxy" to Maven Central, so developers only need one URL for everything.
+> **I've optimized your `Jenkinsfile`:**
+> I've already updated your `Jenkinsfile` to use very low resource requests (100m CPU). This should allow builds to run even when the cluster is somewhat busy.
