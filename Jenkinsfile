@@ -17,6 +17,10 @@ spec:
       volumeMounts:
         - name: nvd-cache
           mountPath: /var/maven/odc-data
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "256Mi"
     - name: docker
       image: docker:dind
       securityContext:
@@ -26,7 +30,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "100m"
+          cpu: "50m"
           memory: "256Mi"
     - name: tools
       image: ubuntu:latest
@@ -35,7 +39,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "50m"
+          cpu: "20m"
           memory: "128Mi"
     - name: security
       image: trufflesecurity/trufflehog:latest
@@ -44,7 +48,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "100m"
+          cpu: "50m"
           memory: "256Mi"
   volumes:
     - name: nvd-cache
