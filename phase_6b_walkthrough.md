@@ -141,14 +141,21 @@ We need to tell Jenkins how to talk to Kubernetes to spawn "Agent" pods for buil
 ## 📦 Step 7: Configure Nexus Repositories
 Now that Nexus is running, you need to create the places where your code artifacts and Docker images will "live".
 
-### 1. Create a Maven Repository (for .jar files)
+### 1. Create Maven Repositories (for .jar files)
 1.  Log in to Nexus as `admin`.
 2.  Click the **Settings (Gear icon)** at the top.
 3.  Go to **Repository** -> **Repositories**.
-4.  Click **Create repository** -> select **maven2 (hosted)**.
-5.  **Name:** `amazon-maven-releases`.
-6.  **Deployment Policy:** Allow redeploy (for development) or Disable redeploy (for strict releases).
-7.  Click **Create repository**.
+4.  **Create the Releases repo:**
+    *   Click **Create repository** -> select **maven2 (hosted)**.
+    *   **Name:** `amazon-maven-releases`.
+    *   **Deployment Policy:** Allow redeploy (for development).
+    *   Click **Create repository**.
+5.  **Create the Snapshots repo (REQUIRED for your current build):**
+    *   Click **Create repository** -> select **maven2 (hosted)**.
+    *   **Name:** `amazon-maven-snapshots`.
+    *   **Version Policy:** Snapshots.
+    *   **Deployment Policy:** Allow redeploy.
+    *   Click **Create repository**.
 
 ### 2. Create a Docker Repository (for Images)
 1.  Click **Create repository** -> select **docker (hosted)**.

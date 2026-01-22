@@ -99,8 +99,28 @@ spec:
                     dir('backend') {
                         // Uses 'nexus-credentials' created in Walkthrough Step 7
                         withCredentials([usernamePassword(credentialsId: 'nexus-credentials', passwordVariable: 'NEXUS_PWD', usernameVariable: 'NEXUS_USER')]) {
-                            sh 'echo "Uploading artifact to Nexus: https://nexus.devcloudproject.com/repository/amazon-maven-releases/"'
-                            // sh "mvn deploy -DaltDeploymentRepository=nexus::default::https://nexus.devcloudproject.com/repository/amazon-maven-releases/"
+                            sh '''
+                                # Generate a temporary settings.xml with credentials
+                                cat > settings.xml <<EOF
+<settings>
+  <servers>
+    <server>
+      <id>amazon-maven-releases</id>
+      <username>${NEXUS_USER}</username>
+      <password>${NEXUS_PWD}</password>
+    </server>
+    <server>
+      <id>amazon-maven-snapshots</id>
+      <username>${NEXUS_USER}</username>
+      <password>${NEXUS_PWD}</password>
+    </server>
+  </servers>
+</settings>
+EOF
+                                echo "Uploading artifact to Nexus..."
+                                mvn deploy -s settings.xml -DskipTests=true
+                                rm settings.xml
+                            '''
                         }
                     }
                 }

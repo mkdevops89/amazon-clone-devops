@@ -89,12 +89,12 @@
     
     <distributionManagement>
         <snapshotRepository>
-            <id>nexus-snapshots</id>
-            <url>http://nexus:8081/repository/maven-snapshots/</url>
+            <id>amazon-maven-snapshots</id>
+            <url>http://nexus/repository/amazon-maven-snapshots/</url>
         </snapshotRepository>
         <repository>
-            <id>nexus-releases</id>
-            <url>http://nexus:8081/repository/maven-releases/</url>
+            <id>amazon-maven-releases</id>
+            <url>http://nexus/repository/amazon-maven-releases/</url>
         </repository>
     </distributionManagement>
 
