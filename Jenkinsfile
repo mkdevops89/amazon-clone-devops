@@ -20,7 +20,7 @@ spec:
       resources:
         requests:
           cpu: "50m"
-          memory: "256Mi"
+          memory: "128Mi"
     - name: docker
       image: docker:dind
       securityContext:
@@ -31,7 +31,7 @@ spec:
       resources:
         requests:
           cpu: "50m"
-          memory: "256Mi"
+          memory: "128Mi"
     - name: tools
       image: ubuntu:latest
       command:
@@ -40,7 +40,7 @@ spec:
       resources:
         requests:
           cpu: "20m"
-          memory: "128Mi"
+          memory: "64Mi"
     - name: security
       image: trufflesecurity/trufflehog:latest
       command:
@@ -49,7 +49,7 @@ spec:
       resources:
         requests:
           cpu: "50m"
-          memory: "256Mi"
+          memory: "128Mi"
   volumes:
     - name: nvd-cache
       persistentVolumeClaim:
