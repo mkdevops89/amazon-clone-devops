@@ -77,11 +77,21 @@ Verify the Backend application is exposing metrics on `/actuator/prometheus`.
     *   **Success:** You see raw metric data (e.g., `# HELP jvm_memory_used_bytes...`).
     *   **Fail:** You see a 404 error.
         
-    > **⚠️ Critical Note:** If the endpoint is missing or returns 403, you must redeploy the latest backend code. Run:
+    > **⚠️ Critical Note: 403 Forbidden Error?**
+    > If you see a 403 error, it means your running backend is outdated (doesn't have the `permitAll()` change).
+    > You must **manually rebuild and push** the backend image:
     > ```bash
-    > ./ops/scripts/deploy_k8s.sh
+    > # 1. Login to ECR
+    > aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 406312601212.dkr.ecr.us-east-1.amazonaws.com
+    > 
+    > # 2. Build Backend
+    > cd backend
+    > docker build --platform linux/amd64 -t 406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest .
+    > 
+    > # 3. Push & Restart
+    > docker push 406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest
+    > kubectl rollout restart deployment/amazon-backend
     > ```
-    > This script automatically rebuilds the Backend (if needed) and Frontend, handling all URL wiring.
 
 ---
 
