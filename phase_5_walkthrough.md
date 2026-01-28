@@ -14,6 +14,10 @@ Ensure the controller is installed (it allows `Ingress` to create ALBs).
 ```bash
 chmod +x ops/scripts/install_lb_controller.sh
 ./ops/scripts/install_lb_controller.sh
+
+# Verify Installation (Wait 1-2 mins):
+kubectl get deployment -n kube-system aws-load-balancer-controller
+# Expected: 2/2 or 1/1 READY
 ```
 
 ---

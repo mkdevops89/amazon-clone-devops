@@ -1,5 +1,13 @@
 # Phase 5 Test Cases: Domains & HTTPS
 
+## 🧪 Test Case 0: Infrastructure Check
+**Objective:** Verify the Load Balancer Controller is running.
+**Steps:**
+1.  Run `kubectl get deployment -n kube-system aws-load-balancer-controller`.
+**Expected Result:**
+*   AVAILABLE column shows `2` (or `1`).
+*   READY column shows `2/2`.
+
 ## 🧪 Test Case 1: SSL Validation
 **Objective:** Verify the ACM Certificate is valid and trusted.
 **Steps:**
