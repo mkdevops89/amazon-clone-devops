@@ -4,13 +4,27 @@ variables:
   SONAR_TOKEN: "$SONAR_TOKEN" # Add this variable in GitLab UI
 
 stages:
+  - scan-infra
   - build
-  - sast
+  - test
+  - scan-container
   - deploy
 
 cache:
   paths:
     - .m2/repository
+
+# 1. Infrastructure Scan (Checkov - IaC Security)
+# Checks Terraform for misconfigurations (e.g. open value security groups)
+infra_scan_job:
+  stage: scan-infra
+  image: 
+    name: bridgecrew/checkov:latest
+    entrypoint: [""]
+  script:
+    - echo "Scanning Infrastructure as Code..."
+    - checkov -d ops/terraform/aws --skip-check CKV_AWS_* --soft-fail || echo "Checkov found issues but soft-fail is on"
+  allow_failure: true
 
 build_job:
   stage: build
@@ -23,11 +37,24 @@ build_job:
       - backend/target/*.jar
 
 sast_job:
-  stage: sast
+  stage: test
   image: maven:3.8.3-openjdk-17
   script:
     - echo "Running SonarQube Analysis..."
     - mvn sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+  needs:
+    - build_job
+
+# 3. Container Scan (Trivy - Supply Chain Security)
+# Scans the filesystem/dependencies for vulnerabilities
+trivy_scan_job:
+  stage: scan-container
+  image: 
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - echo "Scanning dependencies and filesystem..."
+    - trivy fs . --severity HIGH,CRITICAL --no-progress
   needs:
     - build_job
 

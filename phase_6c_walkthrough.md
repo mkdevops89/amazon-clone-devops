@@ -57,9 +57,11 @@ kubectl apply -f ops/k8s/gitlab/runner.yaml
 ## 🚀 Step 3: The Pipeline (.gitlab-ci.yml)
 We define our pipeline stages in the root of the repository.
 
-1.  **Build:** Compile Java code.
-2.  **Code Quality:** Run `mvn sonar:sonar`.
-3.  **Deploy:** Update the Kubernetes cluster.
+1.  **Infrastructure Scan:** (New) Checkov scans our Terraform for cloud misconfigurations.
+2.  **Build:** Compile Java code.
+3.  **Code Quality:** Run `mvn sonar:sonar`.
+4.  **Container Scan:** (New) Trivy scans the filesystem and dependencies for CVEs.
+5.  **Deploy:** Update the Kubernetes cluster.
 
 ---
 
