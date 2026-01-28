@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-CLUSTER_NAME="amazon-cluster"
-REGION="us-east-1"
+CLUSTER_NAME=${1:-${CLUSTER_NAME:-"amazon-cluster"}}
+REGION=${2:-${AWS_REGION:-"us-east-1"}}
 POLICY_NAME="AWSLoadBalancerControllerIAMPolicy"
 
 echo "🔍 Verifying eksctl..."
@@ -31,31 +31,22 @@ echo "✅ Policy ARN: $POLICY_ARN"
 
 echo "👤 Creating ServiceAccount..."
 echo "👤 Creating ServiceAccount..."
-# Attempt 1: Create (with override)
+# Force cleanup of any existing/drifted service account
+echo "🧹 Ensuring clean state for ServiceAccount..."
+eksctl delete iamserviceaccount \
+  --cluster=$CLUSTER_NAME \
+  --namespace=kube-system \
+  --name=aws-load-balancer-controller \
+  --wait || echo "ServiceAccount didn't exist (clean slate)"
+
+echo "👤 Creating ServiceAccount..."
 eksctl create iamserviceaccount \
   --cluster=$CLUSTER_NAME \
   --namespace=kube-system \
   --name=aws-load-balancer-controller \
   --role-name "AmazonEKSLoadBalancerControllerRole" \
   --attach-policy-arn=$POLICY_ARN \
-  --approve \
-  --override-existing-serviceaccounts
-
-# Self-Healing Check: Verify K8s SA exists. If not, eksctl skipped it due to IAM state drift.
-echo "🔍 verifying ServiceAccount existence..."
-if ! kubectl get sa aws-load-balancer-controller -n kube-system &> /dev/null; then
-  echo "⚠️  ServiceAccount missing! Cleaning up drifted IAM stack and retrying..."
-  eksctl delete iamserviceaccount --cluster $CLUSTER_NAME --name aws-load-balancer-controller --namespace kube-system
-  
-  echo "♻️  Retry: Creating ServiceAccount (Fresh)..."
-  eksctl create iamserviceaccount \
-    --cluster=$CLUSTER_NAME \
-    --namespace=kube-system \
-    --name=aws-load-balancer-controller \
-    --role-name "AmazonEKSLoadBalancerControllerRole" \
-    --attach-policy-arn=$POLICY_ARN \
-    --approve
-fi
+  --approve
 
 echo "📦 Installing Helm Chart..."
 helm repo add eks https://aws.github.io/eks-charts
