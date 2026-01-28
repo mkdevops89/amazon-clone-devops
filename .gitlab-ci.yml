@@ -1,0 +1,42 @@
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  SONAR_HOST_URL: "http://sonarqube.devsecops.svc.cluster.local:9000" # Internal Cluster URL
+  SONAR_TOKEN: "$SONAR_TOKEN" # Add this variable in GitLab UI
+
+stages:
+  - build
+  - sast
+  - deploy
+
+cache:
+  paths:
+    - .m2/repository
+
+build_job:
+  stage: build
+  image: maven:3.8.3-openjdk-17
+  script:
+    - echo "Compiling code..."
+    - mvn clean install -DskipTests=true
+  artifacts:
+    paths:
+      - backend/target/*.jar
+
+sast_job:
+  stage: sast
+  image: maven:3.8.3-openjdk-17
+  script:
+    - echo "Running SonarQube Analysis..."
+    - mvn sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+  needs:
+    - build_job
+
+deploy_job:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - echo "Deploying to Kubernetes..."
+    - kubectl apply -f ops/k8s/backend.yaml
+  only:
+    - main
+    - phase-6c-gitlab

@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sonarqube-ingress
+  namespace: devsecops
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # Shared ALB Group - Reuses your existing Load Balancer
+    alb.ingress.kubernetes.io/group.name: "amazon-group"
+    # IMPORTANT: Replace with your actual ACM ARN during deployment (managed by Terraform usually)
+    alb.ingress.kubernetes.io/certificate-arn: '${ACM_CERTIFICATE_ARN}'
+spec:
+  ingressClassName: alb
+  rules:
+    - host: sonarqube.devcloudproject.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sonarqube
+                port:
+                  number: 80
