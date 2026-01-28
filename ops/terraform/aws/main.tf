@@ -49,7 +49,7 @@ module "eks" {
   # Worker Nodes Group
   eks_managed_node_groups = {
     default = {
-      instance_types = ["t3.medium"] # Cost-effective instance type
+      instance_types = ["t3.xlarge"] # Upgraded for Jenkins/SonarQube stability
     }
   }
 
