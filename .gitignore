@@ -100,3 +100,5 @@ ops/k8s/db-secrets.yaml
 !phase_6_walkthrough.md
 !phase_6_testcases.md
 !phase_6b_walkthrough.md
+!phase_6c_walkthrough.md
+!phase_6c_testcases.md
