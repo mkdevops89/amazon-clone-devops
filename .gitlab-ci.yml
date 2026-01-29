@@ -1,6 +1,6 @@
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  SONAR_HOST_URL: "http://sonarqube.devsecops.svc.cluster.local:80" # Internal Cluster URL (Service Port 80 -> Target 9000)
+  SONAR_HOST_URL: "https://sonarqube.devsecops.svc.cluster.local:80" # Internal Cluster URL (Service Port 80 -> Target 9000)
   SONAR_TOKEN: "$SONAR_TOKEN" # Add this variable in GitLab UI
 
 stages:
