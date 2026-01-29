@@ -1,12 +1,16 @@
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  SONAR_HOST_URL: "http://172.20.188.238:80" # Internal Cluster IP (Bypasses DNS & Variable Issues)
-  #SONAR_TOKEN: "$SONAR_TOKEN" # Add this variable in GitLab UI
+  SONAR_HOST_URL: "http://172.20.188.238:80"
+  # Add these in GitLab CI/CD Variables
+  # AWS_ACCOUNT_ID
+  # AWS_REGION
+  # SONAR_TOKEN
 
 stages:
   - scan-infra
   - build
   - test
+  - package
   - scan-container
   - deploy
 
@@ -14,8 +18,7 @@ cache:
   paths:
     - .m2/repository
 
-# 1. Infrastructure Scan (Checkov - IaC Security)
-# Checks Terraform for misconfigurations (e.g. open value security groups)
+# 1. Infrastructure Scan (Checkov)
 infra_scan_job:
   stage: scan-infra
   image: 
@@ -28,6 +31,7 @@ infra_scan_job:
   tags:
     - amazon-clone
 
+# 2. Build JAR
 build_job:
   stage: build
   image: maven:3.8.3-openjdk-17
@@ -40,6 +44,7 @@ build_job:
     paths:
       - backend/target/*.jar
 
+# 3. Test & Code Quality (SonarQube)
 sast_job:
   stage: test
   image: maven:3.8.3-openjdk-17
@@ -53,8 +58,25 @@ sast_job:
   tags:
     - amazon-clone
 
-# 3. Container Scan (Trivy - Supply Chain Security)
-# Scans the filesystem/dependencies for vulnerabilities
+# 4. Build & Push Docker Image (Kaniko)
+push_job:
+  stage: package
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "Building and Pushing to ECR..."
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}/backend"
+      --dockerfile "${CI_PROJECT_DIR}/backend/Dockerfile"
+      --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-backend:latest"
+  needs:
+    - build_job
+    - sast_job
+  tags:
+    - amazon-clone
+
+# 5. Security Scan (Trivy)
 trivy_scan_job:
   stage: scan-container
   image: 
@@ -68,11 +90,15 @@ trivy_scan_job:
   tags:
     - amazon-clone
 
+# 6. Deploy to EKS
 deploy_job:
   stage: deploy
   image: bitnami/kubectl:latest
   script:
     - echo "Deploying to Kubernetes..."
+    - echo "Replacing variables in manifest..."
+    - sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/backend.yaml
+    - sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/backend.yaml
     - kubectl apply -f ops/k8s/backend.yaml
   tags:
     - amazon-clone
