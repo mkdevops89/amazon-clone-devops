@@ -85,8 +85,8 @@ spec:
                                 fi
                                 echo "NVD_KEY injected (length=${#NVD_KEY})"
 
-                                # Safe path for multibranch pipelines
-                                JOB_SAFE_NAME=${JOB_NAME//\\//_}
+                                # Safe path using tr (POSIX compliant)
+                                JOB_SAFE_NAME=$(echo "$JOB_NAME" | tr / _)
                                 ODC_DATA_DIR="/var/maven/odc-data/${JOB_SAFE_NAME}"
                                 mkdir -p "$ODC_DATA_DIR"
 
