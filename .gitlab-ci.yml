@@ -44,8 +44,9 @@ sast_job:
   stage: test
   image: maven:3.8.3-openjdk-17
   script:
+    - test -n "$SONAR_TOKEN" || (echo "SONAR_TOKEN missing" && exit 1)
     - echo "Running SonarQube Analysis..."
-    - cd backend && mvn sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+    - cd backend && mvn sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.tokenn=$SONAR_TOKEN
   needs:
     - build_job
   tags:
