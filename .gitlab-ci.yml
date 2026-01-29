@@ -1,5 +1,6 @@
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  SONAR_HOST_URL: "http://172.20.188.238:80" # Internal Cluster IP (Bypasses DNS & Variable Issues)
   SONAR_TOKEN: "$SONAR_TOKEN" # Add this variable in GitLab UI
 
 stages:
