@@ -13,7 +13,7 @@ We need a place to send our code quality reports.
 ### 1.1 Create the Deployment
 Apply the SonarQube manifest which includes:
 *   **Persistence:** 10GB PVC to save data.
-*   **InitContainer:** Fixes `vm.max_map_count` for ElasticSearch.
+*   **InitContainers:** Fixes `vm.max_map_count` and volume permissions (chown 1000:1000).
 *   **Service:** Port 9000.
 
 ```bash
