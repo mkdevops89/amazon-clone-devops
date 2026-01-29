@@ -45,6 +45,7 @@ export ACM_CERTIFICATE_ARN="arn:aws:acm:us-east-1:406312601212:certificate/9e3aa
 
 envsubst < ops/k8s/nexus/nexus.yaml | kubectl apply -f -
 envsubst < ops/k8s/jenkins/jenkins.yaml | kubectl apply -f -
+envsubst < ops/k8s/ingress.yaml | kubectl apply -f -
 ```
 
 > [!TIP]
