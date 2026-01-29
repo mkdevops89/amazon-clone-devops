@@ -46,6 +46,7 @@ export DOMAIN_NAME="yourdomainaname.com"  Ensure this matches your route53 domai
 
 # 2. Deploy All Ingresses (Main, Nexus, Jenkins, Grafana)
 envsubst < ops/k8s/nexus/nexus.yaml | kubectl apply -f -
+kubectl apply -f ops/k8s/jenkins/nvd-cache-pvc.yaml # Required for Security Scans
 envsubst < ops/k8s/jenkins/jenkins.yaml | kubectl apply -f -
 envsubst < ops/k8s/ingress.yaml | kubectl apply -f -
 envsubst < ops/k8s/ingress-grafana.yaml | kubectl apply -f -
