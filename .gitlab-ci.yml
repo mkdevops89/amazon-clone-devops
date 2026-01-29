@@ -1,7 +1,7 @@
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   SONAR_HOST_URL: "http://172.20.188.238:80" # Internal Cluster IP (Bypasses DNS & Variable Issues)
-  SONAR_TOKEN: "$SONAR_TOKEN" # Add this variable in GitLab UI
+  #SONAR_TOKEN: "$SONAR_TOKEN" # Add this variable in GitLab UI
 
 stages:
   - scan-infra
@@ -47,7 +47,7 @@ sast_job:
     - test -n "$SONAR_TOKEN" || (echo "SONAR_TOKEN missing" && exit 1)
     - echo "Running SonarQube Analysis..."
     - cd backend 
-    - mvn -B sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.token="$SONAR_TOKEN"
+    - mvn -B sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.login="$SONAR_TOKEN"
   needs:
     - build_job
   tags:
