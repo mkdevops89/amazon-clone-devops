@@ -10,7 +10,7 @@ metadata:
 spec:
   containers:
     - name: maven
-      image: maven:3.8.6-openjdk-18
+      image: maven:3.9.6-eclipse-temurin-17
       command:
         - cat
       tty: true
@@ -20,18 +20,10 @@ spec:
       resources:
         requests:
           cpu: "50m"
-          memory: "128Mi"
-    - name: docker
-      image: docker:dind
-      securityContext:
-        privileged: true
-      command:
-        - cat
-      tty: true
-      resources:
-        requests:
-          cpu: "50m"
-          memory: "128Mi"
+          memory: "512Mi"
+        limits:
+          cpu: "1000m"
+          memory: "1Gi"
     - name: tools
       image: ubuntu:latest
       command:
@@ -73,7 +65,8 @@ spec:
         stage('Security: Secrets') {
             steps {
                 container('security') {
-                    sh 'trufflehog git file:///home/jenkins/agent/workspace/${JOB_NAME} --only-verified'
+                    // Use $WORKSPACE and clean job name for safety
+                    sh 'trufflehog git file://${WORKSPACE} --only-verified'
                 }
             }
         }
@@ -92,24 +85,18 @@ spec:
                                 fi
                                 echo "NVD_KEY injected (length=${#NVD_KEY})"
 
-                                # Validate NVD key + egress from this K8s agent
-                                # CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-                                #   "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=1&apiKey=${NVD_KEY}")
-                                # echo "NVD HTTP status: $CODE"
-                                # if [ "$CODE" != "200" ]; then
-                                #   echo "ERROR: NVD API not reachable or key invalid (status=$CODE)"
-                                #   exit 1
-                                # fi
-
-                                # Use persistent cache (PVC) - job-scoped folder reduces corruption collisions
-                                ODC_DATA_DIR="/var/maven/odc-data/${JOB_NAME}"
+                                # Safe path for multibranch pipelines
+                                JOB_SAFE_NAME=${JOB_NAME//\\//_}
+                                ODC_DATA_DIR="/var/maven/odc-data/${JOB_SAFE_NAME}"
                                 mkdir -p "$ODC_DATA_DIR"
 
-                                echo "WARNING: NVD Check skipped due to persistent 404/Rate Limits."
-                                # mvn -B org.owasp:dependency-check-maven:9.0.9:check \
-                                #   -DnvdApiKey="${NVD_KEY}" \
-                                #   -DnvdApiDelay=25000 \
-                                #   -DdataDirectory="$ODC_DATA_DIR"
+                                # Run ODC with Warn-Only (exit code 0 on failure)
+                                echo "Running OWASP Dependency Check (Warn Only mode)..."
+                                mvn -B org.owasp:dependency-check-maven:9.0.9:check \
+                                  -DnvdApiKey="${NVD_KEY}" \
+                                  -DnvdApiDelay=25000 \
+                                  -DdataDirectory="$ODC_DATA_DIR" \
+                                  -DfailOnError=false || echo "ODC Scan failed (Ignored)"
                             '''
                         }
                     }
@@ -145,7 +132,10 @@ spec:
                         // Uses 'nexus-credentials' created in Walkthrough Step 7
                         withCredentials([usernamePassword(credentialsId: 'nexus-credentials', passwordVariable: 'NEXUS_PWD', usernameVariable: 'NEXUS_USER')]) {
                             sh '''
-                                # Generate a temporary settings.xml with credentials
+                                # Cleanup credentials on exit (trap works even if build fails)
+                                trap "rm -f settings.xml" EXIT
+
+                                # Generate settings.xml
                                 cat > settings.xml <<EOF
 <settings>
   <servers>
@@ -164,7 +154,6 @@ spec:
 EOF
                                 echo "Uploading artifact to Nexus..."
                                 mvn deploy -s settings.xml -DskipTests=true
-                                rm settings.xml
                             '''
                         }
                     }
