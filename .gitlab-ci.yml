@@ -31,7 +31,7 @@ build_job:
   image: maven:3.8.3-openjdk-17
   script:
     - echo "Compiling code..."
-    - mvn clean install -DskipTests=true
+    - cd backend && mvn clean install -DskipTests=true
   artifacts:
     paths:
       - backend/target/*.jar
@@ -41,7 +41,7 @@ sast_job:
   image: maven:3.8.3-openjdk-17
   script:
     - echo "Running SonarQube Analysis..."
-    - mvn sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+    - cd backend && mvn sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
   needs:
     - build_job
 
