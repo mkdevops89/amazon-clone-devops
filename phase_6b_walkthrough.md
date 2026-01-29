@@ -40,12 +40,15 @@ Now deploy the apps (which will use the new `gp3` storage).
 
 Run this command to replace the placeholders:
 ```bash
-# Set the ACM ARN found in your AWS Console
-export ACM_CERTIFICATE_ARN="arn:aws:acm:us-east-1:406312601212:certificate/9e3aa5f9-1cec-488b-943c-6994089e3775"
+# 1. Fetch Values Dynamically (No Copy-Paste needed!)
+export ACM_CERTIFICATE_ARN=$(cd ops/terraform/aws && terraform output -raw acm_certificate_arn)
+export DOMAIN_NAME="yourdomainaname.com"  Ensure this matches your route53 domain
 
+# 2. Deploy All Ingresses (Main, Nexus, Jenkins, Grafana)
 envsubst < ops/k8s/nexus/nexus.yaml | kubectl apply -f -
 envsubst < ops/k8s/jenkins/jenkins.yaml | kubectl apply -f -
 envsubst < ops/k8s/ingress.yaml | kubectl apply -f -
+envsubst < ops/k8s/ingress-grafana.yaml | kubectl apply -f -
 ```
 
 > [!TIP]
@@ -63,7 +66,7 @@ Run this command in your terminal:
 ```bash
 kubectl get ingress -n default amazon-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
 ```
-*(Result: `k8s-amazongroup-629b6c7264-839863946.us-east-1.elb.amazonaws.com`)*
+*(Result: `k8s-amazongroup-..................`)*
 
 1.  Go to **Route53** -> **Hosted Zones**.
 2.  Create two new records:
@@ -76,7 +79,7 @@ kubectl get ingress -n default amazon-ingress -o jsonpath='{.status.loadBalancer
 
 ### Unlock Jenkins
 1.  **URL:** Go to `https://jenkins.devcloudproject.com`
-2.  **Initial Password:** `497e1b2074af4579a7ed29d00af0ff05` (Retrieved via `kubectl exec`)
+2.  **Initial Password:** `kubectl exec -it -n devsecops deployment/jenkins -- cat /var/jenkins_home/secrets/initialAdminPassword`
 3.  **Setup Wizard:**
     *   Paste the password.
     *   Select **"Install Suggested Plugins"**.
@@ -87,7 +90,7 @@ kubectl get ingress -n default amazon-ingress -o jsonpath='{.status.loadBalancer
 1.  **URL:** Go to `https://nexus.devcloudproject.com`
 2.  Click **Sign In** (top right).
 3.  **Username:** `admin`
-4.  **Initial Password:** `2e840eff-a549-488c-9f82-bfdcce38b389` (Retrieved via `kubectl exec`)
+4.  **Initial Password:** `kubectl exec -it -n devsecops deployment/nexus -- cat /nexus-data/admin.password`
 5.  Follow the wizard (Change password, allow anonymous access for now).
 
 ---
