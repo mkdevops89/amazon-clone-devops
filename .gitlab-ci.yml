@@ -25,6 +25,8 @@ infra_scan_job:
     - echo "Scanning Infrastructure as Code..."
     - checkov -d ops/terraform/aws --skip-check CKV_AWS_* --soft-fail || echo "Checkov found issues but soft-fail is on"
   allow_failure: true
+  tags:
+    - amazon-clone
 
 build_job:
   stage: build
@@ -32,6 +34,8 @@ build_job:
   script:
     - echo "Compiling code..."
     - cd backend && mvn clean install -DskipTests=true
+  tags:
+    - amazon-clone
   artifacts:
     paths:
       - backend/target/*.jar
@@ -44,6 +48,8 @@ sast_job:
     - cd backend && mvn sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
   needs:
     - build_job
+  tags:
+    - amazon-clone
 
 # 3. Container Scan (Trivy - Supply Chain Security)
 # Scans the filesystem/dependencies for vulnerabilities
@@ -57,6 +63,8 @@ trivy_scan_job:
     - trivy fs . --severity HIGH,CRITICAL --no-progress
   needs:
     - build_job
+  tags:
+    - amazon-clone
 
 deploy_job:
   stage: deploy
@@ -64,6 +72,8 @@ deploy_job:
   script:
     - echo "Deploying to Kubernetes..."
     - kubectl apply -f ops/k8s/backend.yaml
+  tags:
+    - amazon-clone
   only:
     - main
     - phase-6c-gitlab
