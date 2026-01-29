@@ -40,14 +40,6 @@ data:
   config.toml: |
     concurrent = 4
     check_interval = 0
-    [[runners]]
-      name = "kubernetes-runner"
-      url = "https://gitlab.com/"
-      executor = "kubernetes"
-      [runners.kubernetes]
-        namespace = "gitlab-runner"
-        privileged = true
-        image = "maven:3.8.3-openjdk-17"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -73,14 +65,20 @@ spec:
               value: "https://gitlab.com/"
             - name: REGISTRATION_TOKEN
               value: "REPLACE_ME_WITH_TOKEN"
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              cp /config-template/config.toml /etc/gitlab-runner/config.toml
+              gitlab-runner register --non-interactive --url https://gitlab.com/ --registration-token $REGISTRATION_TOKEN --executor kubernetes --tags amazon-clone --locked=false
+              gitlab-runner run --user=gitlab-runner --working-directory=/home/gitlab-runner
           volumeMounts:
-            - name: config
+            - name: config-template
+              mountPath: "/config-template"
+            - name: runner-data
               mountPath: "/etc/gitlab-runner"
-          lifecycle:
-            postStart:
-              exec:
-                command: ["/bin/bash", "-c", "gitlab-runner register --non-interactive --url https://gitlab.com/ --registration-token $REGISTRATION_TOKEN --executor kubernetes --tags amazon-clone --locked=false"]
       volumes:
-        - name: config
+        - name: config-template
           configMap:
             name: gitlab-runner-config
+        - name: runner-data
+          emptyDir: {}
