@@ -52,7 +52,8 @@ Since we are using partial automation, you need to point the domain to the Load 
 4.  **Project Key:** `amazon-clone-backend`.
 5.  **Project Display Name:** `Amazon Clone Backend`.
 6.  **Main Branch Name:** `main` (if prompted).
-7.  **Generate Token:** Name it `gitlab-ci-token` and **SAVE IT** (You will need it for GitLab Variables).
+7.  **Generate Token:** Name it `gitlab-ci-token` and **COPY THE VALUE**.
+    *   **CRITICAL:** Copy the long random string (e.g., `sqa_...`). Do not copy the name. You cannot see it again.
 
 ---
 
@@ -84,10 +85,10 @@ Update the runner manifest with your specific token.
 # Export your token
 export GITLAB_TOKEN="glrt-YOUR_TOKEN_HERE"
 
-# Deploy (using sed to inject token temporarily)
+# Inject Token & Apply (Use this method to avoid committing secrets)
 sed "s/REPLACE_ME_WITH_TOKEN/$GITLAB_TOKEN/g" ops/k8s/gitlab/runner.yaml | kubectl apply -f -
 ```
-*(Note: In production, we would use Secrets, but this is fine for learning).*
+*(Note: In production, we would use Kubernetes Secrets or External Secrets Operator, but this `sed` injection pattern is fine for learning).*
 
 ### 2.3 Connect Local Repo to GitLab
 Now that the project is created, we need to upload our code.
@@ -113,31 +114,59 @@ git push -u gitlab phase-6c-gitlab
 
 ---
 
-### 2.4 Configure Secret Variables
-We need to give GitLab the SonarQube token securely.
+## 🔑 Step 3: Configure CI/CD Variables
+We need to give GitLab access to our AWS credentials and SonarQube.
 
 1.  Go to your GitLab Project -> **Settings** -> **CI/CD**.
 2.  Expand **Variables**.
-3.  Click **Add variable**.
-    *   **Key:** `SONAR_TOKEN`
-    *   **Value:** (Paste your SonarQube token from Step 1.4)
-    *   **Type:** Variable
-    *   **Flags:** Check "Mask variable" (to hide it in logs).
-4.  Click **Add variable**.
+3.  Add the following variables:
+
+| Key | Value | Flags |
+| :--- | :--- | :--- |
+| `SONAR_TOKEN` | (The `sqa_...` value from Step 1.4) | Masked |
+| `AWS_ACCOUNT_ID` | (Your 12-digit AWS Account ID) | Masked |
+| `AWS_REGION` | `us-east-1` | - |
+
+> **Why AWS Credentials?**
+> The pipeline needs them to:
+> 1.  Push the Docker image to ECR (`push_job`).
+> 2.  Update the Kubernetes Manifest (`deploy_job`).
 
 ---
 
-## 🚀 Step 3: The Pipeline (.gitlab-ci.yml)
+## 🚀 Step 4: The Pipeline (.gitlab-ci.yml)
 We define our pipeline stages in the root of the repository.
 
-1.  **Infrastructure Scan:** (New) Checkov scans our Terraform for cloud misconfigurations.
-2.  **Build:** Compile Java code.
-3.  **Code Quality:** Run `mvn sonar:sonar`.
-4.  **Container Scan:** (New) Trivy scans the filesystem and dependencies for CVEs.
-5.  **Deploy:** Update the Kubernetes cluster.
+1.  **Infrastructure Scan (Checkov):** Scans Terraform for cloud misconfigurations.
+2.  **Build:** Compiles Java code into a JAR.
+3.  **Code Quality (SonarQube):** Runs `mvn sonar:sonar` to audit code quality.
+4.  **Package (Kaniko):** Builds the Docker image and pushes it to your ECR registry.
+5.  **Container Scan (Trivy):** Scans the new Docker image/filesystem for CVEs.
+6.  **Deploy:** Uses `kubectl` to update the application in the EKS cluster.
+    *   *Note:* It uses `sed` to inject your AWS Account ID into the manifest before applying.
+
+---
+
+## ⚠️ Troubleshooting
+
+### ECR Permission Denied (`ecr:InitiateLayerUpload`)
+If your pipeline fails at the **Package** stage with "Authorization Denied", it means your Kubernetes Nodes don't have permission to write to ECR.
+
+**Fix:** Attach the **AmazonEC2ContainerRegistryPowerUser** policy to your EKS Node Group Role.
+
+```bash
+# 1. Find your Node Group Role Name
+aws iam list-roles --query "Roles[?contains(RoleName, 'default-eks-node-group')].RoleName" --output text
+
+# 2. Attach the Policy (Replace ROLE_NAME below)
+aws iam attach-role-policy \
+  --role-name "default-eks-node-group-xxxxxxxxx" \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
+```
 
 ---
 
 ## ✅ Verification
-*   **SonarQube:** Check the dashboard for the "Green" Quality Gate.
-*   **GitLab:** Ensure the pipeline passes.
+*   **SonarQube:** Check the dashboard (`https://sonarqube.devcloudproject.com`) for the "Green" Quality Gate.
+*   **GitLab:** Ensure all 6 stages of the pipeline pass.
+*   **Application:** Verify the application is running by checking the `amazon-backend` pod age or logs.
