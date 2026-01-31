@@ -35,6 +35,7 @@ infra_scan_job:
   tags:
     - amazon-clone
   artifacts:
+    when: always
     paths:
       - checkov-report.xml
     expire_in: 1 week
@@ -52,6 +53,7 @@ gitleaks_scan_job:
   tags:
     - amazon-clone
   artifacts:
+    when: always
     paths:
       - gitleaks-report.json
     expire_in: 1 week
@@ -104,6 +106,7 @@ dependency_check_job:
   tags:
     - amazon-clone
   artifacts:
+    when: always
     paths:
       - dependency-check-report/*
     expire_in: 1 week
@@ -146,6 +149,11 @@ trivy_scan_job:
     - build_job
   tags:
     - amazon-clone
+  artifacts:
+    when: always
+    paths:
+      - trivy-report.txt
+    expire_in: 1 week
 
 # ===============================
 # 6. Deployment
@@ -185,6 +193,7 @@ zap_scan_job:
   tags:
     - amazon-clone
   artifacts:
+    when: always
     paths:
       - zap_report.html
     expire_in: 1 week
