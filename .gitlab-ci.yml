@@ -17,6 +17,7 @@ stages:
 cache:
   paths:
     - .m2/repository
+    - owasp-data
 
 # ===============================
 # 1. Infrastructure Security
@@ -102,7 +103,7 @@ dependency_check_job:
     - echo "Running OWASP Dependency Check..."
     - |
       mkdir -p dependency-check-report
-      /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report/dependency-check-report.html --nvdApiKey "$NVD_API_KEY"
+      /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report/dependency-check-report.html --data ./owasp-data --nvdApiKey "$NVD_API_KEY"
   allow_failure: true
   tags:
     - amazon-clone
