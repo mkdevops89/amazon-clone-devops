@@ -31,7 +31,7 @@ infra_scan_job:
     entrypoint: [""]
   script:
     - echo "Scanning Infrastructure as Code..."
-    - checkov -d ops/terraform/aws --skip-check CKV_AWS_* --soft-fail || echo "Checkov found issues but soft-fail is on"
+    - 'checkov -d ops/terraform/aws --skip-check CKV_AWS_* --soft-fail || echo "Checkov found issues but soft-fail is on"'
   allow_failure: true
   tags:
     - amazon-clone
@@ -44,7 +44,7 @@ gitleaks_scan_job:
     entrypoint: [""]
   script:
     - echo "Scanning for secrets..."
-    - gitleaks detect --source=. --verbose --redact
+    - "gitleaks detect --source=. --verbose --redact"
   allow_failure: true
   tags:
     - amazon-clone
@@ -59,7 +59,7 @@ build_job:
   image: maven:3.8.3-openjdk-17
   script:
     - echo "Compiling code..."
-    - cd backend && mvn clean install -DskipTests=true
+    - "cd backend && mvn clean install -DskipTests=true"
   tags:
     - amazon-clone
   artifacts:
@@ -75,10 +75,10 @@ sast_job:
   stage: test
   image: maven:3.8.3-openjdk-17
   script:
-    - test -n "$SONAR_TOKEN" || (echo "SONAR_TOKEN missing" && exit 1)
+    - 'test -n "$SONAR_TOKEN" || (echo "SONAR_TOKEN missing" && exit 1)'
     - echo "Running SonarQube Analysis..."
-    - cd backend 
-    - mvn -B sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.login="$SONAR_TOKEN"
+    - "cd backend" 
+    - 'mvn -B sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.login="$SONAR_TOKEN"'
   needs:
     - build_job
   tags:
@@ -92,7 +92,7 @@ dependency_check_job:
     entrypoint: [""]
   script:
     - echo "Running OWASP Dependency Check..."
-    - /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report
+    - '/usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report'
   allow_failure: true
   tags:
     - amazon-clone
@@ -113,10 +113,7 @@ push_job:
     entrypoint: [""]
   script:
     - echo "Building and Pushing to ECR..."
-    - /kaniko/executor
-      --context "${CI_PROJECT_DIR}/backend"
-      --dockerfile "${CI_PROJECT_DIR}/backend/Dockerfile"
-      --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-backend:latest"
+    - /kaniko/executor --context "${CI_PROJECT_DIR}/backend" --dockerfile "${CI_PROJECT_DIR}/backend/Dockerfile" --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-backend:latest"
   needs:
     - build_job
     - sast_job
@@ -135,7 +132,7 @@ trivy_scan_job:
     entrypoint: [""]
   script:
     - echo "Scanning dependencies and filesystem..."
-    - trivy fs . --severity HIGH,CRITICAL --no-progress
+    - "trivy fs . --severity HIGH,CRITICAL --no-progress"
   needs:
     - build_job
   tags:
@@ -152,9 +149,9 @@ deploy_job:
   script:
     - echo "Deploying to Kubernetes..."
     - echo "Replacing variables in manifest..."
-    - sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/backend.yaml
-    - sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/backend.yaml
-    - kubectl apply -f ops/k8s/backend.yaml
+    - 'sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/backend.yaml'
+    - 'sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/backend.yaml'
+    - "kubectl apply -f ops/k8s/backend.yaml"
   tags:
     - amazon-clone
   only:
@@ -174,8 +171,8 @@ dast_job:
   script:
     - echo "Running OWSAP ZAP Baseline Scan against Backup..."
     # Scans the internal k8s service DNS
-    - zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r zap_report.html || echo "ZAP found vulnerabilities"
-    - cp /zap/wrk/zap_report.html . || echo "Report generation failed"
+    - 'zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r zap_report.html || echo "ZAP found vulnerabilities"'
+    - "cp /zap/wrk/zap_report.html . || echo 'Report generation failed'"
   allow_failure: true
   tags:
     - amazon-clone
