@@ -1,10 +1,10 @@
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   SONAR_HOST_URL: "http://172.20.188.238:80"
-  # Add these in GitLab CI/CD Variables
-  # AWS_ACCOUNT_ID
-  # AWS_REGION
-  # SONAR_TOKEN
+  # Set these in GitLab CI/CD Variables
+  # AWS_ACCOUNT_ID: [Your Account ID]
+  # AWS_REGION: us-east-1
+  # SONAR_TOKEN: [Your Sonar Token]
 
 stages:
   - scan-infra
@@ -13,12 +13,17 @@ stages:
   - package
   - scan-container
   - deploy
+  - dast
 
 cache:
   paths:
     - .m2/repository
 
-# 1. Infrastructure Scan (Checkov)
+# ===============================
+# 1. Infrastructure Security
+# ===============================
+
+# 1a. Checkov (IaC Scan)
 infra_scan_job:
   stage: scan-infra
   image: 
@@ -31,7 +36,24 @@ infra_scan_job:
   tags:
     - amazon-clone
 
-# 2. Build JAR
+# 1b. Gitleaks (Secret Scanning)
+gitleaks_scan_job:
+  stage: scan-infra
+  image: 
+    name: zricethezav/gitleaks:latest
+    entrypoint: [""]
+  script:
+    - echo "Scanning for secrets..."
+    - gitleaks detect --source=. --verbose --redact
+  allow_failure: true
+  tags:
+    - amazon-clone
+
+# ===============================
+# 2. Build Artifacts
+# ===============================
+
+# 2a. Maven Build
 build_job:
   stage: build
   image: maven:3.8.3-openjdk-17
@@ -44,7 +66,11 @@ build_job:
     paths:
       - backend/target/*.jar
 
-# 3. Test & Code Quality (SonarQube)
+# ===============================
+# 3. Code Security & Quality
+# ===============================
+
+# 3a. SonarQube (SAST)
 sast_job:
   stage: test
   image: maven:3.8.3-openjdk-17
@@ -58,7 +84,28 @@ sast_job:
   tags:
     - amazon-clone
 
-# 4. Build & Push Docker Image (Kaniko)
+# 3b. OWASP Dependency Check (SCA)
+dependency_check_job:
+  stage: test
+  image: 
+    name: owasp/dependency-check:latest
+    entrypoint: [""]
+  script:
+    - echo "Running OWASP Dependency Check..."
+    - /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report
+  allow_failure: true
+  tags:
+    - amazon-clone
+  artifacts:
+    paths:
+      - dependency-check-report/*
+    expire_in: 1 week
+
+# ===============================
+# 4. Container Build
+# ===============================
+
+# 4a. Kaniko (Docker Build & Push)
 push_job:
   stage: package
   image:
@@ -76,7 +123,11 @@ push_job:
   tags:
     - amazon-clone
 
-# 5. Security Scan (Trivy)
+# ===============================
+# 5. Container Security
+# ===============================
+
+# 5a. Trivy (Container Scan)
 trivy_scan_job:
   stage: scan-container
   image: 
@@ -90,7 +141,11 @@ trivy_scan_job:
   tags:
     - amazon-clone
 
-# 6. Deploy to EKS
+# ===============================
+# 6. Deployment
+# ===============================
+
+# 6a. Deploy to EKS
 deploy_job:
   stage: deploy
   image: bitnami/kubectl:latest
@@ -105,3 +160,26 @@ deploy_job:
   only:
     - main
     - phase-6c-gitlab
+
+# ===============================
+# 7. Dynamic Analysis
+# ===============================
+
+# 7a. OWASP ZAP (DAST)
+dast_job:
+  stage: dast
+  image: 
+    name: ghcr.io/zaproxy/zaproxy:stable
+    entrypoint: [""]
+  script:
+    - echo "Running OWSAP ZAP Baseline Scan against Backup..."
+    # Scans the internal k8s service DNS
+    - zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r zap_report.html || echo "ZAP found vulnerabilities"
+    - cp /zap/wrk/zap_report.html . || echo "Report generation failed"
+  allow_failure: true
+  tags:
+    - amazon-clone
+  artifacts:
+    paths:
+      - zap_report.html
+    expire_in: 1 week
