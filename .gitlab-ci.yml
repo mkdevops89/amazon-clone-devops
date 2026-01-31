@@ -146,7 +146,8 @@ trivy_scan_job:
   script:
     - echo "Scanning dependencies and filesystem..."
     - trivy fs . --severity HIGH,CRITICAL --no-progress --output trivy-report.txt
-    - cat trivy-report.txt # Show in logs  needs:
+    - cat trivy-report.txt # Show in logs
+  needs:
     - build_job
   tags:
     - amazon-clone
