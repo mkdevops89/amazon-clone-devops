@@ -175,6 +175,7 @@ deploy_job:
   only:
     - main
     - phase-6c-gitlab
+    - phase-6d-scanreports
 
 # ===============================
 # 7. Dynamic Analysis
