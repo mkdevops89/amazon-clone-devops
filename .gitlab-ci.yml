@@ -164,7 +164,7 @@ trivy_scan_job:
 
 deploy_job:
   stage: deploy
-  image: bitnami/kubectl:latest
+  image: dtzar/helm-kubectl:latest
   script:
     - echo "Deploying to Kubernetes..."
     - echo "Replacing variables in manifest..."
@@ -177,6 +177,7 @@ deploy_job:
   only:
     - main
     - phase-6c-gitlab
+    - phase-6d-scanreports
 
 # ===============================
 # 7. Dynamic Analysis
@@ -190,8 +191,10 @@ zap_scan_job:
   script:
     - echo "Running OWSAP ZAP Baseline Scan against Backup..."
     - |
-      zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r /tmp/zap_report.html || echo "ZAP found vulnerabilities"
-      cp /tmp/zap_report.html ./zap_report.html || echo "Report generation failed"
+      # Hack: Patch ZAP script to bypass mount check which fails in GitLab CI
+      sed -i 's/if not os.path.ismount(base_dir):/if False:/' /zap/zap-baseline.py
+      zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r /zap/wrk/zap_report.html || echo "ZAP found vulnerabilities"
+      cp /zap/wrk/zap_report.html ./zap_report.html || echo "Report generation failed"
   allow_failure: true
   tags:
     - amazon-clone
