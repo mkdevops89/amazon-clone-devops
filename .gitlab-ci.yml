@@ -1,10 +1,8 @@
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   SONAR_HOST_URL: "http://172.20.188.238:80"
-  # Set these in GitLab CI/CD Variables
-  # AWS_ACCOUNT_ID: [Your Account ID]
-  # AWS_REGION: us-east-1
-  # SONAR_TOKEN: [Your Sonar Token]
+  # Add these in GitLab CI/CD Variables
+  # AWS_ACCOUNT_ID, AWS_REGION, SONAR_TOKEN
 
 stages:
   - scan-infra
@@ -23,7 +21,6 @@ cache:
 # 1. Infrastructure Security
 # ===============================
 
-# 1a. Checkov (IaC Scan)
 infra_scan_job:
   stage: scan-infra
   image: 
@@ -31,12 +28,12 @@ infra_scan_job:
     entrypoint: [""]
   script:
     - echo "Scanning Infrastructure as Code..."
-    - 'checkov -d ops/terraform/aws --skip-check CKV_AWS_* --soft-fail || echo "Checkov found issues but soft-fail is on"'
+    - |
+      checkov -d ops/terraform/aws --skip-check CKV_AWS_* --soft-fail || echo "Checkov found issues but soft-fail is on"
   allow_failure: true
   tags:
     - amazon-clone
 
-# 1b. Gitleaks (Secret Scanning)
 gitleaks_scan_job:
   stage: scan-infra
   image: 
@@ -44,7 +41,7 @@ gitleaks_scan_job:
     entrypoint: [""]
   script:
     - echo "Scanning for secrets..."
-    - "gitleaks detect --source=. --verbose --redact"
+    - gitleaks detect --source=. --verbose --redact
   allow_failure: true
   tags:
     - amazon-clone
@@ -53,13 +50,12 @@ gitleaks_scan_job:
 # 2. Build Artifacts
 # ===============================
 
-# 2a. Maven Build
 build_job:
   stage: build
   image: maven:3.8.3-openjdk-17
   script:
     - echo "Compiling code..."
-    - "cd backend && mvn clean install -DskipTests=true"
+    - cd backend && mvn clean install -DskipTests=true
   tags:
     - amazon-clone
   artifacts:
@@ -70,21 +66,20 @@ build_job:
 # 3. Code Security & Quality
 # ===============================
 
-# 3a. SonarQube (SAST)
 sast_job:
   stage: test
   image: maven:3.8.3-openjdk-17
   script:
-    - 'test -n "$SONAR_TOKEN" || (echo "SONAR_TOKEN missing" && exit 1)'
-    - echo "Running SonarQube Analysis..."
-    - "cd backend" 
-    - 'mvn -B sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.login="$SONAR_TOKEN"'
+    - |
+      test -n "$SONAR_TOKEN" || (echo "SONAR_TOKEN missing" && exit 1)
+      echo "Running SonarQube Analysis..."
+      cd backend 
+      mvn -B sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.login="$SONAR_TOKEN"
   needs:
     - build_job
   tags:
     - amazon-clone
 
-# 3b. OWASP Dependency Check (SCA)
 dependency_check_job:
   stage: test
   image: 
@@ -92,7 +87,8 @@ dependency_check_job:
     entrypoint: [""]
   script:
     - echo "Running OWASP Dependency Check..."
-    - '/usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report'
+    - |
+      /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report
   allow_failure: true
   tags:
     - amazon-clone
@@ -105,7 +101,6 @@ dependency_check_job:
 # 4. Container Build
 # ===============================
 
-# 4a. Kaniko (Docker Build & Push)
 push_job:
   stage: package
   image:
@@ -113,7 +108,11 @@ push_job:
     entrypoint: [""]
   script:
     - echo "Building and Pushing to ECR..."
-    - /kaniko/executor --context "${CI_PROJECT_DIR}/backend" --dockerfile "${CI_PROJECT_DIR}/backend/Dockerfile" --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-backend:latest"
+    - |
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}/backend" \
+        --dockerfile "${CI_PROJECT_DIR}/backend/Dockerfile" \
+        --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-backend:latest"
   needs:
     - build_job
     - sast_job
@@ -124,7 +123,6 @@ push_job:
 # 5. Container Security
 # ===============================
 
-# 5a. Trivy (Container Scan)
 trivy_scan_job:
   stage: scan-container
   image: 
@@ -132,7 +130,7 @@ trivy_scan_job:
     entrypoint: [""]
   script:
     - echo "Scanning dependencies and filesystem..."
-    - "trivy fs . --severity HIGH,CRITICAL --no-progress"
+    - trivy fs . --severity HIGH,CRITICAL --no-progress
   needs:
     - build_job
   tags:
@@ -142,16 +140,16 @@ trivy_scan_job:
 # 6. Deployment
 # ===============================
 
-# 6a. Deploy to EKS
 deploy_job:
   stage: deploy
   image: bitnami/kubectl:latest
   script:
     - echo "Deploying to Kubernetes..."
     - echo "Replacing variables in manifest..."
-    - 'sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/backend.yaml'
-    - 'sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/backend.yaml'
-    - "kubectl apply -f ops/k8s/backend.yaml"
+    - |
+      sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/backend.yaml
+      sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/backend.yaml
+      kubectl apply -f ops/k8s/backend.yaml
   tags:
     - amazon-clone
   only:
@@ -162,7 +160,6 @@ deploy_job:
 # 7. Dynamic Analysis
 # ===============================
 
-# 7a. OWASP ZAP (DAST)
 dast_job:
   stage: dast
   image: 
@@ -170,9 +167,9 @@ dast_job:
     entrypoint: [""]
   script:
     - echo "Running OWSAP ZAP Baseline Scan against Backup..."
-    # Scans the internal k8s service DNS
-    - 'zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r zap_report.html || echo "ZAP found vulnerabilities"'
-    - "cp /zap/wrk/zap_report.html . || echo 'Report generation failed'"
+    - |
+      zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r zap_report.html || echo "ZAP found vulnerabilities"
+      cp /zap/wrk/zap_report.html . || echo "Report generation failed"
   allow_failure: true
   tags:
     - amazon-clone
