@@ -8,7 +8,7 @@ This document outlines the tests to verify the integrity of the CI/CD pipeline a
 
 ### ✅ TC-6A-01: Secret Detection (TruffleHog)
 **Scenario:** Verify that committing secret keys breaks the build.
-1.  **Action:** Create a .txt file name it `secrets.txt` with content `aws secret key and value`.
+1.  **Action:** Create a .txt file name it `secrets.txt` with content `aws secret key and value`...
 2.  **Action:** Commit and push to `phase-6a-githubactions`.
 3.  **Expected Result:** The GitHub Action `DevSecOps CI` fails at the "TruffleHog" step.
 4.  **Recovery:** Remove the file, squash commits (or remove from history), and push again. The build should pass.
