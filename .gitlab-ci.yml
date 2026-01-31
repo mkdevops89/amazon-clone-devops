@@ -1,11 +1,8 @@
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   SONAR_HOST_URL: "http://172.20.188.238:80"
-  NVD_API_KEY: "963cb7bb-6087-487e-91b6-4364928d2fac"
-  # Set these in GitLab CI/CD Variables
-  # AWS_ACCOUNT_ID: [Your Account ID]
-  # AWS_REGION: us-east-1
-  # SONAR_TOKEN: [Your Sonar Token]
+  # Add these in GitLab CI/CD Variables
+  # AWS_ACCOUNT_ID, AWS_REGION, SONAR_TOKEN, NVD_API_KEY
 
 stages:
   - scan-infra
