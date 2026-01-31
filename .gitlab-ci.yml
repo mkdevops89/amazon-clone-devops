@@ -88,6 +88,7 @@ dependency_check_job:
   script:
     - echo "Running OWASP Dependency Check..."
     - |
+      mkdir -p dependency-check-report
       /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report
   allow_failure: true
   tags:
