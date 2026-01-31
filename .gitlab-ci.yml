@@ -29,10 +29,15 @@ infra_scan_job:
   script:
     - echo "Scanning Infrastructure as Code..."
     - |
-      checkov -d ops/terraform/aws --skip-check CKV_AWS_* --soft-fail || echo "Checkov found issues but soft-fail is on"
+      checkov -d ops/terraform/aws --skip-check CKV_AWS_* --output junitxml > checkov-report.xml || echo "Checkov found issues"
+      cat checkov-report.xml # Print to logs too
   allow_failure: true
   tags:
     - amazon-clone
+  artifacts:
+    paths:
+      - checkov-report.xml
+    expire_in: 1 week
 
 gitleaks_scan_job:
   stage: scan-infra
@@ -41,10 +46,15 @@ gitleaks_scan_job:
     entrypoint: [""]
   script:
     - echo "Scanning for secrets..."
-    - gitleaks detect --source=. --verbose --redact
+    - |
+      gitleaks detect --source=. --verbose --redact --report-path gitleaks-report.json
   allow_failure: true
   tags:
     - amazon-clone
+  artifacts:
+    paths:
+      - gitleaks-report.json
+    expire_in: 1 week
 
 # ===============================
 # 2. Build Artifacts
