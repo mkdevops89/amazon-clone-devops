@@ -1,8 +1,11 @@
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   SONAR_HOST_URL: "http://172.20.188.238:80"
-  # Add these in GitLab CI/CD Variables
-  # AWS_ACCOUNT_ID, AWS_REGION, SONAR_TOKEN
+  NVD_API_KEY: "963cb7bb-6087-487e-91b6-4364928d2fac"
+  # Set these in GitLab CI/CD Variables
+  # AWS_ACCOUNT_ID: [Your Account ID]
+  # AWS_REGION: us-east-1
+  # SONAR_TOKEN: [Your Sonar Token]
 
 stages:
   - scan-infra
@@ -89,7 +92,7 @@ dependency_check_job:
     - echo "Running OWASP Dependency Check..."
     - |
       mkdir -p dependency-check-report
-      /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report
+      /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report --nvdApiKey "$NVD_API_KEY"
   allow_failure: true
   tags:
     - amazon-clone
