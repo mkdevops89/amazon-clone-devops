@@ -102,7 +102,7 @@ dependency_check_job:
     - echo "Running OWASP Dependency Check..."
     - |
       mkdir -p dependency-check-report
-      /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report --nvdApiKey "$NVD_API_KEY"
+      /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report/dependency-check-report.html --nvdApiKey "$NVD_API_KEY"
   allow_failure: true
   tags:
     - amazon-clone
@@ -145,8 +145,8 @@ trivy_scan_job:
     entrypoint: [""]
   script:
     - echo "Scanning dependencies and filesystem..."
-    - trivy fs . --severity HIGH,CRITICAL --no-progress
-  needs:
+    - trivy fs . --severity HIGH,CRITICAL --no-progress --output trivy-report.txt
+    - cat trivy-report.txt # Show in logs  needs:
     - build_job
   tags:
     - amazon-clone
@@ -189,8 +189,8 @@ zap_scan_job:
   script:
     - echo "Running OWSAP ZAP Baseline Scan against Backup..."
     - |
-      zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r zap_report.html || echo "ZAP found vulnerabilities"
-      cp /zap/wrk/zap_report.html . || echo "Report generation failed"
+      zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r /tmp/zap_report.html || echo "ZAP found vulnerabilities"
+      cp /tmp/zap_report.html ./zap_report.html || echo "Report generation failed"
   allow_failure: true
   tags:
     - amazon-clone
@@ -215,7 +215,7 @@ upload_reports_job:
       aws s3 cp checkov-report.xml s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/checkov-report.xml || echo "Checkov report missing"
       aws s3 cp gitleaks-report.json s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/gitleaks-report.json || echo "Gitleaks report missing"
       aws s3 cp backend/target/*.jar s3://$S3_BUCKET_NAME/builds/$CI_PIPELINE_ID/ || echo "Build artifact missing"
-      aws s3 cp dependency-check-report/index.html s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/dependency-check.html || echo "SCA report missing"
+      aws s3 cp dependency-check-report/dependency-check-report.html s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/dependency-check.html || echo "SCA report missing"
       aws s3 cp trivy-report.txt s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/trivy-report.txt || echo "Trivy report missing"
       aws s3 cp zap_report.html s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/zap_report.html || echo "ZAP report missing"
   tags:
