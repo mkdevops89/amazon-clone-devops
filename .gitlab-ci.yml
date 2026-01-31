@@ -11,7 +11,7 @@ stages:
   - package
   - scan-container
   - deploy
-  - dast
+  - dynamic-analysis
 
 cache:
   paths:
@@ -160,8 +160,8 @@ deploy_job:
 # 7. Dynamic Analysis
 # ===============================
 
-dast_job:
-  stage: dast
+zap_scan_job:
+  stage: dynamic-analysis
   image: 
     name: ghcr.io/zaproxy/zaproxy:stable
     entrypoint: [""]
