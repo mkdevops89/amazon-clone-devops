@@ -126,11 +126,15 @@ We need to give GitLab access to our AWS credentials and SonarQube.
 | `SONAR_TOKEN` | (The `sqa_...` value from Step 1.4) | Masked |
 | `AWS_ACCOUNT_ID` | (Your 12-digit AWS Account ID) | Masked |
 | `AWS_REGION` | `us-east-1` | - |
+| `NVD_API_KEY` | (Your NVD/NIST API Key) | Masked |
 
 > **Why AWS Credentials?**
 > The pipeline needs them to:
 > 1.  Push the Docker image to ECR (`push_job`).
 > 2.  Update the Kubernetes Manifest (`deploy_job`).
+>
+> **Why NVD API Key?**
+> The **OWASP Dependency Check** needs this to download the vulnerability database from NIST without hitting "429 Too Many Requests" errors.
 
 ---
 
@@ -138,12 +142,31 @@ We need to give GitLab access to our AWS credentials and SonarQube.
 We define our pipeline stages in the root of the repository.
 
 1.  **Infrastructure Scan (Checkov):** Scans Terraform for cloud misconfigurations.
-2.  **Build:** Compiles Java code into a JAR.
-3.  **Code Quality (SonarQube):** Runs `mvn sonar:sonar` to audit code quality.
-4.  **Package (Kaniko):** Builds the Docker image and pushes it to your ECR registry.
-5.  **Container Scan (Trivy):** Scans the new Docker image/filesystem for CVEs.
-6.  **Deploy:** Uses `kubectl` to update the application in the EKS cluster.
+2.  **Secret Scan (Gitleaks):** Scans git history for leaked secrets.
+3.  **Build:** Compiles Java code into a JAR.
+4.  **Code Quality (SonarQube):** Runs `mvn sonar:sonar` to audit code quality.
+5.  **SCA (Dependency Check):** Checks Java libraries for known CVEs.
+6.  **Package (Kaniko):** Builds the Docker image and pushes it to your ECR registry.
+7.  **Container Scan (Trivy):** Scans the new Docker image/filesystem for CVEs.
+8.  **Deploy:** Uses `kubectl` to update the application in the EKS cluster.
     *   *Note:* It uses `sed` to inject your AWS Account ID into the manifest before applying.
+9.  **Dynamic Analysis (OWASP ZAP):** Attacks the running application to find vulnerabilities.
+
+---
+
+## 📊 Accessing Security Reports
+We configured all 5 security scanners to generate **Job Artifacts**. This allows you to download and audit the results.
+
+### How to Download
+Go to **Build** -> **Pipelines** -> Click the **Job Name** -> **Download Artifacts** (or Browse).
+
+| Tool | Report Filename | Format | Description |
+| :--- | :--- | :--- | :--- |
+| **Checkov** | `checkov-report.xml` | JUnit XML | IaC misconfigurations (can be imported into test dashboards). |
+| **Gitleaks** | `gitleaks-report.json` | JSON | List of secrets found in git history. |
+| **Dependency Check** | `dependency-check-report/index.html` | HTML | Interactive dashboard of vulnerable libraries. |
+| **Trivy** | `trivy-report.txt` | Text | Simple list of container vulnerabilities (OS packages). |
+| **OWASP ZAP** | `zap_report.html` | HTML | Report of runtime vulnerabilities (XSS, Headers, etc). |
 
 ---
 
@@ -164,9 +187,23 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
 ```
 
+### Gitleaks Fails on "Old" Secrets
+Gitleaks scans your **Git History**. If you committed a secret 5 commits ago and removed it, Gitleaks will still fail.
+
+**Fix:** Add the "dirty" commit ID to `.gitleaksignore`.
+
+```toml
+[ignore]
+    commits = [
+        "commit-hash-of-the-leak",
+        "another-commit-hash"
+    ]
+```
+
 ---
 
 ## ✅ Verification
 *   **SonarQube:** Check the dashboard (`https://sonarqube.devcloudproject.com`) for the "Green" Quality Gate.
-*   **GitLab:** Ensure all 6 stages of the pipeline pass.
+*   **GitLab:** Ensure all stages of the pipeline pass.
+*   **Reports:** Download and view the HTML/Text reports for all 5 scanners.
 *   **Application:** Verify the application is running by checking the `amazon-backend` pod age or logs.
