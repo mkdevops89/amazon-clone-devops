@@ -58,3 +58,8 @@ output "acm_certificate_arn" {
   description = "The ARN of the SSL Certificate"
   value       = module.acm.acm_certificate_arn
 }
+
+output "s3_reports_bucket" {
+  description = "S3 Bucket Name for Security Reports"
+  value       = aws_s3_bucket.reports.id
+}

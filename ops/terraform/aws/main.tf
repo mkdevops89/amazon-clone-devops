@@ -50,6 +50,11 @@ module "eks" {
   eks_managed_node_groups = {
     default = {
       instance_types = ["t3.medium"] # Cost-effective instance type
+      
+      # Fix: Attach Policy to allow uploading reports to S3
+      iam_role_additional_policies = {
+        scan_reports = aws_iam_policy.reports_upload_policy.arn
+      }
     }
   }
 

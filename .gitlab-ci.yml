@@ -12,6 +12,7 @@ stages:
   - scan-container
   - deploy
   - dynamic-analysis
+  - upload-reports
 
 cache:
   paths:
@@ -197,3 +198,31 @@ zap_scan_job:
     paths:
       - zap_report.html
     expire_in: 1 week
+
+# ===============================
+# 8. Artifact Preservation
+# ===============================
+
+upload_reports_job:
+  stage: upload-reports
+  image: 
+    name: amazon/aws-cli:latest
+    entrypoint: [""]
+  script:
+    - echo "Uploading security reports to S3..."
+    - |
+      aws s3 cp checkov-report.xml s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/checkov-report.xml || echo "Checkov report missing"
+      aws s3 cp gitleaks-report.json s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/gitleaks-report.json || echo "Gitleaks report missing"
+      aws s3 cp backend/target/*.jar s3://$S3_BUCKET_NAME/builds/$CI_PIPELINE_ID/ || echo "Build artifact missing"
+      aws s3 cp dependency-check-report/index.html s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/dependency-check.html || echo "SCA report missing"
+      aws s3 cp trivy-report.txt s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/trivy-report.txt || echo "Trivy report missing"
+      aws s3 cp zap_report.html s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/zap_report.html || echo "ZAP report missing"
+  tags:
+    - amazon-clone
+  needs:
+    - infra_scan_job
+    - gitleaks_scan_job
+    - build_job
+    - dependency_check_job
+    - trivy_scan_job
+    - zap_scan_job
