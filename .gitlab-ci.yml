@@ -103,7 +103,7 @@ dependency_check_job:
     - echo "Running OWASP Dependency Check..."
     - |
       mkdir -p dependency-check-report
-      /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report/dependency-check-report.html --data ./owasp-data --nvdApiKey "$NVD_API_KEY"
+      /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report --data ./owasp-data --nvdApiKey "$NVD_API_KEY"
   allow_failure: true
   tags:
     - amazon-clone
@@ -177,7 +177,6 @@ deploy_job:
   only:
     - main
     - phase-6c-gitlab
-    - phase-6d-scanreports
 
 # ===============================
 # 7. Dynamic Analysis
@@ -216,7 +215,7 @@ upload_reports_job:
     - |
       aws s3 cp checkov-report.xml s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/checkov-report.xml || echo "Checkov report missing"
       aws s3 cp gitleaks-report.json s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/gitleaks-report.json || echo "Gitleaks report missing"
-      aws s3 cp backend/target/*.jar s3://$S3_BUCKET_NAME/builds/$CI_PIPELINE_ID/ || echo "Build artifact missing"
+      aws s3 cp backend/target/backend-0.0.1-SNAPSHOT.jar s3://$S3_BUCKET_NAME/builds/$CI_PIPELINE_ID/backend.jar || echo "Build artifact missing"
       aws s3 cp dependency-check-report/dependency-check-report.html s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/dependency-check.html || echo "SCA report missing"
       aws s3 cp trivy-report.txt s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/trivy-report.txt || echo "Trivy report missing"
       aws s3 cp zap_report.html s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/zap_report.html || echo "ZAP report missing"
