@@ -49,7 +49,7 @@ module "eks" {
   # Worker Nodes Group
   eks_managed_node_groups = {
     default = {
-      instance_types = ["t3.medium"] # Cost-effective instance type
+      instance_types = ["t3.xlarge"] # Production instance type
       
       # Fix: Attach Policy to allow uploading reports to S3
       iam_role_additional_policies = {
