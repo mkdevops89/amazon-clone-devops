@@ -193,8 +193,9 @@ zap_scan_job:
     - |
       # Hack: Patch ZAP script to bypass mount check which fails in GitLab CI
       sed -i 's/if not os.path.ismount(base_dir):/if False:/' /zap/zap-baseline.py
-      zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r /zap/wrk/zap_report.html || echo "ZAP found vulnerabilities"
-      cp /zap/wrk/zap_report.html ./zap_report.html || echo "Report generation failed"
+      sed -i 's|base_dir = "/zap/wrk"|base_dir = "/tmp"|' /zap/zap-baseline.py
+      zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r zap_report.html || echo "ZAP found vulnerabilities"
+      cp /tmp/zap_report.html ./zap_report.html || echo "Report generation failed"
   allow_failure: true
   tags:
     - amazon-clone
