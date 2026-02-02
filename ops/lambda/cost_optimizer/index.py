@@ -80,22 +80,24 @@ def scale_down_eks_nodes():
         logger.error(f"Failed to scale EKS: {e}")
 
 def restore_eks_nodes():
-    """Restores EKS Node Groups to default size (e.g., 2)."""
+    """Restores EKS Node Groups to default size (e.g., 1)."""
     logger.info("Restoring EKS Node Groups...")
     cluster_name = os.environ.get('CLUSTER_NAME', 'amazon-cluster')
     
     try:
         nodegroups = eks.list_nodegroups(clusterName=cluster_name)['nodegroups']
         for ng in nodegroups:
-            # In a real scenario, read from DynamoDB/Tags. Here we default to 2.
+            # In a real scenario, read from DynamoDB/Tags. Here we default to 1.
             eks.update_nodegroup_config(
                 clusterName=cluster_name,
                 nodegroupName=ng,
-                scalingConfig={'minSize': 2, 'desiredSize': 2}
+                scalingConfig={'minSize': 1, 'desiredSize': 1}
             )
-            logger.info(f"Restored {ng} to size 2")
+            logger.info(f"Restored {ng} to size 1")
+        return f"Restored EKS Node Groups in {cluster_name} to size 1."
     except Exception as e:
         logger.error(f"Failed to restore EKS: {e}")
+        return f"Error restoring EKS: {e}"
 
 def stop_dev_instances():
     """Stops EC2 Intances tagged Environment=Dev"""
