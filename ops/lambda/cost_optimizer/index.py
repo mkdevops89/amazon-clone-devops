@@ -14,6 +14,7 @@ asg = boto3.client('autoscaling')
 eks = boto3.client('eks')
 rds = boto3.client('rds')
 sns = boto3.client('sns')
+cw = boto3.client('cloudwatch')
 
 SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN')
 
@@ -33,6 +34,8 @@ def lambda_handler(event, context):
         report.append(stop_dev_instances())
         report.append(stop_dev_rds())
         report.append(cleanup_orphaned_resources())
+        # Phase 8: Right-Sizing Recommendations
+        report.append(analyze_right_sizing())
     elif action == 'start':
         report.append(restore_eks_nodes())
         report.append(start_dev_instances())
@@ -181,3 +184,50 @@ def start_dev_rds():
         if env_tag == 'Dev' and status == 'stopped':
             rds.start_db_instance(DBInstanceIdentifier=db_id)
             logger.info(f"Started RDS: {db_id}")
+
+def analyze_right_sizing():
+    """Analyzes CPU Utilization for the past 7 days to recommend right-sizing."""
+    logger.info("Analyzing Right-Sizing opportunities...")
+    
+    recommendations = []
+    instances = ec2.describe_instances(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+    
+    for r in instances['Reservations']:
+        for i in r['Instances']:
+            instance_id = i['InstanceId']
+            instance_type = i['InstanceType']
+            
+            # Skip if explicitly ignored
+            tags = {t['Key']: t['Value'] for t in i.get('Tags', [])}
+            if tags.get('IgnoreRightSizing') == 'true':
+                continue
+                
+            # Get Max CPU over last 7 days
+            try:
+                response = cw.get_metric_statistics(
+                    Namespace='AWS/EC2',
+                    MetricName='CPUUtilization',
+                    Dimensions=[{'Name': 'InstanceId', 'Value': instance_id}],
+                    StartTime=datetime.utcnow().replace(day=datetime.utcnow().day - 7),
+                    EndTime=datetime.utcnow(),
+                    Period=86400,
+                    Statistics=['Maximum'],
+                    Unit='Percent'
+                )
+                
+                # If no data points, skip
+                if not response['Datapoints']:
+                    continue
+                    
+                max_cpu = max([dp['Maximum'] for dp in response['Datapoints']])
+                
+                # Logic: If Max CPU < 20% on a "Large" instance, recommend downgrade
+                if max_cpu < 20.0 and 'large' in instance_type:
+                     recommendations.append(f"📉 Recommendation: Downgrade {instance_id} ({instance_type}). Max CPU was only {max_cpu:.1f}%")
+            
+            except Exception as e:
+                logger.error(f"Failed to get metrics for {instance_id}: {e}")
+                
+    if recommendations:
+        return "\n".join(recommendations)
+    return None
