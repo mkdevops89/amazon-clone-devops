@@ -49,11 +49,23 @@ func checkNodes(clientset *kubernetes.Clientset) {
 			if cond.Type == "Ready" {
 				status = string(cond.Status)
 			}
+			// Phase 8: Enhanced Monitoring (Pressure Checks)
+			if cond.Status == "True" && (cond.Type == "MemoryPressure" || cond.Type == "DiskPressure" || cond.Type == "PIDPressure") {
+				fmt.Printf("⚠️  WARNING: Node %s has %s!\n", node.Name, cond.Type)
+			}
 		}
+		
+		// Check Instance Type & Lifecycle (Spot vs On-Demand)
+		instanceType := node.Labels["node.kubernetes.io/instance-type"]
+		lifecycle := node.Labels["lifecycle"]
+		if lifecycle == "" {
+			lifecycle = "On-Demand"
+		}
+
 		if status == "True" {
-			fmt.Printf("✅ Node %s is Ready\n", node.Name)
+			fmt.Printf("✅ Node %s (%s, %s) is Ready\n", node.Name, instanceType, lifecycle)
 		} else {
-			fmt.Printf("⚠️ Node %s is NOT Ready\n", node.Name)
+			fmt.Printf("❌ Node %s is NOT Ready\n", node.Name)
 		}
 	}
 }
