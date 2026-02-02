@@ -11,6 +11,7 @@ logger.setLevel(logging.INFO)
 ec2 = boto3.client('ec2')
 asg = boto3.client('autoscaling')
 eks = boto3.client('eks')
+rds = boto3.client('rds')
 
 def lambda_handler(event, context):
     """
@@ -24,10 +25,14 @@ def lambda_handler(event, context):
     if action == 'stop':
         scale_down_eks_nodes()
         stop_dev_instances()
+        stop_dev_rds()
         cleanup_orphaned_resources()
     elif action == 'start':
         restore_eks_nodes()
         start_dev_instances()
+        start_dev_rds()
+    
+    return {"status": "success", "action": action}
     
     return {"status": "success", "action": action}
 
@@ -121,3 +126,35 @@ def cleanup_orphaned_resources():
             alloc_id = eip['AllocationId']
             ec2.release_address(AllocationId=alloc_id)
             logger.info(f"Released orphaned EIP: {alloc_id}")
+
+def stop_dev_rds():
+    """Stops RDS Instances tagged Environment=Dev"""
+    logger.info("Stopping Dev RDS Instances...")
+    dbs = rds.describe_db_instances()
+    for db in dbs['DBInstances']:
+        db_id = db['DBInstanceIdentifier']
+        status = db['DBInstanceStatus']
+        
+        arn = db['DBInstanceArn']
+        tags = rds.list_tags_for_resource(ResourceName=arn)['TagList']
+        env_tag = next((t['Value'] for t in tags if t['Key'] == 'Environment'), None)
+
+        if env_tag == 'Dev' and status == 'available':
+            rds.stop_db_instance(DBInstanceIdentifier=db_id)
+            logger.info(f"Stopped RDS: {db_id}")
+
+def start_dev_rds():
+    """Starts RDS Instances tagged Environment=Dev"""
+    logger.info("Starting Dev RDS Instances...")
+    dbs = rds.describe_db_instances()
+    for db in dbs['DBInstances']:
+        db_id = db['DBInstanceIdentifier']
+        status = db['DBInstanceStatus']
+        
+        arn = db['DBInstanceArn']
+        tags = rds.list_tags_for_resource(ResourceName=arn)['TagList']
+        env_tag = next((t['Value'] for t in tags if t['Key'] == 'Environment'), None)
+
+        if env_tag == 'Dev' and status == 'stopped':
+            rds.start_db_instance(DBInstanceIdentifier=db_id)
+            logger.info(f"Started RDS: {db_id}")

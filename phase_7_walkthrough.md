@@ -61,8 +61,16 @@ To bring everything back up manually (e.g., if you are working late):
 2.  Run it:
     ```bash
     python3 test_start.py
-    ```
-    *This will set EKS Node Groups back to size 2 and Start EC2 instances.*
+### Step 4: Tag Your Resources (Required)
+The automation **only** touches resources with the tag `Environment=Dev`. 
+If your instances are running after the test, they are likely missing this tag.
+
+**Tag them using AWS CLI:**
+```bash
+# Tag all instances in your VPC (Be careful!)
+aws ec2 create-tags --resources i-0123456789abcdef0 --tags Key=Environment,Value=Dev
+```
+*Replace the instance ID with your actual instance ID.*
 
 ---
 
