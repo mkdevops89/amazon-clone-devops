@@ -113,3 +113,24 @@ resource "aws_lambda_function" "auto_healer" {
   runtime         = "python3.9"
   timeout         = 60
 }
+
+resource "aws_cloudwatch_event_rule" "morning_start" {
+  name                = "morning-start"
+  description         = "Trigger Cost Terminator at 9 AM"
+  schedule_expression = "cron(0 9 * * ? *)"
+}
+
+resource "aws_cloudwatch_event_target" "trigger_start" {
+  rule      = aws_cloudwatch_event_rule.morning_start.name
+  target_id = "cost_terminator_start"
+  arn       = aws_lambda_function.cost_optimizer.arn
+  input     = jsonencode({"action": "start"})
+}
+
+resource "aws_lambda_permission" "allow_eventbridge_start" {
+  statement_id  = "AllowExecutionFromEventBridgeStart"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.cost_optimizer.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.morning_start.arn
+}
