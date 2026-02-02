@@ -1,68 +1,166 @@
-# Phase 7: Senior Automation & Custom Tools Walkthrough
+# Phase 7: Senior Automation - Execution Guide
 
-## 🚀 Goal Assessed
-**Transition from "Scripting" to "Platform Engineering".**
-Instead of simple Bash scripts running on a server, we have built a **Serverless, Event-Driven Automation Platform** using custom Python/Go tools and Terraform.
+This guide explains how to **run and verify** the new automation tools created in Phase 7.
 
-## 🛠️ Created Tools
+## 1. Setup Environment
+Ensure you have the following installed:
+*   Python 3.9+
+*   Go 1.18+
+*   Terraform 1.0+
+*   AWS CLI (configured with credentials)
 
-### 1. The Cost Terminator (Python/Lambda)
-*   **Location**: `ops/lambda/cost_optimizer/`
-*   **Type**: Serverless Function (AWS Lambda).
-*   **Trigger**: EventBridge Cron (Nightly at 8 PM, Morning at 6 AM).
-*   **Logic**:
-    *   **Scale-Down**: Sets EKS Node Groups (`min`/`desired`) to **0** to stop hourly compute charges.
-    *   **Stop Instances**: Stops any EC2/RDS instance tagged `Environment=Dev`.
-    *   **Reaper**: Deletes `available` (unattached) EBS Volumes and unassociated EIPs to prevent "zombie" costs.
-
-### 2. The Auto-Healer (Python/Lambda)
-*   **Location**: `ops/lambda/auto_healer/`
-*   **Type**: Reactive Function (AWS Lambda).
-*   **Trigger**: CloudWatch Alarms (SNS) or CloudTrail Events.
-*   **Logic**:
-    *   **Disk Pressure**: If disk > 90%, it runs an SSM Command to `rm -rf /tmp/*` and `docker prune`.
-    *   **Security Guard**: If a Security Group opens port 22 to `0.0.0.0/0`, it **instantly revokes** the rule.
-
-### 3. Ops Check (Go CLI)
-*   **Location**: `ops/cli/ops-check/`
-*   **Type**: Compiled Binary (Golang).
-*   **Usage**: Engineers run `ops-check` locally.
-*   **Logic**: Instantly validates:
-    *   Node Health (Ready/NotReady).
-    *   Pod Status (Pending/CrashLoopBackOff).
-    *   (Future) Quota limits and latent issues.
-
-### 4. Drift Detective (Terraform/CodeBuild)
-*   **Location**: `ops/terraform/aws/drift_detection.tf`
-*   **Type**: Scheduled CI Task (AWS CodeBuild).
-*   **Trigger**: Daily at Midnight.
-*   **Logic**: Runs `terraform plan -detailed-exitcode`. If it returns exit code `2` (changes detected), it alerts the team, catching "ClickOps" changes.
-
-## 🏗️ Infrastructure Architecture
-All automation infrastructure is defined as code in `ops/terraform/aws/lambda.tf`:
-*   **IAM Roles**: Least-privilege roles for Lambdas to manage EC2/EKS.
-*   **EventBridge Rules**: Cron schedules for triggers.
-*   **Lambda Functions**: Python runtime configurations.
-
-## ✅ Verification Steps
-
-### 1. Build the CLI Tool
 ```bash
-cd ops/cli/ops-check
+# Verify installations
+python3 --version
+go version
+terraform -version
+```
+
+---
+
+## 2. 🐍 Run "The Cost Terminator" (Local)
+You can run the Python Lambda logic directly on your machine to test it (Dry Run).
+
+### Step 1: Install Dependencies
+```bash
+cd ops/lambda/cost_optimizer
+pip3 install -r requirements.txt
+```
+
+### Step 2: Test the Logic
+Create a temporary `test_local.py` file to invoke the handler:
+
+```bash
+cat <<EOF > test_local.py
+from index import lambda_handler
+
+# Verify the function loads and prints "Stop" action
+print("🚀 Simulating Nightly Stop Event...")
+lambda_handler({"action": "stop"}, {})
+EOF
+```
+
+Run the test:
+```bash
+# Ensure AWS Credentials are active
+export AWS_PROFILE=default  # Change if needed
+
+python3 test_local.py
+```
+*Expected Output*: Logs showing "Scale down", "Stop instances", or "cleanup".
+
+### Step 3: Restore the System (Start)
+To bring everything back up manually (e.g., if you are working late):
+
+1.  Modify `test_local.py` or create `test_start.py`:
+    ```python
+    from index import lambda_handler
+    print("🚀 Simulating Morning Start Event...")
+    lambda_handler({"action": "start"}, {})
+    ```
+2.  Run it:
+    ```bash
+    python3 test_start.py
+    ```
+    *This will set EKS Node Groups back to size 2 and Start EC2 instances.*
+
+---
+
+## 3. 🛡️ Run "The Auto-Healer" (Local)
+Test the remediation logic.
+
+### Step 1: Install Dependencies
+```bash
+# Re-use the same virtualenv or install
+cd ../auto_healer
+# (This shares requirements with cost_optimizer usually, or install boto3)
+pip3 install boto3
+```
+
+### Step 2: Test Security Group Revocation
+```bash
+cat <<EOF > test_healer.py
+from index import check_security_group_compliance
+
+# Simulate a "Bad" Audit Event (Port 22 Open to World)
+fake_event = {
+    "requestParameters": {
+        "groupId": "sg-12345fake",
+        "ipPermissions": {
+            "items": [{
+                "fromPort": 22,
+                "toPort": 22,
+                "ipRanges": {"items": [{"cidrIp": "0.0.0.0/0"}]}
+            }]
+        }
+    }
+}
+
+print("🛡️ Testing Auto-Healer Compliance Check...")
+check_security_group_compliance(fake_event)
+EOF
+```
+
+Run it:
+```bash
+python3 test_healer.py
+```
+
+---
+
+## 4. 🐹 Run "Ops Check" (Go CLI)
+Compile and run the binary tool to check your Kubernetes cluster.
+
+### Step 1: Go to Directory
+```bash
+cd ../../cli/ops-check
+```
+
+### Step 2: Run directly
+```bash
+# This uses your local ~/.kube/config
+go run main.go
+```
+
+### Step 3: Compile (Optional)
+To create a binary you can share with the team:
+```bash
 go build -o ops-check
 ./ops-check
 ```
+*Expected Output*: A list of ✅ (Ready) or ❌ (Failed) nodes and pods.
 
-### 2. Deploy Infrastructure
+---
+
+## 5. 🏗️ Deploy Infrastructure (Terraform)
+Deploy the Lambda functions and EventBridge schedules to AWS.
+
+### Step 1: Initialize
 ```bash
-cd ops/terraform/aws
+cd ../../terraform/aws
 terraform init
-terraform apply -target=aws_lambda_function.cost_optimizer -target=aws_lambda_function.auto_healer
 ```
 
-### 3. Test Lambda Logic (Dry Run)
-Invoke the function via AWS CLI with a test payload:
+### Step 2: Plan
+See what will be created (Lambdas, Roles, Rules):
 ```bash
-aws lambda invoke --function-name cost_terminator --payload '{"action": "stop"}' response.json
-cat response.json
+terraform plan
+```
+
+### Step 3: Apply (Selective)
+To deploy *only* the new automation without touching existing infrastructure:
+```bash
+terraform apply -target=aws_lambda_function.cost_optimizer \
+                -target=aws_lambda_function.auto_healer \
+                -target=aws_cloudwatch_event_rule.nightly_stop
+```
+
+---
+
+## 🧹 Cleanup (After Testing)
+To remove the local test files:
+```bash
+rm ops/lambda/cost_optimizer/test_local.py
+rm ops/lambda/auto_healer/test_healer.py
+rm ops/cli/ops-check/ops-check
 ```
