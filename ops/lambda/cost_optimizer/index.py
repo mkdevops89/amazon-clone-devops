@@ -137,7 +137,8 @@ def stop_dev_rds():
         
         arn = db['DBInstanceArn']
         tags = rds.list_tags_for_resource(ResourceName=arn)['TagList']
-        env_tag = next((t['Value'] for t in tags if t['Key'] == 'Environment'), None)
+        # Robust tag checking: strip whitespace
+        env_tag = next((t['Value'].strip() for t in tags if t['Key'].strip() == 'Environment'), None)
 
         if env_tag == 'Dev' and status == 'available':
             rds.stop_db_instance(DBInstanceIdentifier=db_id)
@@ -153,7 +154,8 @@ def start_dev_rds():
         
         arn = db['DBInstanceArn']
         tags = rds.list_tags_for_resource(ResourceName=arn)['TagList']
-        env_tag = next((t['Value'] for t in tags if t['Key'] == 'Environment'), None)
+        # Robust tag checking: strip whitespace
+        env_tag = next((t['Value'].strip() for t in tags if t['Key'].strip() == 'Environment'), None)
 
         if env_tag == 'Dev' and status == 'stopped':
             rds.start_db_instance(DBInstanceIdentifier=db_id)
