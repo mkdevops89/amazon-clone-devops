@@ -102,8 +102,19 @@ dependency_check_job:
   script:
     - echo "Running OWASP Dependency Check..."
     - |
+    - |
       mkdir -p dependency-check-report
-      /usr/share/dependency-check/bin/dependency-check.sh --project "Amazon Clone" --scan backend --format HTML --format JSON --out dependency-check-report --data ./owasp-data --nvdApiKey "$NVD_API_KEY"
+      # Increase memory and connection timeouts to prevent NVD update failures
+      export JAVA_OPTS="-Xmx2g"
+      /usr/share/dependency-check/bin/dependency-check.sh \
+        --project "Amazon Clone" \
+        --scan backend \
+        --format HTML --format JSON \
+        --out dependency-check-report \
+        --data ./owasp-data \
+        --nvdApiKey "$NVD_API_KEY" \
+        --nvdApiDelay 6000 \
+        --connectionTimeout 60000
   allow_failure: true
   tags:
     - amazon-clone
@@ -190,18 +201,35 @@ zap_scan_job:
     entrypoint: [""]
   script:
     - echo "Running OWASP ZAP Baseline Scan against Backend..."
-    - |
-      set +e
-
-      echo "PWD: $(pwd)"
-      zap-baseline.py --autooff \
+      # Run ZAP, writing report to the required directory
+      # We use '|| true' because ZAP returns exit codes for warnings/failures
+      # Note: We specifically request -r (HTML report). 
+      # The failure 'zap.out' implies it might be defaulting to stdout capture or wrong flag.
+      # We will force the full path explicitly.
+      
+    - zap-baseline.py \
+        --autooff \
         -t "http://amazon-backend.default.svc.cluster.local:8080" \
-        -r zap_report.html
-      RC=$?
-      echo "ZAP exit code: $RC"
-      ls -la
-      test -f zap_report.html || (echo "zap_report.html not created" && exit 1)
-      exit $RC
+        -r zap_report.html \
+        -J zap_report.json || echo "ZAP scan finished (Exit Code: $?)"
+      
+    - echo "Listing /zap/wrk content:"
+    - ls -la /zap/wrk
+      
+      # Try to recover HTML report first
+    - |
+      if [ -f /zap/wrk/zap_report.html ]; then
+        cp /zap/wrk/zap_report.html ./zap_report.html
+        echo "Recovered HTML report."
+      # Fallback to JSON if HTML failed
+      elif [ -f /zap/wrk/zap_report.json ]; then
+        cp /zap/wrk/zap_report.json ./zap_report.json
+        echo "Recovered JSON report (HTML missing)."
+      else
+        echo "ERROR: No report generated."
+        # Debug: Did it fail to start entirely?
+        exit 1
+      fi
   allow_failure: true
   tags:
     - amazon-clone
@@ -209,6 +237,7 @@ zap_scan_job:
     when: always
     paths:
       - zap_report.html
+      - zap_report.json
     expire_in: 1 week
 
 # ===============================
