@@ -49,6 +49,11 @@ module "eks" {
   # Worker Nodes Group
   eks_managed_node_groups = {
     default = {
+      # Safety: Keep 2 nodes to ensure availability across AZs (Since volumes are in 1a/1b)
+      min_size     = 2
+      max_size     = 3
+      desired_size = 2
+
       instance_types = ["t3.xlarge"] # Production instance type
       
       # Fix: Attach Policy to allow uploading reports to S3
