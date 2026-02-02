@@ -12,3 +12,7 @@ prometheus:
     serviceMonitorSelectorNilUsesHelmValues: false
     serviceMonitorSelector: {}
     serviceMonitorNamespaceSelector: {}
+
+kube-state-metrics:
+  metricLabelsAllowlist:
+    - nodes=[*]
