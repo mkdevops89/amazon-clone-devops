@@ -49,9 +49,6 @@ def publish_alert(subject, message):
     if SNS_TOPIC_ARN:
         sns.publish(TopicArn=SNS_TOPIC_ARN, Subject=subject, Message=message)
 
-    
-    return {"status": "success", "action": action}
-
 def scale_down_eks_nodes():
     """Sets EKS Node Group min/desired size to 0."""
     logger.info("Scaling down EKS Node Groups...")
