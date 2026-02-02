@@ -17,7 +17,6 @@ stages:
 cache:
   paths:
     - .m2/repository
-    - owasp-data
 
 # ===============================
 # 1. Infrastructure Security
@@ -103,17 +102,8 @@ dependency_check_job:
     - echo "Running OWASP Dependency Check..."
     - |
       mkdir -p dependency-check-report
-      # Increase memory and connection timeouts to prevent NVD update failures
-      export JAVA_OPTS="-Xmx2g"
-      /usr/share/dependency-check/bin/dependency-check.sh \
-        --project "Amazon Clone" \
-        --scan backend \
-        --format HTML --format JSON \
-        --out dependency-check-report \
-        --data ./owasp-data \
-      # Force clean run to fix H2 corruption
-      rm -rf owasp-data
-      mkdir -p owasp-data
+      # Use /tmp for NVD data to avoid H2 corruption on network volumes
+      mkdir -p /tmp/owasp-data
       
       export JAVA_OPTS="-Xmx2g"
       /usr/share/dependency-check/bin/dependency-check.sh \
@@ -121,7 +111,7 @@ dependency_check_job:
         --scan backend \
         --format HTML --format JSON \
         --out dependency-check-report \
-        --data ./owasp-data \
+        --data /tmp/owasp-data \
         --nvdApiKey "$NVD_API_KEY"
   allow_failure: true
   tags:
