@@ -189,33 +189,29 @@ zap_scan_job:
     name: ghcr.io/zaproxy/zaproxy:stable
     entrypoint: [""]
   script:
-    - echo "Running OWSAP ZAP Baseline Scan against Backend..."
+    - echo "Running OWASP ZAP Baseline Scan against Backend..."
     - |
-      # ZAP Baseline Scan
-      # The 'zap-baseline.py' script enforces that report files must be in a mounted volume
-      # or specifically in /zap/wrk. Since we can't easily mount volumes in GitLab CI (dind),
-      # we write to /zap/wrk and copy it out.
-      
+      set +e
+
       echo "Current Directory: $(pwd)"
-      
-      # Ensure /zap/wrk exists (it should in the image)
-      mkdir -p /zap/wrk
-      
-      # Run ZAP, writing report to the required directory
-      # We use '|| true' because ZAP returns exit codes for warnings/failures, but we want to capture the report first.
-      zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r /zap/wrk/zap_report.html || echo "ZAP scan finished with findings"
-      
-      echo "Listing /zap/wrk content:"
-      ls -la /zap/wrk
-      
-      # Copy report to current directory for GitLab Artifacts
-      if [ -f /zap/wrk/zap_report.html ]; then
-        cp /zap/wrk/zap_report.html ./zap_report.html
-        echo "Report successfully copied to workspace."
-      else
-        echo "ERROR: Report generation failed."
-        exit 1
-      fi
+      ls -la
+
+      # Write report to the GitLab workspace (artifact-friendly)
+      zap-baseline.py \
+        -t "http://amazon-backend.default.svc.cluster.local:8080" \
+        -r "zap_report.html"
+
+      ZAP_RC=$?
+      echo "ZAP exit code: ${ZAP_RC}"
+
+      echo "Workspace content:"
+      ls -la
+
+      # Ensure the report exists; if not, fail the job (so you notice)
+      test -f zap_report.html || (echo "ERROR: zap_report.html not created" && exit 1)
+
+      # If you want the pipeline NOT to fail on findings, keep allow_failure: true
+      exit ${ZAP_RC}
   allow_failure: true
   tags:
     - amazon-clone
