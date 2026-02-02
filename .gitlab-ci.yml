@@ -111,9 +111,15 @@ dependency_check_job:
         --format HTML --format JSON \
         --out dependency-check-report \
         --data ./owasp-data \
-        --nvdApiKey "$NVD_API_KEY" \
-        --nvdApiDelay 6000 \
-        --connectionTimeout 60000
+      # Increase memory to avoid OOM
+      export JAVA_OPTS="-Xmx2g"
+      /usr/share/dependency-check/bin/dependency-check.sh \
+        --project "Amazon Clone" \
+        --scan backend \
+        --format HTML --format JSON \
+        --out dependency-check-report \
+        --data ./owasp-data \
+        --nvdApiKey "$NVD_API_KEY"
   allow_failure: true
   tags:
     - amazon-clone
