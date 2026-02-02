@@ -63,8 +63,43 @@ aws budgets describe-budgets --account-id $(aws sts get-caller-identity --query 
 
 ---
 
-## 4. 🧠 Next Steps (Optimization)
-Now that the infrastructure is cheaper, we need to make the apps smart enough to use it.
+---
 
-1.  **Affinity Rules**: Tell Jenkins to *prefer* the Critical Node.
-2.  **Ops Check Phase 2**: Add Disk/Memory pressure checks.
+## 4. 🧠 Intelligent Scheduling
+Now that we have a **Critical Node** (On-Demand) and **Spot Nodes**, we must tell our Stateful Apps (Jenkins, Nexus, SonarQube) to live on the Safe Node.
+
+### Step 1: Push Manifest Changes
+We updated the `jenkins.yaml`, `nexus.yaml`, and `sonarqube.yaml` to include `nodeSelector: intent=critical`.
+```bash
+git add ops/k8s/jenkins/jenkins.yaml ops/k8s/nexus/nexus.yaml ops/k8s/sonarqube/sonarqube.yaml
+git commit -m "feat(k8s): pin stateful apps to critical node group"
+git push
+```
+
+### Step 2: Apply Changes
+Redeploy the applications to enforce the new rules.
+```bash
+kubectl apply -f ops/k8s/jenkins/jenkins.yaml
+kubectl apply -f ops/k8s/nexus/nexus.yaml
+kubectl apply -f ops/k8s/sonarqube/sonarqube.yaml
+```
+
+### Step 3: Verify Scheduling
+Check where the pods are running. They should all be on the **Critical Node** (On-Demand).
+```bash
+# Get the Critical Node Name
+kubectl get nodes -l intent=critical
+
+# Check Pod Locations
+kubectl get pods -n devsecops -o wide
+```
+*Look at the `NODE` column. It should match the Critical Node name.*
+
+---
+
+## 5. ✅ Phase 8 Complete
+You have successfully:
+1.  Implemented Hybrid Architecture (Spot + On-Demand).
+2.  Set up Cost Protection (Budgets).
+3.  Optimized Workload Placement (Intelligent Scheduling).
+
