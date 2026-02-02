@@ -131,6 +131,12 @@ def cleanup_orphaned_resources():
         # Check for protection tag
         tags = {t['Key']: t['Value'] for t in vol.get('Tags', [])}
         if tags.get('DoNotDelete') != 'true':
+            # Safety check: Is this a Kubernetes PVC?
+            is_pvc = any(k.startswith('kubernetes.io/created-for/pvc') for k in tags.keys())
+            if is_pvc:
+                logger.info(f"Skipping PVC volume: {vid}")
+                continue
+                
             ec2.delete_volume(VolumeId=vid)
             logger.info(f"Deleted orphaned volume: {vid}")
 
