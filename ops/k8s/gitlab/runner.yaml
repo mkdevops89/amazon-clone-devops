@@ -76,6 +76,15 @@ spec:
             - |
               cp /config-template/config.toml /etc/gitlab-runner/config.toml
               gitlab-runner register --non-interactive --url https://gitlab.com/ --registration-token $REGISTRATION_TOKEN --executor kubernetes --tag-list amazon-clone --locked=false --kubernetes-namespace "gitlab-runner" --kubernetes-service-account "gitlab-runner"
+
+              # Hack: Inject Volume Mount for ZAP
+              cat <<EOF >> /etc/gitlab-runner/config.toml
+              [[runners.kubernetes.volumes.empty_dir]]
+                name = "zap-wrk"
+                mount_path = "/zap/wrk"
+                medium = "Memory"
+              EOF
+
               gitlab-runner run --user=gitlab-runner --working-directory=/home/gitlab-runner
           volumeMounts:
             - name: config-template
