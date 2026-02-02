@@ -54,6 +54,7 @@ To bring everything back up manually (simulate morning start):
 
 **Run this Python one-liner:**
 ```bash
+cd ops/lambda/cost_optimizer
 python3 -c "from index import lambda_handler; lambda_handler({'action': 'start'}, {})"
 ```
 *Expected Output*: "Restoring EKS Node Groups...", "Starting Dev EC2 Instances..."
