@@ -35,7 +35,7 @@ def scale_down_eks_nodes():
     """Sets EKS Node Group min/desired size to 0."""
     logger.info("Scaling down EKS Node Groups...")
     # TODO: Fetch cluster name dynamically or from env
-    cluster_name = os.environ.get('CLUSTER_NAME', 'amazon-clone')
+    cluster_name = os.environ.get('CLUSTER_NAME', 'amazon-cluster')
     
     try:
         nodegroups = eks.list_nodegroups(clusterName=cluster_name)['nodegroups']
@@ -61,7 +61,7 @@ def scale_down_eks_nodes():
 def restore_eks_nodes():
     """Restores EKS Node Groups to default size (e.g., 2)."""
     logger.info("Restoring EKS Node Groups...")
-    cluster_name = os.environ.get('CLUSTER_NAME', 'amazon-clone')
+    cluster_name = os.environ.get('CLUSTER_NAME', 'amazon-cluster')
     
     try:
         nodegroups = eks.list_nodegroups(clusterName=cluster_name)['nodegroups']
