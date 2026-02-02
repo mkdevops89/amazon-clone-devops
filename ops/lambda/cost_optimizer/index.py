@@ -1,6 +1,7 @@
 import boto3
 import logging
 import os
+import json
 from datetime import datetime
 
 # Setup Logging
@@ -12,6 +13,9 @@ ec2 = boto3.client('ec2')
 asg = boto3.client('autoscaling')
 eks = boto3.client('eks')
 rds = boto3.client('rds')
+sns = boto3.client('sns')
+
+SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN')
 
 def lambda_handler(event, context):
     """
@@ -21,18 +25,30 @@ def lambda_handler(event, context):
     """
     action = event.get('action', 'stop')
     logger.info(f"Received action: {action}")
+    
+    report = []
 
     if action == 'stop':
-        scale_down_eks_nodes()
-        stop_dev_instances()
-        stop_dev_rds()
-        cleanup_orphaned_resources()
+        report.append(scale_down_eks_nodes())
+        report.append(stop_dev_instances())
+        report.append(stop_dev_rds())
+        report.append(cleanup_orphaned_resources())
     elif action == 'start':
-        restore_eks_nodes()
-        start_dev_instances()
-        start_dev_rds()
+        report.append(restore_eks_nodes())
+        report.append(start_dev_instances())
+        report.append(start_dev_rds())
     
-    return {"status": "success", "action": action}
+    # Filter empty reports and join
+    summary = "\n".join([r for r in report if r])
+    if summary:
+        publish_alert(f"Cost Terminator Report: {action.upper()}", summary)
+    
+    return {"status": "success", "action": action, "report": summary}
+
+def publish_alert(subject, message):
+    if SNS_TOPIC_ARN:
+        sns.publish(TopicArn=SNS_TOPIC_ARN, Subject=subject, Message=message)
+
     
     return {"status": "success", "action": action}
 

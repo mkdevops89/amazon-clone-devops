@@ -44,7 +44,8 @@ resource "aws_iam_policy" "lambda_policy" {
           "ssm:SendCommand",
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
-          "logs:PutLogEvents"
+          "logs:PutLogEvents",
+          "sns:Publish"
         ]
         Effect   = "Allow"
         Resource = "*"
@@ -56,6 +57,11 @@ resource "aws_iam_policy" "lambda_policy" {
 resource "aws_iam_role_policy_attachment" "lambda_attach" {
   role       = aws_iam_role.lambda_exec.name
   policy_arn = aws_iam_policy.lambda_policy.arn
+}
+
+# SNS Topic for Alerts
+resource "aws_sns_topic" "alerts" {
+  name = "auto-healer-alerts"
 }
 
 # 1. Cost Terminator Lambda
@@ -73,6 +79,12 @@ resource "aws_lambda_function" "cost_optimizer" {
   source_code_hash = archive_file.cost_optimizer_zip.output_base64sha256
   runtime         = "python3.9"
   timeout         = 300
+  
+  environment {
+    variables = {
+      SNS_TOPIC_ARN = aws_sns_topic.alerts.arn
+    }
+  }
 }
 
 # 2. EventBridge Schedules (Cron)
@@ -112,6 +124,12 @@ resource "aws_lambda_function" "auto_healer" {
   source_code_hash = archive_file.auto_healer_zip.output_base64sha256
   runtime         = "python3.9"
   timeout         = 60
+  
+  environment {
+    variables = {
+      SNS_TOPIC_ARN = aws_sns_topic.alerts.arn
+    }
+  }
 }
 
 resource "aws_cloudwatch_event_rule" "morning_start" {

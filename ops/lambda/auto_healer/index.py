@@ -2,12 +2,17 @@ import boto3
 import logging
 import json
 
+import os
+
 # Setup Logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 ec2 = boto3.client('ec2')
 ssm = boto3.client('ssm')
+sns = boto3.client('sns')
+
+SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN')
 
 def lambda_handler(event, context):
     """
@@ -16,8 +21,6 @@ def lambda_handler(event, context):
     """
     logger.info(f"Received event: {json.dumps(event)}")
     
-    # Check identifying information from the alarm
-    # Simplify: Assuming the event comes from an SNS topic triggered by an Alarm
     try:
         if 'Records' in event:
             message = json.loads(event['Records'][0]['Sns']['Message'])
@@ -26,13 +29,10 @@ def lambda_handler(event, context):
             logger.info(f"Alarm: {alarm_name}, Reason: {state_reason}")
             
             if "DiskSpace" in alarm_name:
-                # Extract InstanceId from Alarm Dimensions (simplified)
-                # In real life, parse 'Trigger' -> 'Dimensions'
                 instance_id = parse_instance_id(message)
                 if instance_id:
                     remediate_disk_space(instance_id)
             
-        # Example: Direct EventBridge trigger for Security Group Change
         elif 'detail-type' in event and event['detail-type'] == 'AWS API Call via CloudTrail':
              event_name = event['detail']['eventName']
              if event_name == 'AuthorizeSecurityGroupIngress':
@@ -44,7 +44,6 @@ def lambda_handler(event, context):
 
 def parse_instance_id(message):
     """Extracts InstanceId from CloudWatch Alarm message."""
-    # Placeholder logic
     metrics = message['Trigger']['Dimensions']
     for m in metrics:
         if m['name'] == 'InstanceId':
@@ -65,7 +64,10 @@ def remediate_disk_space(instance_id):
         DocumentName="AWS-RunShellScript",
         Parameters={'commands': commands}
     )
-    logger.info(f"SSM Command Sent: {response['Command']['CommandId']}")
+    cmd_id = response['Command']['CommandId']
+    logger.info(f"SSM Command Sent: {cmd_id}")
+    
+    publish_alert("Auto-Healer: Disk Space Cleaned", f"Executed cleanup on instance {instance_id}. Command ID: {cmd_id}")
 
 def check_security_group_compliance(detail):
     """Revokes 0.0.0.0/0 on Port 22."""
@@ -73,12 +75,10 @@ def check_security_group_compliance(detail):
     items = detail['requestParameters']['ipPermissions']['items']
     
     for item in items:
-        # Check if port 22 is involved
         from_port = item.get('fromPort')
         to_port = item.get('toPort')
         
         if from_port == 22 or (from_port <= 22 and to_port >= 22):
-            # Check for 0.0.0.0/0
             for ip_range in item.get('ipRanges', {}).get('items', []):
                 if ip_range['cidrIp'] == '0.0.0.0/0':
                     logger.warning(f"SECURITY VIOLATION: Port 22 open to world on {sg_id}. Revoking...")
@@ -91,3 +91,16 @@ def revoke_rule(sg_id, ip_permission):
         IpPermissions=[ip_permission]
     )
     logger.info(f"Revoked bad rule on {sg_id}")
+    publish_alert("Auto-Healer: Security Rule Revoked", f"Revoked 0.0.0.0/0 access on Port 22 for Security Group {sg_id}.")
+
+def publish_alert(subject, message):
+    """Publishes a message to the SNS Topic."""
+    if SNS_TOPIC_ARN:
+        sns.publish(
+            TopicArn=SNS_TOPIC_ARN,
+            Subject=subject,
+            Message=message
+        )
+        logger.info(f"Published SNS Alert: {subject}")
+    else:
+        logger.warning("SNS_TOPIC_ARN not set. Skipping alert.")
