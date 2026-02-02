@@ -193,25 +193,15 @@ zap_scan_job:
     - |
       set +e
 
-      echo "Current Directory: $(pwd)"
-      ls -la
-
-      # Write report to the GitLab workspace (artifact-friendly)
-      zap-baseline.py \
+      echo "PWD: $(pwd)"
+      zap-baseline.py --autooff \
         -t "http://amazon-backend.default.svc.cluster.local:8080" \
-        -r "zap_report.html"
-
-      ZAP_RC=$?
-      echo "ZAP exit code: ${ZAP_RC}"
-
-      echo "Workspace content:"
+        -r zap_report.html
+      RC=$?
+      echo "ZAP exit code: $RC"
       ls -la
-
-      # Ensure the report exists; if not, fail the job (so you notice)
-      test -f zap_report.html || (echo "ERROR: zap_report.html not created" && exit 1)
-
-      # If you want the pipeline NOT to fail on findings, keep allow_failure: true
-      exit ${ZAP_RC}
+      test -f zap_report.html || (echo "zap_report.html not created" && exit 1)
+      exit $RC
   allow_failure: true
   tags:
     - amazon-clone
