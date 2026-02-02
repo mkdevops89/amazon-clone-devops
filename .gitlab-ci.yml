@@ -111,7 +111,10 @@ dependency_check_job:
         --format HTML --format JSON \
         --out dependency-check-report \
         --data ./owasp-data \
-      # Increase memory to avoid OOM
+      # Force clean run to fix H2 corruption
+      rm -rf owasp-data
+      mkdir -p owasp-data
+      
       export JAVA_OPTS="-Xmx2g"
       /usr/share/dependency-check/bin/dependency-check.sh \
         --project "Amazon Clone" \
