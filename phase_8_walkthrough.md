@@ -97,9 +97,34 @@ kubectl get pods -n devsecops -o wide
 
 ---
 
-## 5. ✅ Phase 8 Complete
+## 5. 📉 Optimizations (Monitoring & Right-Sizing)
+We have also implemented **Enhanced Monitoring** (Node Pressure) and **Right-Sizing AI** (Cost Recommendations).
+
+### Step 1: Push Operations Code
+You need to save the Go and Python changes to your branch.
+```bash
+# Push Ops Check (Go)
+git add ops/cli/ops-check/main.go
+git commit -m "feat(ops): add memory and disk pressure checks"
+
+# Push Cost Optimizer (Python)
+git add ops/lambda/cost_optimizer/index.py
+git commit -m "feat(finops): add right-sizing recommendation logic"
+
+git push
+```
+
+### Step 2: What happens next?
+1.  **Ops Check**: Run `go run main.go` locally to check your cluster health.
+2.  **Cost Terminator**: The Python code will be deployed next time you run Terraform (or via CI/CD pipelines). It will start analyzing your CPU usage nightly and suggest downgrades if you are over-provisioned.
+
+---
+
+## 6. ✅ Phase 8 Complete
 You have successfully:
 1.  Implemented Hybrid Architecture (Spot + On-Demand).
 2.  Set up Cost Protection (Budgets).
 3.  Optimized Workload Placement (Intelligent Scheduling).
+4.  Adding Intelligence (Node Pressure & Right-Sizing).
+
 
