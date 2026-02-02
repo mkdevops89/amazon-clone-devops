@@ -48,17 +48,45 @@ module "eks" {
 
   # Worker Nodes Group
   eks_managed_node_groups = {
-    default = {
-      # Safety: Keep 2 nodes to ensure availability across AZs (Since volumes are in 1a/1b)
-      min_size     = 2
-      max_size     = 3
-      desired_size = 2
-
-      instance_types = ["t3.xlarge"] # Production instance type
+    # 1. Critical Node Group (On-Demand)
+    # Purpose: Runs CoreDNS, Ingress, and Stateful Pods (Jenkins/Nexus/Sonar)
+    critical = {
+      name           = "critical-ng"
+      capacity_type  = "ON_DEMAND"
+      instance_types = ["t3.xlarge"]
       
+      min_size     = 1
+      max_size     = 2
+      desired_size = 1
+
       # Fix: Attach Policy to allow uploading reports to S3
       iam_role_additional_policies = {
         scan_reports = aws_iam_policy.reports_upload_policy.arn
+      }
+      
+      labels = {
+        "intent" = "critical"
+      }
+    }
+
+    # 2. General Node Group (Spot Instances)
+    # Purpose: Runs Stateless Build Agents and ephemeral workloads
+    spot = {
+      name           = "spot-ng"
+      capacity_type  = "SPOT"
+      instance_types = ["t3.xlarge", "t3.2xlarge"] # Multiple types increase Spot availability
+      
+      min_size     = 1
+      max_size     = 5
+      desired_size = 1
+
+      iam_role_additional_policies = {
+        scan_reports = aws_iam_policy.reports_upload_policy.arn
+      }
+
+      labels = {
+        "intent"    = "apps"
+        "lifecycle" = "Ec2Spot"
       }
     }
   }
