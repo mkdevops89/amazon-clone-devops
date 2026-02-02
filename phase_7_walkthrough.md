@@ -50,17 +50,15 @@ python3 test_local.py
 *Expected Output*: Logs showing "Scale down", "Stop instances", or "cleanup".
 
 ### Step 3: Restore the System (Start)
-To bring everything back up manually (e.g., if you are working late):
+To bring everything back up manually (simulate morning start):
 
-1.  Modify `test_local.py` or create `test_start.py`:
-    ```python
-    from index import lambda_handler
-    print("🚀 Simulating Morning Start Event...")
-    lambda_handler({"action": "start"}, {})
-    ```
-2.  Run it:
-    ```bash
-    python3 test_start.py
+**Run this Python one-liner:**
+```bash
+python3 -c "from index import lambda_handler; lambda_handler({'action': 'start'}, {})"
+```
+*Expected Output*: "Restoring EKS Node Groups...", "Starting Dev EC2 Instances..."
+
+```
 ### Step 4: Tag Your Resources (Required)
 The automation **only** touches resources with the tag `Environment=Dev`. 
 If your instances are running after the test, they are likely missing this tag.
