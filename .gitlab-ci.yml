@@ -192,33 +192,29 @@ zap_scan_job:
     - echo "Running OWSAP ZAP Baseline Scan against Backend..."
     - |
       # ZAP Baseline Scan
-      # -t: Target URL
-      # -r: Report file (saved to current directory by default if writable)
-      # -I: Ignore warnings
-      # -j: JSON report (optional, but we use HTML here)
+      # The 'zap-baseline.py' script enforces that report files must be in a mounted volume
+      # or specifically in /zap/wrk. Since we can't easily mount volumes in GitLab CI (dind),
+      # we write to /zap/wrk and copy it out.
       
       echo "Current Directory: $(pwd)"
       
-      # Try running without the sed hack first. The sed hack was breaking the path.
-      # ZAP in Docker typically runs as 'zap' user, so we need to ensure permissions or use a shared volume.
-      # GitLab Runner creates the build directory.
+      # Ensure /zap/wrk exists (it should in the image)
+      mkdir -p /zap/wrk
       
-      zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r zap_report.html || echo "ZAP found vulnerabilities (Exit Code: $?)"
+      # Run ZAP, writing report to the required directory
+      # We use '|| true' because ZAP returns exit codes for warnings/failures, but we want to capture the report first.
+      zap-baseline.py -t http://amazon-backend.default.svc.cluster.local:8080 -r /zap/wrk/zap_report.html || echo "ZAP scan finished with findings"
       
-      ls -la
+      echo "Listing /zap/wrk content:"
+      ls -la /zap/wrk
       
-      if [ -f zap_report.html ]; then
-        echo "Report generated successfully."
+      # Copy report to current directory for GitLab Artifacts
+      if [ -f /zap/wrk/zap_report.html ]; then
+        cp /zap/wrk/zap_report.html ./zap_report.html
+        echo "Report successfully copied to workspace."
       else
-        echo "Report NOT found. Checking /zap/wrk..."
-        # Fallback: Check if it was written to the default ZAP workdir and copy it
-        if [ -f /zap/wrk/zap_report.html ]; then
-           cp /zap/wrk/zap_report.html .
-           echo "Recovered report from /zap/wrk"
-        else
-           echo "ERROR: Report failed to generate."
-           exit 1
-        fi
+        echo "ERROR: Report generation failed."
+        exit 1
       fi
   allow_failure: true
   tags:
