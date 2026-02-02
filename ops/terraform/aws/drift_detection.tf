@@ -44,3 +44,61 @@ resource "aws_cloudwatch_event_target" "trigger_codebuild" {
   arn       = aws_codebuild_project.drift_detective.arn
   role_arn  = aws_iam_role.eventbridge_codepipeline.arn # Role to allow EventBridge to start Build
 }
+
+# --- MISSING IAM ROLES ---
+
+# 1. CodeBuild Service Role
+resource "aws_iam_role" "codebuild_exec" {
+  name = "drift_detective_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "codebuild.amazonaws.com"
+      }
+    }]
+  })
+}
+
+# Attach Admin Access (since Terraform needs to read/write state and check all resources)
+resource "aws_iam_role_policy_attachment" "codebuild_admin" {
+  role       = aws_iam_role.codebuild_exec.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
+
+# 2. EventBridge Role (to trigger CodeBuild)
+resource "aws_iam_role" "eventbridge_codepipeline" {
+  name = "eventbridge_drift_trigger_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "events.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_policy" "eventbridge_start_build" {
+  name = "eventbridge_start_codebuild"
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["codebuild:StartBuild"]
+      Resource = [aws_codebuild_project.drift_detective.arn]
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eventbridge_attach" {
+  role       = aws_iam_role.eventbridge_codepipeline.name
+  policy_arn = aws_iam_policy.eventbridge_start_build.arn
+}
