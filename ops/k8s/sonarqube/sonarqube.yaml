@@ -26,6 +26,9 @@ spec:
       labels:
         app: sonarqube
     spec:
+      # Phase 8: Intelligent Scheduling
+      nodeSelector:
+        intent: critical
       # InitContainer is REQUIRED to run ElasticSearch on AWS Nodes
       # It sets vm.max_map_count to 262144
       initContainers:

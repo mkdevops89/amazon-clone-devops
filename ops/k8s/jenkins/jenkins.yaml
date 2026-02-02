@@ -55,6 +55,9 @@ spec:
         app: jenkins
     spec:
       serviceAccountName: jenkins-sa
+      # Phase 8: Intelligent Scheduling (Pin to Critical Node)
+      nodeSelector:
+        intent: critical
       initContainers:
         - name: fix-permissions
           image: busybox

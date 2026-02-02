@@ -26,6 +26,9 @@ spec:
       labels:
         app: nexus
     spec:
+      # Phase 8: Intelligent Scheduling
+      nodeSelector:
+        intent: critical
       initContainers:
         - name: fix-permissions
           image: busybox
