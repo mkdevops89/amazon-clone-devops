@@ -76,10 +76,12 @@ public class User {
         this.password = password;
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "JPA Entity requires mutable access")
     public Set<Role> getRoles() {
         return roles;
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JPA Entity requires mutable access")
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
     }

@@ -32,7 +32,7 @@ public class UserDetailsImpl implements UserDetails {
         this.username = username;
         this.email = email;
         this.password = password;
-        this.authorities = authorities;
+        this.authorities = (authorities != null) ? new java.util.ArrayList<>(authorities) : null;
     }
 
     public static UserDetailsImpl build(User user) {
@@ -50,7 +50,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
+        return (authorities != null) ? new java.util.ArrayList<>(authorities) : null;
     }
 
     public Long getId() {
@@ -62,36 +62,6 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     @Override
-    public String getPassword() {
-        return password;
-    }
-
-    @Override
-    public String getUsername() {
-        return username;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o)
             return true;
@@ -99,5 +69,10 @@ public class UserDetailsImpl implements UserDetails {
             return false;
         UserDetailsImpl user = (UserDetailsImpl) o;
         return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

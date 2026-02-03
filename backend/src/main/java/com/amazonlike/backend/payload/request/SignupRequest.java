@@ -45,10 +45,10 @@ public class SignupRequest {
     }
 
     public Set<String> getRole() {
-        return this.role;
+        return (this.role != null) ? new java.util.HashSet<>(this.role) : null;
     }
 
     public void setRole(Set<String> role) {
-        this.role = role;
+        this.role = (role != null) ? new java.util.HashSet<>(role) : null;
     }
 }

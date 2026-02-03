@@ -26,6 +26,7 @@ public class CartItem {
     public CartItem() {
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JPA Entity requires mutable access")
     public CartItem(User user, Product product, int quantity, String sessionId) {
         this.user = user;
         this.product = product;
@@ -41,18 +42,22 @@ public class CartItem {
         this.id = id;
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "JPA Entity requires mutable access")
     public User getUser() {
         return user;
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JPA Entity requires mutable access")
     public void setUser(User user) {
         this.user = user;
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "JPA Entity requires mutable access")
     public Product getProduct() {
         return product;
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JPA Entity requires mutable access")
     public void setProduct(Product product) {
         this.product = product;
     }
