@@ -16,10 +16,18 @@ export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output tex
 echo "🔍 Using AWS Account ID: $AWS_ACCOUNT_ID"
 echo "🌍 Using Domain: $DOMAIN_NAME"
 
-# 2. Build Frontend with Start URL
 echo ""
 echo "----------------------------------------------------"
-echo "🏗️  Step 1: Building Frontend Image"
+echo "🏗️  Step 1: Building Backend Image"
+echo "----------------------------------------------------"
+cd "$ROOT_DIR/backend"
+docker build --platform linux/amd64 -t "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest" .
+echo "⬆️  Pushing Backend Image to ECR..."
+docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-backend:latest"
+
+echo ""
+echo "----------------------------------------------------"
+echo "🏗️  Step 2: Building Frontend Image"
 echo "----------------------------------------------------"
 echo "Note: In Phase 5, we use a deterministic domain ($DOMAIN_NAME)"
 echo "so we can build the frontend immediately without waiting for a LoadBalancer."
@@ -40,7 +48,8 @@ docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/amazon-frontend:l
 # 3. Deploy Manifests
 echo ""
 echo "----------------------------------------------------"
-echo "🚀 Step 2: Deploying Infrastructure..."
+echo "----------------------------------------------------"
+echo "🚀 Step 3: Deploying Infrastructure..."
 echo "----------------------------------------------------"
 cd "$ROOT_DIR"
 
@@ -58,7 +67,8 @@ apply_manifest "ops/k8s/ingress.yaml"
 apply_manifest "ops/k8s/ingress-grafana.yaml"
 
 # Restart Pods to ensure they pull the new image
-echo "🔄 Restarting Frontend Pods to pick up new image..."
+echo "🔄 Restarting Pods to pick up new images..."
+kubectl rollout restart deployment/amazon-backend
 kubectl rollout restart deployment/amazon-frontend
 
 echo "----------------------------------------------------"
