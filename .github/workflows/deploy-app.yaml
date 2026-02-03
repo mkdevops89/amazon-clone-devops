@@ -3,7 +3,7 @@ name: Deploy App to EKS
 on:
   workflow_dispatch: # Manual trigger for safety
   push:
-    branches: [ "phase-6a-githubactions" ]
+    branches: [ "phase-6a-githubactions", "phase-10-features" ]
   release:
     types: [published]
 

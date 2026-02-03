@@ -3,7 +3,7 @@ name: DevSecOps CI
 on:
   workflow_dispatch: # Manual trigger
   push:
-    branches: [ "phase-6a-githubactions" ]
+    branches: [ "phase-6a-githubactions", "phase-10-features" ]
 
 jobs:
   security-checks:
