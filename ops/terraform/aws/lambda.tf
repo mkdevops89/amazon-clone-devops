@@ -90,8 +90,8 @@ resource "aws_lambda_function" "cost_optimizer" {
 # 2. EventBridge Schedules (Cron)
 resource "aws_cloudwatch_event_rule" "nightly_stop" {
   name                = "nightly-stop"
-  description         = "Trigger Cost Terminator at 8 PM"
-  schedule_expression = "cron(0 20 * * ? *)"
+  description         = "Trigger Cost Terminator at 9:15 PM CST"
+  schedule_expression = "cron(15 3 * * ? *)"
 }
 
 resource "aws_cloudwatch_event_target" "trigger_stop" {
