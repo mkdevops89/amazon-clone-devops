@@ -76,8 +76,10 @@ def scale_down_eks_nodes():
                 scalingConfig={'minSize': 0, 'desiredSize': 0}
             )
             logger.info(f"Scaled {ng} to 0")
+        return f"Scaled down EKS Node Groups ({len(nodegroups)} groups) to 0."
     except Exception as e:
         logger.error(f"Failed to scale EKS: {e}")
+        return f"Error scaling EKS: {e}"
 
 def restore_eks_nodes():
     """Restores EKS Node Groups to default size (e.g., 1)."""
@@ -111,11 +113,13 @@ def stop_dev_instances():
     instances = ec2.describe_instances(Filters=filters)
     ids = [i['InstanceId'] for r in instances['Reservations'] for i in r['Instances']]
     
+
     if ids:
         ec2.stop_instances(InstanceIds=ids)
-        logger.info(f"Stopped instances: {ids}")
+        return f"Stopped EC2 Instances: {', '.join(ids)}"
     else:
         logger.info("No running Dev instances found.")
+        return "No running Dev EC2 instances found to stop."
 
 def start_dev_instances():
     """Starts EC2 Intances tagged Environment=Dev"""
@@ -126,7 +130,8 @@ def start_dev_instances():
     
     if ids:
         ec2.start_instances(InstanceIds=ids)
-        logger.info(f"Started instances: {ids}")
+        return f"Started EC2 Instances: {', '.join(ids)}"
+    return "No stopped Dev EC2 instances found to start."
 
 def cleanup_orphaned_resources():
     """Deletes available volumes and unassociated EIPs."""
@@ -172,6 +177,8 @@ def stop_dev_rds():
         if env_tag == 'Dev' and status == 'available':
             rds.stop_db_instance(DBInstanceIdentifier=db_id)
             logger.info(f"Stopped RDS: {db_id}")
+            return f"Stopped RDS Instance: {db_id}"
+    return "Checked RDS instances."
 
 def start_dev_rds():
     """Starts RDS Instances tagged Environment=Dev"""
@@ -189,6 +196,8 @@ def start_dev_rds():
         if env_tag == 'Dev' and status == 'stopped':
             rds.start_db_instance(DBInstanceIdentifier=db_id)
             logger.info(f"Started RDS: {db_id}")
+            return f"Started RDS Instance: {db_id}"
+    return "Checked RDS instances."
 
 def analyze_right_sizing():
     """Analyzes CPU Utilization for the past 7 days to recommend right-sizing."""
