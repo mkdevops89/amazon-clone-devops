@@ -134,8 +134,8 @@ resource "aws_lambda_function" "auto_healer" {
 
 resource "aws_cloudwatch_event_rule" "morning_start" {
   name                = "morning-start"
-  description         = "Trigger Cost Terminator at 9 AM"
-  schedule_expression = "cron(0 9 * * ? *)"
+  description         = "Trigger Cost Terminator at 9 AM CST"
+  schedule_expression = "cron(0 15 * * ? *)"
 }
 
 resource "aws_cloudwatch_event_target" "trigger_start" {

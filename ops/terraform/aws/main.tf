@@ -67,6 +67,10 @@ module "eks" {
       labels = {
         "intent" = "critical"
       }
+
+      tags = {
+        Environment = "Dev"
+      }
     }
 
     # 2. General Node Group (Spot Instances)
@@ -87,6 +91,10 @@ module "eks" {
       labels = {
         "intent"    = "apps"
         "lifecycle" = "Ec2Spot"
+      }
+
+      tags = {
+        Environment = "Dev"
       }
     }
   }
@@ -185,6 +193,10 @@ module "db" {
   create_db_subnet_group = true
   # Dynamic naming prevents collision with ghost resources
   db_subnet_group_name   = "${var.db_name}-${module.vpc.vpc_id}-subnet-group"
+
+  tags = {
+    Environment = "Dev"
+  }
 }
 
 # ==========================================
