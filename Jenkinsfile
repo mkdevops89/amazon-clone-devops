@@ -41,6 +41,15 @@ spec:
         requests:
           cpu: "20m"
           memory: "64Mi"
+    - name: node
+      image: node:18-alpine
+      command:
+        - cat
+      tty: true
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "128Mi"
     - name: security
       image: trufflesecurity/trufflehog:latest
       command:
@@ -138,6 +147,17 @@ spec:
             }
         }
 
+        stage('Frontend: Build') {
+            steps {
+                container('node') {
+                    dir('frontend') {
+                        sh 'npm ci'
+                        sh 'npm run build'
+                    }
+                }
+            }
+        }
+
         stage('Upload to Nexus') {
             steps {
                 container('maven') {
@@ -172,10 +192,24 @@ EOF
             }
         }
 
-        stage('Deploy (Mock)') {
+        stage('Deploy to EKS') {
             steps {
-                container('tools') {
-                    sh 'echo "Deploying to Kubernetes..."'
+                container('docker') {
+                    withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                        script {
+                            // Install requirements for deploy_k8s.sh
+                            sh 'apk add --no-cache bash aws-cli gettext curl'
+                            sh 'curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x kubectl && mv kubectl /usr/local/bin/'
+                            
+                            // Configure AWS environment
+                            withEnv(["AWS_REGION=us-east-1"]) {
+                                sh '''
+                                    chmod +x ops/scripts/deploy_k8s.sh
+                                    ./ops/scripts/deploy_k8s.sh
+                                '''
+                            }
+                        }
+                    }
                 }
             }
         }
