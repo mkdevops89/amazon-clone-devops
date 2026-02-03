@@ -102,7 +102,12 @@ def restore_eks_nodes():
 def stop_dev_instances():
     """Stops EC2 Intances tagged Environment=Dev"""
     logger.info("Stopping Dev EC2 Instances...")
-    filters = [{'Name': 'tag:Environment', 'Values': ['Dev']}, {'Name': 'instance-state-name', 'Values': ['running']}]
+    # Fix: Exclude Spot Instances (they cannot be stopped, only terminated via ASG/EKS scaling)
+    filters = [
+        {'Name': 'tag:Environment', 'Values': ['Dev']}, 
+        {'Name': 'instance-state-name', 'Values': ['running']},
+        {'Name': 'instance-lifecycle', 'Values': ['on-demand']} # Only stop On-Demand
+    ]
     instances = ec2.describe_instances(Filters=filters)
     ids = [i['InstanceId'] for r in instances['Reservations'] for i in r['Instances']]
     
