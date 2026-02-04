@@ -59,6 +59,9 @@ module "eks" {
       max_size     = 2
       desired_size = 1
 
+      # Fix: Restrict Critical Node to us-east-1a ONLY (where Persistent Volumes are)
+      subnet_ids = [module.vpc.private_subnets[0]]
+
       # Fix: Attach Policy to allow uploading reports to S3
       iam_role_additional_policies = {
         scan_reports = aws_iam_policy.reports_upload_policy.arn
