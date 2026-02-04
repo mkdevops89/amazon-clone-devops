@@ -197,6 +197,19 @@ EOF
                 container('docker') {
                     withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                         script {
+                            // Start Docker Daemon
+                            sh 'dockerd > /var/log/dockerd.log 2>&1 &'
+                            sh '''
+                                count=0
+                                while ! docker info >/dev/null 2>&1; do
+                                    echo "Waiting for Docker..."
+                                    sleep 1
+                                    count=$((count+1))
+                                    if [ $count -ge 30 ]; then echo "Docker failed to start"; cat /var/log/dockerd.log; exit 1; fi
+                                done
+                                echo "Docker is UP!"
+                            '''
+
                             // Install requirements for deploy_k8s.sh
                             sh 'apk add --no-cache bash aws-cli gettext curl'
                             sh 'curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x kubectl && mv kubectl /usr/local/bin/'
