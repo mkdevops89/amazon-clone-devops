@@ -205,6 +205,7 @@ EOF
                             withEnv(["AWS_REGION=us-east-1"]) {
                                 sh '''
                                     chmod +x ops/scripts/deploy_k8s.sh
+                                    aws eks update-kubeconfig --name amazon-cluster
                                     ./ops/scripts/deploy_k8s.sh
                                 '''
                             }
