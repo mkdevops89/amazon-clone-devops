@@ -214,6 +214,9 @@ EOF
                             sh 'apk add --no-cache bash aws-cli gettext curl'
                             sh 'curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x kubectl && mv kubectl /usr/local/bin/'
                             
+                            // Login to ECR
+                            sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query Account --output text).dkr.ecr.us-east-1.amazonaws.com'
+
                             // Configure AWS environment
                             withEnv(["AWS_REGION=us-east-1"]) {
                                 sh '''
