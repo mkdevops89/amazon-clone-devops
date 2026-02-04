@@ -24,7 +24,7 @@ spec:
           env:
             # Connects to the Backend Service via Public Internet (Required for Client-Side Fetch)
             - name: NEXT_PUBLIC_API_URL
-              value: "https://api.${DOMAIN_NAME}"
+              value: "https://api.devcloudproject.com"
           resources:
             requests:
               memory: "256Mi"

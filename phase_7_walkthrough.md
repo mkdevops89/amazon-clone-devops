@@ -154,12 +154,30 @@ See what will be created (Lambdas, Roles, Rules):
 terraform plan
 ```
 
-### Step 3: Apply (Selective)
-To deploy *only* the new automation without touching existing infrastructure:
+### Step 3: Apply (Full)
+Since we have verified the plan is safe and includes critical fixes (EKS Scaling, Drift Detection, and Lambdas), run the full apply:
 ```bash
-terraform apply -target=aws_lambda_function.cost_optimizer \
-                -target=aws_lambda_function.auto_healer \
-                -target=aws_cloudwatch_event_rule.nightly_stop
+terraform apply -auto-approve
+```
+
+## 6. ☁️ Verify Cloud Deployment
+Check that your automation is actually live in AWS.
+
+### 1. Check Lambdas
+```bash
+aws lambda get-function --function-name cost_terminator --query 'Configuration.LastModified'
+aws lambda get-function --function-name auto_healer --query 'Configuration.LastModified'
+```
+
+### 2. Check Drift Detective (CodeBuild)
+```bash
+aws codebuild batch-get-projects --names drift-detective --query 'projects[].name'
+```
+
+### 3. Check Schedules (CloudWatch)
+```bash
+aws events list-rules --name-prefix daily-drift-check
+aws events list-rules --name-prefix nightly-stop
 ```
 
 ---

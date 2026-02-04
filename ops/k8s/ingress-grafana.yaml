@@ -7,7 +7,7 @@ metadata:
 
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: "<INSERT_YOUR_ACM_ARN>"
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-east-1:406312601212:certificate/d3295a68-4c22-4f92-af08-9cb09758966d"
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
     # Group: Joins the existing ALB created by amazon-ingress
@@ -17,7 +17,7 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-    - host: grafana.${DOMAIN_NAME}
+    - host: grafana.devcloudproject.com
       http:
         paths:
           - path: /

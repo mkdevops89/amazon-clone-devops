@@ -116,7 +116,7 @@ metadata:
     # Shared ALB Group
     alb.ingress.kubernetes.io/group.name: "amazon-group"
     # IMPORTANT: Replace with your actual ACM ARN
-    alb.ingress.kubernetes.io/certificate-arn: '${ACM_CERTIFICATE_ARN}'
+    alb.ingress.kubernetes.io/certificate-arn: 'arn:aws:acm:us-east-1:406312601212:certificate/d3295a68-4c22-4f92-af08-9cb09758966d'
 spec:
   ingressClassName: alb
   rules:

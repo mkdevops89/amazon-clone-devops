@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: amazon-backend
+  namespace: devsecops
   labels:
     app: amazon-backend
 spec:
@@ -70,6 +71,19 @@ spec:
                   key: rabbitmq_password
             - name: SPRING_RABBITMQ_SSL_ENABLED
               value: "true"
+            # App Config
+            - name: AMAZONLIKE_APP_FRONTENDURL
+              value: "https://www.devcloudproject.com,https://devcloudproject.com"
+            - name: AMAZONLIKE_APP_FRONTEND_URL
+              value: "https://www.devcloudproject.com,https://devcloudproject.com"
+            - name: AMAZONLIKE_APP_JWTSECRET
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: jwt_secret
+                  optional: true
+            - name: AMAZONLIKE_APP_JWTEXPIRATIONMS
+              value: "86400000"
           resources:
             requests:
               memory: "512Mi"

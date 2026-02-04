@@ -115,7 +115,11 @@ git push
 ```
 
 ### Step 2: What happens next?
-1.  **Ops Check**: Run `go run main.go` locally to check your cluster health.
+1.  **Ops Check**: Run `go run main.go` locally to check your cluster health:
+    ```bash
+    cd ops/cli/ops-check
+    go run main.go
+    ```
 2.  **Cost Terminator**: The Python code will be deployed next time you run Terraform (or via CI/CD pipelines). It will start analyzing your CPU usage nightly and suggest downgrades if you are over-provisioned.
 
 ---

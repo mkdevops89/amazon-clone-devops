@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from 'next/link';
 import AuthService from "../../services/auth.service";
 import { useRouter } from "next/navigation";
 
@@ -19,7 +20,10 @@ export default function Login() {
         AuthService.login(username, password).then(
             () => {
                 router.push("/");
-                window.location.reload();
+                // We use a small delay or reload to ensure the UI updates with auth state
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
             },
             (error) => {
                 const resMessage =
@@ -36,25 +40,65 @@ export default function Login() {
     };
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center py-2">
-            <div className="w-full max-w-md p-8 space-y-3 rounded-xl border bg-white shadow-lg">
-                <h1 className="text-2xl font-bold text-center">Login</h1>
-                <form onSubmit={handleLogin} className="space-y-6">
+        <div style={{
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            paddingTop: '3rem',
+            background: 'linear-gradient(to bottom, #f0f2f2, #ffffff)',
+            fontFamily: 'system-ui, -apple-system, sans-serif'
+        }}>
+            {/* Logo */}
+            <Link href="/" style={{ marginBottom: '1.5rem', fontSize: '2.5rem', fontWeight: 'bold', textDecoration: 'none', color: 'black' }}>
+                Amazon<span style={{ color: '#ff9900' }}>Clone</span>
+            </Link>
+
+            {/* Login Card */}
+            <div style={{
+                width: '100%',
+                maxWidth: '350px',
+                padding: '1.5rem 2rem',
+                borderRadius: '8px',
+                backgroundColor: 'white',
+                border: '1px solid #ddd',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+            }}>
+                <h1 style={{ fontSize: '1.8rem', marginBottom: '1rem', fontWeight: '500' }}>Sign in</h1>
+
+                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                     <div>
-                        <label className="block mb-2 text-sm font-medium text-gray-900">Username</label>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.3rem' }}>Username</label>
                         <input
                             type="text"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                            style={{
+                                width: '100%',
+                                padding: '0.6rem',
+                                borderRadius: '3px',
+                                border: '1px solid #a6a6a6',
+                                outline: 'none',
+                                boxSizing: 'border-box'
+                            }}
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             required
                         />
                     </div>
                     <div>
-                        <label className="block mb-2 text-sm font-medium text-gray-900">Password</label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.3rem' }}>Password</label>
+                            <Link href="#" style={{ fontSize: '0.8rem', color: '#0066c0', textDecoration: 'none' }}>Forgot your password?</Link>
+                        </div>
                         <input
                             type="password"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                            style={{
+                                width: '100%',
+                                padding: '0.6rem',
+                                borderRadius: '3px',
+                                border: '1px solid #a6a6a6',
+                                outline: 'none',
+                                boxSizing: 'border-box'
+                            }}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -63,18 +107,79 @@ export default function Login() {
 
                     <button
                         type="submit"
-                        className="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
                         disabled={loading}
+                        style={{
+                            marginTop: '0.5rem',
+                            padding: '0.6rem',
+                            background: loading ? '#ddd' : 'linear-gradient(to bottom, #f7dfa1, #f0c14b)',
+                            border: '1px solid #a88734 #9c7e31 #846a29',
+                            borderRadius: '3px',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: '400'
+                        }}
                     >
-                        {loading ? "Logging in..." : "Login"}
+                        {loading ? "Signing in..." : "Sign in"}
                     </button>
 
                     {message && (
-                        <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+                        <div style={{
+                            padding: '0.8rem',
+                            marginTop: '0.5rem',
+                            fontSize: '0.8rem',
+                            color: '#c40000',
+                            backgroundColor: '#fff',
+                            border: '1px solid #c40000',
+                            borderRadius: '4px'
+                        }}>
                             {message}
                         </div>
                     )}
                 </form>
+
+                <div style={{ marginTop: '1.5rem', fontSize: '0.75rem', lineHeight: '1.4' }}>
+                    By continuing, you agree to Amazon Clone's <Link href="#" style={{ color: '#0066c0', textDecoration: 'none' }}>Conditions of Use</Link> and <Link href="#" style={{ color: '#0066c0', textDecoration: 'none' }}>Privacy Notice</Link>.
+                </div>
+            </div>
+
+            {/* New to Amazon */}
+            <div style={{
+                marginTop: '1.5rem',
+                width: '100%',
+                maxWidth: '350px',
+                textAlign: 'center'
+            }}>
+                <div style={{
+                    position: 'relative',
+                    borderBottom: '1px solid #e7e7e7',
+                    marginBottom: '1.2rem',
+                    marginTop: '0.5rem'
+                }}>
+                    <span style={{
+                        position: 'absolute',
+                        top: '-10px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: '#fff',
+                        padding: '0 10px',
+                        color: '#767676',
+                        fontSize: '0.75rem'
+                    }}>New to Amazon?</span>
+                </div>
+
+                <Link href="/register" style={{ textDecoration: 'none', width: '100%' }}>
+                    <button style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        background: 'linear-gradient(to bottom, #f7f8fa, #e7e9ec)',
+                        border: '1px solid #adb1b8',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem'
+                    }}>
+                        Create your Amazon account
+                    </button>
+                </Link>
             </div>
         </div>
     );
