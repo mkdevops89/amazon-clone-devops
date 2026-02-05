@@ -13,7 +13,7 @@ public class CartItem {
     @JoinColumn(name = "user_id")
     private User user; // Logged in user (optional if using session)
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 

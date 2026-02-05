@@ -70,7 +70,11 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
                         .requestMatchers("/api/products/**").permitAll() // Allow product browsing
+                        .requestMatchers("/api/cart/**").permitAll() // Allow anonymous cart access
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // Allow
+                                                                                                         // pre-flight
                         .requestMatchers("/actuator/**").permitAll() // Allow health checks
+                        .requestMatchers("/").permitAll() // Allow ALB health check
                         .anyRequest().authenticated());
 
         // Fix: Explicit CORS configuration
@@ -94,5 +98,10 @@ public class WebSecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers("/");
     }
 }

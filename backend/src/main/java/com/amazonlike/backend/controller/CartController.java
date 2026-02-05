@@ -35,18 +35,19 @@ public class CartController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
             // Authenticated User
-            String username = auth.getName(); // Actually returns username from UserDetails
-            // In previous JwtUtils, we set UserDetails as principal.
-            // We need to fetch User entity.
+            String username = ((org.springframework.security.core.userdetails.UserDetails) auth.getPrincipal())
+                    .getUsername();
             Optional<User> user = userRepository.findByUsername(username);
             if (user.isPresent()) {
-                return ResponseEntity.ok(cartRepository.findByUser(user.get()));
+                List<CartItem> items = cartRepository.findByUser(user.get());
+                return ResponseEntity.ok(items);
             }
         }
 
         // Fallback to Session ID (Anonymous)
         if (sessionId != null) {
-            return ResponseEntity.ok(cartRepository.findBySessionId(sessionId));
+            List<CartItem> items = cartRepository.findBySessionId(sessionId);
+            return ResponseEntity.ok(items);
         }
 
         return ResponseEntity.badRequest().build();
@@ -60,12 +61,6 @@ public class CartController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = null;
         if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
-            // Use Username from Context because Principal is UserDetailsImpl
-            // See UserDetailsServiceImpl.loadUserByUsername -> returns UserDetailsImpl
-            // AuthTokenFilter sets this authentication.
-            // But note: auth.getName() on UsernamePasswordAuthenticationToken returns the
-            // name.
-            // Let's use the simple username lookup for now.
             String username = ((org.springframework.security.core.userdetails.UserDetails) auth.getPrincipal())
                     .getUsername();
             user = userRepository.findByUsername(username).orElse(null);
@@ -75,20 +70,35 @@ public class CartController {
             Optional<CartItem> existing = cartRepository.findByUserAndProductId(user, product.getId());
             if (existing.isPresent()) {
                 CartItem item = existing.get();
-                item.setQuantity(item.getQuantity() + request.getQuantity());
-                cartRepository.save(item);
+                int newQuantity = item.getQuantity() + request.getQuantity();
+                if (newQuantity <= 0) {
+                    cartRepository.delete(item);
+                } else {
+                    item.setQuantity(newQuantity);
+                    cartRepository.save(item);
+                }
             } else {
-                cartRepository.save(new CartItem(user, product, request.getQuantity(), null));
+                if (request.getQuantity() > 0) {
+                    cartRepository.save(new CartItem(user, product, request.getQuantity(), null));
+                }
             }
         } else if (request.getSessionId() != null) {
             Optional<CartItem> existing = cartRepository.findBySessionIdAndProductId(request.getSessionId(),
                     product.getId());
             if (existing.isPresent()) {
                 CartItem item = existing.get();
-                item.setQuantity(item.getQuantity() + request.getQuantity());
-                cartRepository.save(item);
+                int newQuantity = item.getQuantity() + request.getQuantity();
+                if (newQuantity <= 0) {
+                    cartRepository.delete(item);
+                } else {
+                    item.setQuantity(newQuantity);
+                    cartRepository.save(item);
+                }
             } else {
-                cartRepository.save(new CartItem(null, product, request.getQuantity(), request.getSessionId()));
+                if (request.getQuantity() > 0) {
+                    CartItem newItem = new CartItem(null, product, request.getQuantity(), request.getSessionId());
+                    cartRepository.save(newItem);
+                }
             }
         } else {
             return ResponseEntity.badRequest().body("User or Session ID required");
