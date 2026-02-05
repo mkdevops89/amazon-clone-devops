@@ -68,8 +68,8 @@ apply_manifest "ops/k8s/ingress-grafana.yaml"
 
 # Restart Pods to ensure they pull the new image
 echo "🔄 Restarting Pods to pick up new images..."
-kubectl rollout restart deployment/amazon-backend
-kubectl rollout restart deployment/amazon-frontend
+kubectl rollout restart deployment/amazon-backend -n devsecops
+kubectl rollout restart deployment/amazon-frontend -n devsecops
 
 echo "----------------------------------------------------"
 echo "✅ Deployment Complete!"
