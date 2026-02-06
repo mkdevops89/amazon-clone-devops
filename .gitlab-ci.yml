@@ -187,6 +187,7 @@ deploy_job:
     - main
     - phase-6c-gitlab
     - phase-6d-scanreports
+    - phase-10-features
 
 # ===============================
 # 7. Dynamic Analysis
