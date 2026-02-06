@@ -114,7 +114,7 @@ git commit -m "feat(finops): add right-sizing recommendation logic"
 git push
 ```
 
-### Step 2: What happens next??
+### Step 2: What happens next?
 1.  **Ops Check**: Run `go run main.go` locally to check your cluster health:
     ```bash
     cd ops/cli/ops-check
