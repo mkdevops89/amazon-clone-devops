@@ -25,7 +25,7 @@ spec:
           env:
             # Connects to the Backend Service via Public Internet (Required for Client-Side Fetch)
             - name: NEXT_PUBLIC_API_URL
-              value: "https://api.devcloudproject.com"
+              value: "https://api.devcloudproject.com/api"
           resources:
             requests:
               memory: "256Mi"
@@ -38,12 +38,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: amazon-frontend
+  namespace: devsecops
 spec:
   selector:
     app: amazon-frontend
   ports:
     - protocol: TCP
-      name: http
       port: 80
       targetPort: 3000
   type: ClusterIP # Changed to ClusterIP for Ingress routing

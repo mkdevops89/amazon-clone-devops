@@ -73,9 +73,9 @@ spec:
               value: "true"
             # App Config
             - name: AMAZONLIKE_APP_FRONTENDURL
-              value: "https://www.devcloudproject.com,https://devcloudproject.com"
+              value: "https://www.devcloudproject.com"
             - name: AMAZONLIKE_APP_FRONTEND_URL
-              value: "https://www.devcloudproject.com,https://devcloudproject.com"
+              value: "https://www.devcloudproject.com"
             - name: AMAZONLIKE_APP_JWTSECRET
               valueFrom:
                 secretKeyRef:
