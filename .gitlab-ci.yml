@@ -270,10 +270,12 @@ deploy_job:
       sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/backend.yaml
       sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/backend.yaml
       kubectl apply -f ops/k8s/backend.yaml
+      kubectl rollout restart deployment/amazon-backend -n devsecops
       
       sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/frontend.yaml
       sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/frontend.yaml
       kubectl apply -f ops/k8s/frontend.yaml
+      kubectl rollout restart deployment/amazon-frontend -n devsecops
   tags:
     - amazon-clone
   only:
