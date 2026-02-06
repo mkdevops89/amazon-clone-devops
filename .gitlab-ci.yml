@@ -110,6 +110,40 @@ sast_backend_job:
   tags:
     - amazon-clone
 
+  tags:
+    - amazon-clone
+
+sast_frontend_job:
+  stage: test
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  script:
+    - |
+      test -n "$SONAR_TOKEN" || (echo "SONAR_TOKEN missing" && exit 1)
+      echo "Running SonarQube Analysis for Frontend..."
+      sonar-scanner \
+        -Dsonar.projectKey=amazon-clone-frontend \
+        -Dsonar.sources=frontend \
+        -Dsonar.host.url="$SONAR_HOST_URL" \
+        -Dsonar.login="$SONAR_TOKEN"
+  needs:
+    - build_frontend_job
+  tags:
+    - amazon-clone
+
+frontend_audit_job:
+  stage: test
+  image: node:20-alpine
+  script:
+    - echo "Running NPM Audit..."
+    - cd frontend
+    - npm ci
+    - npm audit --audit-level=high || echo "NPM Audit found vulnerabilities"
+  tags:
+    - amazon-clone
+  allow_failure: true
+
 dependency_check_job:
   stage: test
   image: 
