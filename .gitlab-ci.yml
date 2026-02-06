@@ -207,7 +207,7 @@ push_frontend_job:
       /kaniko/executor \
         --context "${CI_PROJECT_DIR}/frontend" \
         --dockerfile "${CI_PROJECT_DIR}/frontend/Dockerfile" \
-        --build-arg NEXT_PUBLIC_API_URL="https://api.devcloudproject.com" \
+        --build-arg NEXT_PUBLIC_API_URL="https://api.devcloudproject.com/api" \
         --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-frontend:latest"
   needs:
     - build_frontend_job
