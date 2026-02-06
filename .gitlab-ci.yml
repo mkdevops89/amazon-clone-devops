@@ -96,7 +96,7 @@ build_frontend_job:
 # 3. Code Security & Quality
 # ===============================
 
-sast_job:
+sast_backend_job:
   stage: test
   image: maven:3.8.3-openjdk-17
   script:
@@ -157,7 +157,8 @@ push_job:
         --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-backend:latest"
   needs:
     - build_job
-    - sast_job
+    - sast_backend_job
+    - sast_frontend_job
   tags:
     - amazon-clone
 
@@ -200,6 +201,25 @@ trivy_scan_job:
     when: always
     paths:
       - trivy-report.txt
+    expire_in: 1 week
+
+trivy_frontend_scan_job:
+  stage: scan-container
+  image: 
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - echo "Scanning frontend artifact..."
+    - trivy image --severity HIGH,CRITICAL --no-progress --output trivy-frontend-report.txt "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-frontend:latest"
+    - cat trivy-frontend-report.txt
+  needs:
+    - push_frontend_job
+  tags:
+    - amazon-clone
+  artifacts:
+    when: always
+    paths:
+      - trivy-frontend-report.txt
     expire_in: 1 week
 
 # ===============================
