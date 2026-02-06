@@ -155,6 +155,7 @@ push_job:
         --context "${CI_PROJECT_DIR}/backend" \
         --dockerfile "${CI_PROJECT_DIR}/backend/Dockerfile" \
         --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-backend:latest"
+  needs:
     - build_job
     - sast_job
   tags:
