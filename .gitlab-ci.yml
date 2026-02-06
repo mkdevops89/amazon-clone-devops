@@ -206,7 +206,7 @@ zap_scan_job:
       
       zap-baseline.py \
         --autooff \
-        -t "http://amazon-backend.default.svc.cluster.local:8080" \
+        -t "http://amazon-backend.devsecops.svc.cluster.local:8080" \
         -r zap_report.html \
         -J zap_report.json || echo "ZAP scan finished (Exit Code: $?)"
       
