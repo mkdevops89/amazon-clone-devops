@@ -75,6 +75,23 @@ build_job:
     paths:
       - backend/target/*.jar
 
+build_frontend_job:
+  stage: build
+  image: node:20-alpine
+  script:
+    - echo "Compiling Frontend..."
+    - cd frontend
+    - npm ci
+    - npm run build
+  tags:
+    - amazon-clone
+  artifacts:
+    paths:
+      - frontend/.next
+      - frontend/public
+      - frontend/package.json
+    expire_in: 1 hour
+
 # ===============================
 # 3. Code Security & Quality
 # ===============================
@@ -138,9 +155,26 @@ push_job:
         --context "${CI_PROJECT_DIR}/backend" \
         --dockerfile "${CI_PROJECT_DIR}/backend/Dockerfile" \
         --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-backend:latest"
-  needs:
     - build_job
     - sast_job
+  tags:
+    - amazon-clone
+
+push_frontend_job:
+  stage: package
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "Building and Pushing Frontend to ECR..."
+    - |
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}/frontend" \
+        --dockerfile "${CI_PROJECT_DIR}/frontend/Dockerfile" \
+        --build-arg NEXT_PUBLIC_API_URL="https://api.devcloudproject.com" \
+        --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-frontend:latest"
+  needs:
+    - build_frontend_job
   tags:
     - amazon-clone
 
@@ -181,6 +215,10 @@ deploy_job:
       sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/backend.yaml
       sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/backend.yaml
       kubectl apply -f ops/k8s/backend.yaml
+      
+      sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/frontend.yaml
+      sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/frontend.yaml
+      kubectl apply -f ops/k8s/frontend.yaml
   tags:
     - amazon-clone
   only:
