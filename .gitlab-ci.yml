@@ -276,6 +276,10 @@ deploy_job:
       sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/frontend.yaml
       kubectl apply -f ops/k8s/frontend.yaml
       kubectl rollout restart deployment/amazon-frontend -n devsecops
+      
+      # Apply Monitoring
+      kubectl apply -f ops/k8s/servicemonitor-backend.yaml || echo "Warning: ServiceMonitor CRD not found"
+      kubectl apply -f ops/k8s/servicemonitor-frontend.yaml || echo "Warning: ServiceMonitor CRD not found"
   tags:
     - amazon-clone
   only:
