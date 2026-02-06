@@ -104,7 +104,7 @@ sast_backend_job:
       test -n "$SONAR_TOKEN" || (echo "SONAR_TOKEN missing" && exit 1)
       echo "Running SonarQube Analysis..."
       cd backend 
-      mvn -B sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.login="$SONAR_TOKEN"
+      mvn -B compile sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.login="$SONAR_TOKEN"
   needs:
     - build_job
   tags:
