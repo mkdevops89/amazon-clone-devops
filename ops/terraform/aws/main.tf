@@ -66,6 +66,7 @@ module "eks" {
       iam_role_additional_policies = {
         scan_reports = aws_iam_policy.reports_upload_policy.arn
         ecr_access   = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+        cost_explorer = aws_iam_policy.cost_explorer_policy.arn
       }
       
       labels = {
@@ -91,6 +92,7 @@ module "eks" {
       iam_role_additional_policies = {
         scan_reports = aws_iam_policy.reports_upload_policy.arn
         ecr_access   = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+        cost_explorer = aws_iam_policy.cost_explorer_policy.arn
       }
 
       labels = {
