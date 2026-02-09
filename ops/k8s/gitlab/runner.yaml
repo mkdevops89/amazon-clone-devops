@@ -73,7 +73,10 @@ spec:
             - name: CI_SERVER_URL
               value: "https://gitlab.com/"
             - name: REGISTRATION_TOKEN
-              value: "REPLACE_ME_WITH_TOKEN"
+              valueFrom:
+                secretKeyRef:
+                  name: gitlab-runner-secret
+                  key: registration-token
           command: ["/bin/bash", "-c"]
           args:
             - |
