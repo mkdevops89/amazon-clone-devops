@@ -2,8 +2,9 @@ import { register, collectDefaultMetrics } from 'prom-client';
 
 // Initialize default metrics (CPU, Memory, Event Loop)
 // We check if metrics are already registered to avoid duplicates in hot-reload/dev environments
-if (register.getMetricsAsJSON().length === 0) {
+if (!(global as any)._prometheus_default_metrics_initialized) {
     collectDefaultMetrics({ prefix: 'frontend_' });
+    (global as any)._prometheus_default_metrics_initialized = true;
 }
 
 export async function GET() {
