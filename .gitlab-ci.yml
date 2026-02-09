@@ -297,6 +297,8 @@ deploy_job:
       kubectl apply -f ops/k8s/servicemonitor-frontend.yaml || echo "Warning: ServiceMonitor CRD not found"
       
       # Apply Cost Exporter
+      sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/cost-exporter.yaml
+      sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/cost-exporter.yaml
       kubectl apply -f ops/k8s/cost-exporter.yaml
       kubectl apply -f ops/k8s/servicemonitor-cost-exporter.yaml
       kubectl rollout restart deployment/cost-exporter -n devsecops || true
