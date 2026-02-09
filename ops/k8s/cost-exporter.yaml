@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cost-exporter
+  namespace: devsecops
+  labels:
+    app: cost-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cost-exporter
+  template:
+    metadata:
+      labels:
+        app: cost-exporter
+    spec:
+      serviceAccountName: default # Ensure this SA has IAM permissions for ce:GetCostAndUsage
+      containers:
+        - name: cost-exporter
+          image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/cost-exporter:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: AWS_REGION
+              value: "${AWS_REGION}"
+            - name: SCRAPE_INTERVAL
+              value: "21600"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cost-exporter
+  namespace: devsecops
+  labels:
+    app: cost-exporter
+spec:
+  selector:
+    app: cost-exporter
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http

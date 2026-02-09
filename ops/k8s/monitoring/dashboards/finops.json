@@ -82,9 +82,91 @@
             "datasource": null,
             "fieldConfig": {
                 "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 100
+                            }
+                        ]
+                    },
+                    "unit": "currencyUSD"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 0
+            },
+            "id": 4,
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showThresholdLabels": false,
+                "showThresholdMarkers": true
+            },
+            "pluginVersion": "7.5.0",
+            "targets": [
+                {
+                    "expr": "aws_billing_estimated_charges_total",
+                    "interval": "",
+                    "legendFormat": "Actual Month-to-Date Bill",
+                    "refId": "A"
+                }
+            ],
+            "title": "Current Month Bill (Actual)",
+            "type": "stat"
+        },
+        {
+            "datasource": null,
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
                     "custom": {
-                        "align": "auto",
-                        "displayMode": "auto"
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "bars",
+                        "fillOpacity": 80,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "normal"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
                     },
                     "mappings": [],
                     "thresholds": {
@@ -99,41 +181,39 @@
                                 "value": 80
                             }
                         ]
-                    }
+                    },
+                    "unit": "currencyUSD"
                 },
                 "overrides": []
             },
             "gridPos": {
                 "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 0
+                "w": 24,
+                "x": 0,
+                "y": 8
             },
-            "id": 4,
+            "id": 6,
             "options": {
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": [
-                        "mean"
-                    ],
-                    "fields": "",
-                    "values": false
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
                 },
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true,
-                "text": {}
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
             },
-            "pluginVersion": "7.5.0",
             "targets": [
                 {
-                    "expr": "(count(kube_node_labels{label_lifecycle=\"Ec2Spot\"}) * 0.0416 * 730) + (count(kube_node_labels{label_lifecycle!=\"Ec2Spot\"}) * 0.1664 * 730)",
+                    "expr": "topk(10, aws_billing_service_cost_total)",
                     "interval": "",
-                    "legendFormat": "Estimated Monthly Cost ($)",
+                    "legendFormat": "{{service}}",
                     "refId": "A"
                 }
             ],
-            "title": "Estimated Monthly Compute Cost ($)",
-            "type": "stat"
+            "title": "Cost Breakdown by Service (Top 10)",
+            "type": "barchart"
         }
     ],
     "schemaVersion": 27,
@@ -153,5 +233,5 @@
     "timezone": "",
     "title": "FinOps & Efficiency",
     "uid": "finops-001",
-    "version": 1
+    "version": 2
 }

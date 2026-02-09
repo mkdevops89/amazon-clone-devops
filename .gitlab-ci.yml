@@ -214,6 +214,21 @@ push_frontend_job:
   tags:
     - amazon-clone
 
+push_cost_exporter_job:
+  stage: package
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "Building and Pushing Cost Exporter to ECR..."
+    - |
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}/ops/cost-exporter" \
+        --dockerfile "${CI_PROJECT_DIR}/ops/cost-exporter/Dockerfile" \
+        --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/cost-exporter:latest"
+  tags:
+    - amazon-clone
+
 # ===============================
 # 5. Container Security
 # ===============================
@@ -280,6 +295,11 @@ deploy_job:
       # Apply Monitoring
       kubectl apply -f ops/k8s/servicemonitor-backend.yaml || echo "Warning: ServiceMonitor CRD not found"
       kubectl apply -f ops/k8s/servicemonitor-frontend.yaml || echo "Warning: ServiceMonitor CRD not found"
+      
+      # Apply Cost Exporter
+      kubectl apply -f ops/k8s/cost-exporter.yaml
+      kubectl apply -f ops/k8s/servicemonitor-cost-exporter.yaml
+      kubectl rollout restart deployment/cost-exporter -n devsecops || true
   tags:
     - amazon-clone
   only:
