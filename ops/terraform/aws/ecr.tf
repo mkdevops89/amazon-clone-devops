@@ -71,7 +71,6 @@ resource "aws_ecr_lifecycle_policy" "frontend_policy" {
         type = "expire"
       }
     }]
-    }]
   })
 }
 
