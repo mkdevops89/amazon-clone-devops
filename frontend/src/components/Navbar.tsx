@@ -17,10 +17,21 @@ export default function Navbar() {
             localStorage.setItem("sessionId", crypto.randomUUID());
         }
 
-        // Sync cart count from local storage or API
-        const updateCartCount = () => {
-            const items = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("cart_items") || "[]") : [];
-            setCartCount(items.reduce((acc: number, item: any) => acc + item.quantity, 0));
+        // Sync cart count from API
+        const updateCartCount = async () => {
+            const sessionId = localStorage.getItem("sessionId");
+            if (!sessionId) return;
+
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.devcloudproject.com/api';
+                const res = await fetch(`${apiUrl}/cart?sessionId=${sessionId}`);
+                if (res.ok) {
+                    const items = await res.json();
+                    setCartCount(items.reduce((acc: number, item: any) => acc + item.quantity, 0));
+                }
+            } catch (err) {
+                console.error("Failed to fetch cart count:", err);
+            }
         };
 
         updateCartCount();
