@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import { useState } from 'react';
 
 interface ProductCardProps {
     id: number;
@@ -11,6 +12,40 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ id, title, price, image, category }: ProductCardProps) {
+    const [loading, setLoading] = useState(false);
+
+    const addToCart = async () => {
+        setLoading(true);
+        const sessionId = localStorage.getItem("sessionId");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.devcloudproject.com/api';
+
+        try {
+            const res = await fetch(`${apiUrl}/cart/add`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    productId: id,
+                    quantity: 1,
+                    sessionId: sessionId
+                }),
+            });
+
+            if (res.ok) {
+                // Dispatch event to update Navbar cart count
+                window.dispatchEvent(new Event('cart-updated'));
+                // Temporary visual feedback could be added here
+            } else {
+                console.error("Failed to add to cart");
+            }
+        } catch (error) {
+            console.error("Error adding to cart:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="bg-white p-4 flex flex-col h-full rounded-sm z-30 relative hover:-translate-y-1 transition-transform duration-200">
             <div className="relative h-48 w-full mb-4 flex items-center justify-center">
@@ -51,8 +86,12 @@ export default function ProductCard({ id, title, price, image, category }: Produ
                         Delivery <span className="font-bold">Mon, Feb 26</span>
                     </p>
 
-                    <button className="w-full mt-3 bg-amazon-yellow border border-yellow-500 rounded-full py-1.5 text-sm shadow-sm hover:bg-yellow-400 focus:ring-2 focus:ring-yellow-500 active:ring-amazon-orange">
-                        Add to Cart
+                    <button
+                        onClick={addToCart}
+                        disabled={loading}
+                        className={`w-full mt-3 bg-amazon-yellow border border-yellow-500 rounded-full py-1.5 text-sm shadow-sm hover:bg-yellow-400 focus:ring-2 focus:ring-yellow-500 active:ring-amazon-orange ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        {loading ? 'Adding...' : 'Add to Cart'}
                     </button>
                 </div>
             </div>

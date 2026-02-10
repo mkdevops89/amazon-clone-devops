@@ -73,6 +73,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/products/**").permitAll() // Allow product browsing (if prefix stripped by
                                                                      // Ingress)
                         .requestMatchers("/api/cart/**").permitAll() // Allow anonymous cart access
+                        .requestMatchers("/cart/**").permitAll() // Allow anonymous cart access (if prefix stripped)
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // Allow
                                                                                                          // pre-flight
                         .requestMatchers("/actuator/**").permitAll() // Allow health checks
