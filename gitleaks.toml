@@ -1,0 +1,5 @@
+[allowlist]
+description = "Ignore Prometheus runtime dump file"
+paths = [
+    '''prometheus_targets.json''',
+]
