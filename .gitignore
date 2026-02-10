@@ -105,3 +105,6 @@ ops/k8s/db-secrets.yaml
 !phase_7_walkthrough.md
 !phase_8_walkthrough.md
 !phase_8_5_walkthrough.md
+
+# Prometheus dump
+prometheus_targets.json

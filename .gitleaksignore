@@ -1,6 +1,4 @@
-[ignore]
-	commits = [
-		"078aed5e93576c77a5f49ae037459a6b5e85214c",
-		"a87e81cc4093cb1fd228b9e0aca0ae28f5516538",
-		"d59059dcaed9f81eb7c8aab6824b2edc38ec2425"
-	]
+# Ignored commits
+078aed5e93576c77a5f49ae037459a6b5e85214c
+a87e81cc4093cb1fd228b9e0aca0ae28f5516538
+d59059dcaed9f81eb7c8aab6824b2edc38ec2425
