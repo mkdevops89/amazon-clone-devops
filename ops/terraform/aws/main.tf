@@ -53,7 +53,7 @@ module "eks" {
     critical = {
       name           = "critical-ng"
       capacity_type  = "ON_DEMAND"
-      instance_types = ["t3.xlarge"]
+      instance_types = ["t3.large"] # Cost Optimization: Downsized from t3.xlarge
       
       min_size     = 1
       max_size     = 2
@@ -83,7 +83,7 @@ module "eks" {
     spot = {
       name           = "spot-ng"
       capacity_type  = "SPOT"
-      instance_types = ["t3.xlarge", "t3.2xlarge"] # Multiple types increase Spot availability
+      instance_types = ["t3.medium", "t3.large"] # Cost Optimization: Downsized from t3.xlarge/2xlarge
       
       min_size     = 1
       max_size     = 5
