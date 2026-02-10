@@ -49,7 +49,7 @@ gitleaks_scan_job:
   script:
     - echo "Scanning for secrets..."
     - |
-      gitleaks detect --source=. --verbose --redact --report-path gitleaks-report.json
+      gitleaks detect --source=. -c gitleaks.toml --verbose --redact --report-path gitleaks-report.json
   allow_failure: true
   tags:
     - amazon-clone

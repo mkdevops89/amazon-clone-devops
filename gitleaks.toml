@@ -3,3 +3,6 @@ description = "Ignore Prometheus runtime dump file"
 paths = [
     '''prometheus_targets.json''',
 ]
+commits = [
+    "300d2be296a2395bcd8f506a00a58c898dff92b2",
+]
