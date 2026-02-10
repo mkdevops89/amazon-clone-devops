@@ -69,7 +69,9 @@ public class WebSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
-                        .requestMatchers("/api/products/**").permitAll() // Allow product browsing
+                        .requestMatchers("/api/products/**").permitAll() // Allow product browsing (if prefixed)
+                        .requestMatchers("/products/**").permitAll() // Allow product browsing (if prefix stripped by
+                                                                     // Ingress)
                         .requestMatchers("/api/cart/**").permitAll() // Allow anonymous cart access
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // Allow
                                                                                                          // pre-flight
