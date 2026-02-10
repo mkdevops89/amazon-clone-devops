@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '../components/Navbar';
-import Hero from '../components/Hero';
+import HeroCarousel from '../components/HeroCarousel';
 import ProductCard from '../components/ProductCard';
 
 interface Product {
@@ -41,31 +41,30 @@ function HomeContent() {
 
   return (
     <>
-      {!searchQuery && <Hero />}
+      {!searchQuery && <HeroCarousel />}
 
-      <div className="container" style={{ position: 'relative', zIndex: 10, marginTop: searchQuery ? '2rem' : '0' }}>
+      <div className={`container mx-auto px-4 relative z-30 ${!searchQuery ? '-mt-20 md:-mt-32' : 'mt-8'}`}>
         {searchQuery && (
-          <h2 style={{ marginBottom: '1rem', fontSize: '1.2rem', fontWeight: '400' }}>
-            Results for <span style={{ color: '#c45500', fontWeight: '700' }}>"{searchQuery}"</span>
+          <h2 className="text-xl mb-4">
+            Results for <span className="font-bold text-amazon-orange">"{searchQuery}"</span>
           </h2>
         )}
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: '1.5rem',
-          padding: '1rem'
-        }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {loading ? (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
-              <p>Loading products from Amazon Storefront...</p>
-            </div>
+            Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-white p-4 h-96 animate-pulse rounded-sm">
+                <div className="h-48 bg-gray-200 mb-4 rounded"></div>
+                <div className="h-4 bg-gray-200 w-3/4 mb-2 rounded"></div>
+                <div className="h-4 bg-gray-200 w-1/2 rounded"></div>
+              </div>
+            ))
           ) : products.length === 0 ? (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
-              <p style={{ fontSize: '1.2rem' }}>No products found matching your search.</p>
+            <div className="col-span-full text-center py-12 bg-white rounded-sm shadow-sm">
+              <p className="text-lg text-gray-700">No products found matching your search.</p>
               <button
                 onClick={() => window.location.href = '/'}
-                style={{ marginTop: '1rem', color: '#007185', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                className="mt-4 text-amazon-blue hover:underline hover:text-amazon-orange transition-colors"
               >
                 Clear search and view all products
               </button>
@@ -90,7 +89,7 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <main style={{ minHeight: '100vh', paddingBottom: '2rem', backgroundColor: '#eaeded' }}>
+    <main className="min-h-screen pb-10 bg-gray-100">
       <Navbar />
       <Suspense fallback={<div className="text-center p-10">Loading...</div>}>
         <HomeContent />

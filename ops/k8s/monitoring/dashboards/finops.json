@@ -138,35 +138,12 @@
             "fieldConfig": {
                 "defaults": {
                     "color": {
-                        "mode": "palette-classic"
+                        "mode": "thresholds"
                     },
                     "custom": {
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "drawStyle": "bars",
-                        "fillOpacity": 80,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "normal"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
                     },
                     "mappings": [],
                     "thresholds": {
@@ -194,26 +171,33 @@
             },
             "id": 6,
             "options": {
-                "legend": {
-                    "calcs": [],
-                    "displayMode": "list",
-                    "placement": "bottom"
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
                 },
-                "tooltip": {
-                    "mode": "single",
-                    "sort": "none"
-                }
+                "showHeader": true,
+                "sortBy": [
+                    {
+                        "desc": true,
+                        "displayName": "Value"
+                    }
+                ]
             },
             "targets": [
                 {
                     "expr": "topk(10, aws_billing_service_cost_total)",
                     "interval": "",
                     "legendFormat": "{{service}}",
-                    "refId": "A"
+                    "refId": "A",
+                    "instant": true,
+                    "format": "table"
                 }
             ],
             "title": "Cost Breakdown by Service (Top 10)",
-            "type": "barchart"
+            "type": "table"
         }
     ],
     "schemaVersion": 27,
