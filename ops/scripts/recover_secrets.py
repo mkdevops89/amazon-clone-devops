@@ -57,12 +57,21 @@ def get_mq_info():
         host = endpoint_url.replace('amqps://', '').replace(':5671', '')
         
         # Reset Password since we lost it
-        # User provided password (moved to env var for safety)
-        import os
-        new_password = os.getenv("MQ_PASSWORD", "REPLACE_WITH_REAL_PASSWORD")
-        # mq.update_user(...) # We cannot update via API easily if it fails, assuming user set it or retrieved it.
-        # Just returning it to generate the secret.
-        print(f"⚠️  Using MQ Password from environment or placeholder.")
+        # Try to fetch existing password from K8s secret first
+        import subprocess
+        try:
+            existing_secret = subprocess.check_output(
+                ["kubectl", "get", "secret", "db-secrets", "-n", "devsecops", "-o", "jsonpath={.data.rabbitmq_password}"],
+                stderr=subprocess.DEVNULL
+            ).decode().strip()
+            if existing_secret:
+                new_password = base64.b64decode(existing_secret).decode()
+                print("✅ Using existing MQ password from Kubernetes.")
+            else:
+                new_password = os.getenv("MQ_PASSWORD", "REPLACE_WITH_REAL_PASSWORD")
+        except:
+            new_password = os.getenv("MQ_PASSWORD", "REPLACE_WITH_REAL_PASSWORD")
+            print(f"⚠️  Using MQ Password from environment or placeholder.")
         
         return host, 'admin', new_password
     except Exception as e:
@@ -71,6 +80,7 @@ def get_mq_info():
 
 def generate_yaml(rds_ep, rds_pw, redis_ep, mq_host, mq_user, mq_pw):
     print("📝 Generating db-secrets.yaml...")
+    import os
     
     # Base64 encode values
     def b64(s):
