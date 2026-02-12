@@ -88,7 +88,6 @@ spec:
     environment {
         AWS_REGION = "us-east-1"
         ECR_REGISTRY = "406312601212.dkr.ecr.us-east-1.amazonaws.com"
-        GIT_COMMIT_SHORT = ""
     }
 
     options {
@@ -99,10 +98,13 @@ spec:
     stages {
         stage('Checkout & Setup') {
             steps {
-                script {
-                    checkout scm
-                    env.GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                    echo "--- 🛠️ Building Version: ${env.GIT_COMMIT_SHORT} ---"
+                container('maven') {
+                    script {
+                        checkout scm
+                        def commit = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                        env.GIT_COMMIT_SHORT = commit
+                        echo "--- 🛠️ Building Version: ${env.GIT_COMMIT_SHORT} ---"
+                    }
                 }
             }
         }
@@ -187,17 +189,6 @@ spec:
             }
         }
 
-        stage('Security: Image Scan') {
-            steps {
-                container('trivy') {
-                    script {
-                        sh "trivy image --severity HIGH,CRITICAL ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT}"
-                        sh "trivy image --severity HIGH,CRITICAL ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
-                    }
-                }
-            }
-        }
-
         stage('Push: Docker Images') {
             steps {
                 container('docker') {
@@ -206,6 +197,23 @@ spec:
                         sh "docker push ${ECR_REGISTRY}/amazon-backend:latest"
                         sh "docker push ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
                         sh "docker push ${ECR_REGISTRY}/amazon-frontend:latest"
+                    }
+                }
+            }
+        }
+
+        stage('Security: Image Scan') {
+            steps {
+                container('trivy') {
+                    withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                        script {
+                            // Install AWS CLI in Trivy container to get login token
+                            sh 'apk add --no-cache aws-cli'
+                            sh "export TRIVY_PASSWORD=\$(aws ecr get-login-password --region ${AWS_REGION}) && \
+                                export TRIVY_USERNAME=AWS && \
+                                trivy image --severity HIGH,CRITICAL ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} && \
+                                trivy image --severity HIGH,CRITICAL ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
+                        }
                     }
                 }
             }
