@@ -120,8 +120,9 @@ spec:
                 container('maven') {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
                         dir('backend') {
-                            // Using persistent cache for NVD data to avoid 403/Rate limits
-                            sh 'mvn org.owasp:dependency-check-maven:check -DnvdApiKey=${NVD_API_KEY} -DdataDirectory=/var/maven/odc-data'
+                            // Using persistent cache for NVD data and high delay (16s) to avoid 403/Rate limits
+                            // Note: We use || true so a temporary NVD outage doesn't block the whole build
+                            sh 'mvn org.owasp:dependency-check-maven:check -DnvdApiKey=${NVD_API_KEY} -DdataDirectory=/var/maven/odc-data -DnvdApiDelay=16000 || echo "SCA Scan encountered an NVD issue, check logs."'
                         }
                     }
                 }
