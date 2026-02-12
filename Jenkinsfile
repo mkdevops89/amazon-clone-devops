@@ -59,6 +59,24 @@ spec:
         requests:
           cpu: "50m"
           memory: "128Mi"
+    - name: trivy
+      image: aquasec/trivy:latest
+      command:
+        - cat
+      tty: true
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "256Mi"
+    - name: zap
+      image: owasp/zap2docker-stable:latest
+      command:
+        - cat
+      tty: true
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "512Mi"
   volumes:
     - name: nvd-cache
       persistentVolumeClaim:
@@ -97,11 +115,36 @@ spec:
             }
         }
 
+        stage('Security: SCA Scan') {
+            steps {
+                container('maven') {
+                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+                        dir('backend') {
+                            // Using persistent cache for NVD data to avoid 403/Rate limits
+                            sh 'mvn org.owasp:dependency-check-maven:check -DnvdApiKey=${NVD_API_KEY} -DdataDirectory=/var/maven/odc-data'
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Build: Backend (Artifact)') {
             steps {
                 container('maven') {
                     dir('backend') {
-                        sh 'mvn clean install -DskipTests' // Fast build for Docker layer
+                        sh 'mvn clean install -DskipTests'
+                    }
+                }
+            }
+        }
+
+        stage('Security: SAST Scan') {
+            steps {
+                container('maven') {
+                    dir('backend') {
+                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                            sh 'mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN}'
+                        }
                     }
                 }
             }
@@ -125,20 +168,53 @@ spec:
                             // Login to ECR
                             sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
 
-                            // Build & Push Backend
+                            // Build Backend
                             dir('backend') {
-                                sh "docker build -t ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} -t ${ECR_REGISTRY}/amazon-backend:latest ."
-                                sh "docker push ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT}"
-                                sh "docker push ${ECR_REGISTRY}/amazon-backend:latest"
+                                sh "docker build -t ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} ."
                             }
 
-                            // Build & Push Frontend
+                            // Build Frontend
                             dir('frontend') {
-                                sh "docker build --build-arg NEXT_PUBLIC_API_URL='https://api.devcloudproject.com' -t ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} -t ${ECR_REGISTRY}/amazon-frontend:latest ."
-                                sh "docker push ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
-                                sh "docker push ${ECR_REGISTRY}/amazon-frontend:latest"
+                                sh "docker build --build-arg NEXT_PUBLIC_API_URL='https://api.devcloudproject.com' -t ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} ."
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        stage('Security: Image Scan') {
+            steps {
+                container('trivy') {
+                    script {
+                        sh "trivy image --severity HIGH,CRITICAL ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT}"
+                        sh "trivy image --severity HIGH,CRITICAL ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
+                    }
+                }
+            }
+        }
+
+        stage('Push: Docker Images') {
+            steps {
+                container('docker') {
+                    script {
+                        sh "docker push ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT}"
+                        sh "docker push ${ECR_REGISTRY}/amazon-backend:latest"
+                        sh "docker push ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
+                        sh "docker push ${ECR_REGISTRY}/amazon-frontend:latest"
+                    }
+                }
+            }
+        }
+
+        stage('Security: DAST Scan') {
+            steps {
+                container('zap') {
+                    script {
+                        // OWASP ZAP Baseline scan against the app URL
+                        // Note: Using -r report.html requires artifact archiving or volume mounts
+                        sh 'zap-baseline.py -t https://api.devcloudproject.com -I || true' 
+                        sh 'zap-baseline.py -t https://devcloudproject.com -I || true'
                     }
                 }
             }
