@@ -144,7 +144,7 @@ spec:
                 container('maven') {
                     dir('backend') {
                         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                            sh 'mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN}'
+                            sh 'mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN} -Dsonar.host.url=http://sonarqube'
                         }
                     }
                 }
