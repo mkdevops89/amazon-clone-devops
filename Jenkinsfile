@@ -166,6 +166,9 @@ spec:
                                 done
                             '''
                             
+                            // Install AWS CLI (it's missing in docker:dind)
+                            sh 'apk add --no-cache aws-cli'
+                            
                             // Login to ECR
                             sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
 
