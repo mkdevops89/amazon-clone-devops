@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/cart")
+@RequestMapping({ "/api/cart", "/cart" })
 public class CartController {
 
     @Autowired
