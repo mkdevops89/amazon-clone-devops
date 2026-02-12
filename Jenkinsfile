@@ -69,7 +69,7 @@ spec:
           cpu: "20m"
           memory: "256Mi"
     - name: zap
-      image: owasp/zap2docker-stable:latest
+      image: ghcr.io/zaproxy/zaproxy:stable
       command:
         - cat
       tty: true
