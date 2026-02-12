@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: amazon-backend-monitor
+  namespace: devsecops
+  labels:
+    app: amazon-backend
+    release: prometheus # Common label for Prometheus Operator to select monitors
+spec:
+  selector:
+    matchLabels:
+      app: amazon-backend
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 15s
+  namespaceSelector:
+    matchNames:
+      - devsecops
