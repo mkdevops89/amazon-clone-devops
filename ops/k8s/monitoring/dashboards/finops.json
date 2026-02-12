@@ -3,7 +3,10 @@
         "list": [
             {
                 "builtIn": 1,
-                "datasource": "-- Grafana --",
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
                 "enable": true,
                 "hide": true,
                 "iconColor": "rgba(0, 211, 255, 1)",
@@ -13,137 +16,21 @@
         ]
     },
     "editable": true,
-    "gnetId": null,
+    "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": null,
+    "id": 1,
     "links": [],
+    "liveNow": false,
     "panels": [
         {
-            "datasource": null,
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "fixed"
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    }
-                },
-                "overrides": []
+            "datasource": {
+                "type": "prometheus",
+                "uid": "P1809F7F0C75BB332"
             },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 0,
-                "y": 0
-            },
-            "id": 2,
-            "options": {
-                "reduceOptions": {
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "fields": "",
-                    "values": false
-                },
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
-            },
-            "pluginVersion": "7.5.0",
-            "targets": [
-                {
-                    "expr": "count(kube_node_labels{label_lifecycle=\"Ec2Spot\"})",
-                    "interval": "",
-                    "legendFormat": "Spot Instances",
-                    "refId": "A"
-                },
-                {
-                    "expr": "count(kube_node_labels{label_lifecycle!=\"Ec2Spot\"})",
-                    "interval": "",
-                    "legendFormat": "On-Demand Instances",
-                    "refId": "B"
-                }
-            ],
-            "title": "Spot vs On-Demand Count",
-            "type": "stat"
-        },
-        {
-            "datasource": null,
             "fieldConfig": {
                 "defaults": {
                     "color": {
                         "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "red",
-                                "value": 100
-                            }
-                        ]
-                    },
-                    "unit": "currencyUSD"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 0
-            },
-            "id": 4,
-            "options": {
-                "reduceOptions": {
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "fields": "",
-                    "values": false
-                },
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
-            },
-            "pluginVersion": "7.5.0",
-            "targets": [
-                {
-                    "expr": "aws_billing_estimated_charges_total",
-                    "interval": "",
-                    "legendFormat": "Actual Month-to-Date Bill",
-                    "refId": "A"
-                }
-            ],
-            "title": "Current Month Bill (Actual)",
-            "type": "stat"
-        },
-        {
-            "datasource": null,
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "custom": {
-                        "align": "auto",
-                        "displayMode": "auto",
-                        "inspect": false
                     },
                     "mappings": [],
                     "thresholds": {
@@ -165,42 +52,41 @@
             },
             "gridPos": {
                 "h": 8,
-                "w": 24,
+                "w": 12,
                 "x": 0,
-                "y": 8
+                "y": 0
             },
-            "id": 6,
+            "id": 1,
             "options": {
-                "footer": {
-                    "fields": "",
-                    "reducer": [
-                        "sum"
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
                     ],
-                    "show": false
+                    "fields": "",
+                    "values": false
                 },
-                "showHeader": true,
-                "sortBy": [
-                    {
-                        "desc": true,
-                        "displayName": "Value"
-                    }
-                ]
+                "textMode": "auto"
             },
+            "pluginVersion": "10.0.0",
             "targets": [
                 {
-                    "expr": "topk(10, aws_billing_service_cost_total)",
-                    "interval": "",
-                    "legendFormat": "{{service}}",
-                    "refId": "A",
-                    "instant": true,
-                    "format": "table"
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "P1809F7F0C75BB332"
+                    },
+                    "expr": "sum(aws_cost_daily_total)",
+                    "refId": "A"
                 }
             ],
-            "title": "Cost Breakdown by Service (Top 10)",
-            "type": "table"
+            "title": "Total Daily AWS Cost",
+            "type": "stat"
         }
     ],
-    "schemaVersion": 27,
+    "schemaVersion": 38,
     "style": "dark",
     "tags": [
         "finops",
@@ -215,7 +101,8 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "FinOps & Efficiency",
-    "uid": "finops-001",
-    "version": 2
+    "title": "AWS FinOps Dashboard",
+    "uid": "finops-aws-01",
+    "version": 1,
+    "weekStart": ""
 }

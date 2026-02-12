@@ -41,3 +41,7 @@ ingress:
   className: "alb"
   certificateArn: "arn:aws:acm:us-east-1:406312601212:certificate/d3295a68-4c22-4f92-af08-9cb09758966d"
   groupName: "amazon-group"
+
+monitoring:
+  enabled: true
+
