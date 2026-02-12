@@ -225,14 +225,22 @@ spec:
                 container('tools') {
                     script {
                         echo "--- 🚀 Updating GitOps Manifests with Version: ${env.GIT_COMMIT_SHORT} ---"
-                        // In a real multi-repo GitOps setup, this would commit to a separate 'config' repo.
-                        // For this phase, we update the local values.yaml to prepare for ArgoCD to pull it.
+                        
                         sh """
                             sed -i 's/tag: .*/tag: "${env.GIT_COMMIT_SHORT}"/g' ops/helm/amazon-app/values.yaml
                         """
-                        
-                        // FUTURE: Add 'git commit' and 'git push' here to trigger ArgoCD
-                        echo "Values updated. Ready for GitOps Sync."
+
+                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                            sh """
+                                git config user.email "jenkins@devcloudproject.com"
+                                git config user.name "Jenkins CI"
+                                git add ops/helm/amazon-app/values.yaml
+                                git commit -m "chore(gitops): update image tag to ${env.GIT_COMMIT_SHORT} [skip ci]"
+                                # Use the token to push via HTTPS
+                                git push https://\${GITHUB_TOKEN}@github.com/mkdevops89/amazon-clone-devops.git HEAD:phase-11-gitops
+                            """
+                        }
+                        echo "Values updated and pushed. ArgoCD will sync shortly."
                     }
                 }
             }
