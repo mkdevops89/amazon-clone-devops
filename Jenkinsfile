@@ -174,14 +174,14 @@ spec:
                             // Login to ECR
                             sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
 
-                            // Build Backend
+                            // Build Backend with both SHA and latest tags
                             dir('backend') {
-                                sh "docker build -t ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} ."
+                                sh "docker build -t ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} -t ${ECR_REGISTRY}/amazon-backend:latest ."
                             }
 
-                            // Build Frontend
+                            // Build Frontend with both SHA and latest tags
                             dir('frontend') {
-                                sh "docker build --build-arg NEXT_PUBLIC_API_URL='https://api.devcloudproject.com' -t ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} ."
+                                sh "docker build --build-arg NEXT_PUBLIC_API_URL='https://api.devcloudproject.com' -t ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} -t ${ECR_REGISTRY}/amazon-frontend:latest ."
                             }
                         }
                     }
@@ -224,9 +224,9 @@ spec:
                 container('zap') {
                     script {
                         // OWASP ZAP Baseline scan against the app URL
-                        // Note: Using -r report.html requires artifact archiving or volume mounts
-                        sh 'zap-baseline.py -t https://api.devcloudproject.com -I || true' 
-                        sh 'zap-baseline.py -t https://devcloudproject.com -I || true'
+                        // Note: Using the stable image which has the script in /zap/
+                        sh '/zap/zap-baseline.py -t https://api.devcloudproject.com -I || true' 
+                        sh '/zap/zap-baseline.py -t https://devcloudproject.com -I || true'
                     }
                 }
             }
@@ -238,6 +238,9 @@ spec:
                     script {
                         echo "--- 🚀 Updating GitOps Manifests with Version: ${env.GIT_COMMIT_SHORT} ---"
                         
+                        // Ensure git and sed are present in the tools container
+                        sh "apt-get update && apt-get install -y git sed"
+
                         sh """
                             sed -i 's/tag: .*/tag: "${env.GIT_COMMIT_SHORT}"/g' ops/helm/amazon-app/values.yaml
                         """
