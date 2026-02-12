@@ -8,7 +8,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Stage 2: Extract Layers (Optimized for Docker Caching)
-FROM eclipse-temurin:17-jre-alpine AS extract
+FROM eclipse-temurin:17-jre AS extract
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 RUN java -Djarmode=layertools -jar app.jar extract
@@ -16,11 +16,12 @@ RUN java -Djarmode=layertools -jar app.jar extract
 # ==========================================
 # Stage 3: Run Stage (Runtime)
 # ==========================================
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 # Senior Best Practice: Run as non-root user for security hardening
-RUN addgroup -S spring && adduser -S spring -G spring
+# Note: Non-alpine users are managed slightly differently with adduser
+RUN groupadd -r spring && useradd -r -g spring spring
 USER spring:spring
 
 # Copy extracted layers. 
