@@ -19,7 +19,7 @@ spec:
           mountPath: /var/maven/odc-data
       resources:
         requests:
-          cpu: "50m"
+          cpu: "20m"
           memory: "128Mi"
     - name: docker
       image: docker:dind
@@ -30,7 +30,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "50m"
+          cpu: "20m"
           memory: "256Mi"
     - name: tools
       image: ubuntu:latest
@@ -39,7 +39,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "20m"
+          cpu: "10m"
           memory: "64Mi"
     - name: node
       image: node:20-alpine
@@ -48,7 +48,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "50m"
+          cpu: "20m"
           memory: "128Mi"
     - name: security
       image: trufflesecurity/trufflehog:latest
@@ -57,7 +57,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "50m"
+          cpu: "10m"
           memory: "128Mi"
     - name: trivy
       image: aquasec/trivy:latest
@@ -66,7 +66,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "50m"
+          cpu: "20m"
           memory: "256Mi"
     - name: zap
       image: owasp/zap2docker-stable:latest
@@ -75,8 +75,8 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "100m"
-          memory: "512Mi"
+          cpu: "50m"
+          memory: "256Mi"
   volumes:
     - name: nvd-cache
       persistentVolumeClaim:
