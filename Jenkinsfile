@@ -211,8 +211,8 @@ spec:
                             sh 'apk add --no-cache aws-cli'
                             sh "export TRIVY_PASSWORD=\$(aws ecr get-login-password --region ${AWS_REGION}) && \
                                 export TRIVY_USERNAME=AWS && \
-                                trivy image --severity HIGH,CRITICAL ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} && \
-                                trivy image --severity HIGH,CRITICAL ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
+                                trivy image --severity HIGH,CRITICAL --scanners vuln --cache-dir /tmp/trivy-cache ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} && \
+                                trivy image --severity HIGH,CRITICAL --scanners vuln --cache-dir /tmp/trivy-cache ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
                         }
                     }
                 }

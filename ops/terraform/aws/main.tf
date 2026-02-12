@@ -54,6 +54,7 @@ module "eks" {
       name           = "critical-ng"
       capacity_type  = "ON_DEMAND"
       instance_types = ["t3.large"] # Cost Optimization: Downsized from t3.xlarge
+      disk_size      = 50
       
       min_size     = 1
       max_size     = 2
@@ -84,9 +85,10 @@ module "eks" {
       name           = "spot-ng"
       capacity_type  = "SPOT"
       instance_types = ["t3.medium", "t3.large"] # Cost Optimization: Downsized from t3.xlarge/2xlarge
+      disk_size      = 50
       
       min_size     = 1
-      max_size     = 5
+      max_size     = 2
       desired_size = 1
 
       iam_role_additional_policies = {
