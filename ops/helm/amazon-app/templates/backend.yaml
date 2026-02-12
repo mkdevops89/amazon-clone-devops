@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: amazon-backend
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      app: amazon-backend
+  template:
+    metadata:
+      labels:
+        app: amazon-backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8080"
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.backend.service.port }}
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: db_url
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: db_username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: db_password
+            - name: SPRING_DATA_REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: redis_host
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_SSL_ENABLED
+              value: "true"
+            - name: SPRING_RABBITMQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: rabbitmq_host
+            - name: SPRING_RABBITMQ_PORT
+              value: "5671"
+            - name: SPRING_RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: rabbitmq_username
+            - name: SPRING_RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: rabbitmq_password
+            - name: SPRING_RABBITMQ_SSL_ENABLED
+              value: "true"
+            - name: AMAZONLIKE_APP_FRONTENDURL
+              value: "https://www.{{ .Values.global.domain }}"
+            - name: AMAZONLIKE_APP_FRONTEND_URL
+              value: "https://www.{{ .Values.global.domain }}"
+            - name: AMAZONLIKE_APP_JWTSECRET
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: jwt_secret
+                  optional: true
+            - name: AMAZONLIKE_APP_JWTEXPIRATIONMS
+              value: "86400000"
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: amazon-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: amazon-backend
+spec:
+  selector:
+    app: amazon-backend
+  ports:
+    - protocol: TCP
+      name: http
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

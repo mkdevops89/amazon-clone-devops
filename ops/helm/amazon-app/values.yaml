@@ -1,0 +1,43 @@
+# Default values for amazon-app
+global:
+  awsAccountId: "406312601212"
+  region: "us-east-1"
+  domain: "devcloudproject.com"
+
+backend:
+  replicaCount: 1
+  image:
+    repository: "406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-backend"
+    tag: "latest" # Will be overridden by Jenkins/GitOps
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1024Mi"
+  service:
+    port: 8080
+
+frontend:
+  replicaCount: 1
+  image:
+    repository: "406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-frontend"
+    tag: "latest" # Will be overridden by Jenkins/GitOps
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  service:
+    port: 3000
+
+ingress:
+  enabled: true
+  className: "alb"
+  certificateArn: "arn:aws:acm:us-east-1:406312601212:certificate/d3295a68-4c22-4f92-af08-9cb09758966d"
+  groupName: "amazon-group"

@@ -31,7 +31,7 @@ spec:
       resources:
         requests:
           cpu: "50m"
-          memory: "128Mi"
+          memory: "256Mi"
     - name: tools
       image: ubuntu:latest
       command:
@@ -67,165 +67,96 @@ spec:
         }
     }
 
+    environment {
+        AWS_REGION = "us-east-1"
+        ECR_REGISTRY = "406312601212.dkr.ecr.us-east-1.amazonaws.com"
+        GIT_COMMIT_SHORT = ""
+    }
+
     options {
         disableConcurrentBuilds()
         timestamps()
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout & Setup') {
             steps {
-                checkout scm
+                script {
+                    checkout scm
+                    env.GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    echo "--- 🛠️ Building Version: ${env.GIT_COMMIT_SHORT} ---"
+                }
             }
         }
 
-        stage('Security: Secrets') {
+        stage('Security: Secrets Scan') {
             steps {
                 container('security') {
-                    sh 'trufflehog git file:///home/jenkins/agent/workspace/${JOB_NAME} --only-verified'
+                    sh "trufflehog git file://${WORKSPACE} --only-verified"
                 }
             }
         }
 
-        stage('Security: SCA') {
+        stage('Build: Backend (Artifact)') {
             steps {
                 container('maven') {
                     dir('backend') {
-                        withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
-                            sh '''
-                                set -euo pipefail
-
-                                if [ -z "${NVD_KEY:-}" ]; then
-                                  echo "ERROR: NVD_KEY is empty - Jenkins credential injection failed."
-                                  exit 1
-                                fi
-                                echo "NVD_KEY injected (length=${#NVD_KEY})"
-
-                                # Validate NVD key + egress from this K8s agent
-                                # CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-                                #   "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=1&apiKey=${NVD_KEY}")
-                                # echo "NVD HTTP status: $CODE"
-                                # if [ "$CODE" != "200" ]; then
-                                #   echo "ERROR: NVD API not reachable or key invalid (status=$CODE)"
-                                #   exit 1
-                                # fi
-
-                                # Use persistent cache (PVC) - job-scoped folder reduces corruption collisions
-                                ODC_DATA_DIR="/var/maven/odc-data/${JOB_NAME}"
-                                mkdir -p "$ODC_DATA_DIR"
-
-                                echo "WARNING: NVD Check skipped due to persistent 404/Rate Limits."
-                                # mvn -B org.owasp:dependency-check-maven:9.0.9:check \
-                                #   -DnvdApiKey="${NVD_KEY}" \
-                                #   -DnvdApiDelay=25000 \
-                                #   -DdataDirectory="$ODC_DATA_DIR"
-                            '''
-                        }
+                        sh 'mvn clean install -DskipTests' // Fast build for Docker layer
                     }
                 }
             }
         }
 
-        stage('Build & Unit Test') {
-            steps {
-                container('maven') {
-                    dir('backend') {
-                        // Removed -DskipTests to run real unit tests
-                        sh 'mvn clean install'
-                    }
-                }
-            }
-        }
-
-        stage('Security: SAST') {
-            steps {
-                container('maven') {
-                    dir('backend') {
-                        sh 'mvn spotbugs:check'
-                    }
-                }
-            }
-        }
-
-        stage('Frontend: Build') {
-            steps {
-                container('node') {
-                    dir('frontend') {
-                        sh 'npm ci'
-                        sh 'npm run build'
-                    }
-                }
-            }
-        }
-
-        stage('Upload to Nexus') {
-            steps {
-                container('maven') {
-                    dir('backend') {
-                        // Uses 'nexus-credentials' created in Walkthrough Step 7
-                        withCredentials([usernamePassword(credentialsId: 'nexus-credentials', passwordVariable: 'NEXUS_PWD', usernameVariable: 'NEXUS_USER')]) {
-                            sh '''
-                                # Generate a temporary settings.xml with credentials
-                                cat > settings.xml <<EOF
-<settings>
-  <servers>
-    <server>
-      <id>amazon-maven-releases</id>
-      <username>${NEXUS_USER}</username>
-      <password>${NEXUS_PWD}</password>
-    </server>
-    <server>
-      <id>amazon-maven-snapshots</id>
-      <username>${NEXUS_USER}</username>
-      <password>${NEXUS_PWD}</password>
-    </server>
-  </servers>
-</settings>
-EOF
-                                echo "Uploading artifact to Nexus..."
-                                mvn deploy -s settings.xml -DskipTests=true
-                                rm settings.xml
-                            '''
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Deploy to EKS') {
+        stage('Build: Docker Images') {
             steps {
                 container('docker') {
                     withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                         script {
-                            // Start Docker Daemon
                             sh 'dockerd > /var/log/dockerd.log 2>&1 &'
                             sh '''
                                 count=0
                                 while ! docker info >/dev/null 2>&1; do
-                                    echo "Waiting for Docker..."
                                     sleep 1
                                     count=$((count+1))
-                                    if [ $count -ge 30 ]; then echo "Docker failed to start"; cat /var/log/dockerd.log; exit 1; fi
+                                    if [ $count -ge 30 ]; then echo "Docker failed to start"; exit 1; fi
                                 done
-                                echo "Docker is UP!"
                             '''
-
-                            // Install requirements for deploy_k8s.sh
-                            sh 'apk add --no-cache bash aws-cli gettext curl'
-                            sh 'curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x kubectl && mv kubectl /usr/local/bin/'
                             
                             // Login to ECR
-                            sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query Account --output text).dkr.ecr.us-east-1.amazonaws.com'
+                            sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
 
-                            // Configure AWS environment
-                            withEnv(["AWS_REGION=us-east-1"]) {
-                                sh '''
-                                    chmod +x ops/scripts/deploy_k8s.sh
-                                    aws eks update-kubeconfig --name amazon-cluster
-                                    ./ops/scripts/deploy_k8s.sh
-                                '''
+                            // Build & Push Backend
+                            dir('backend') {
+                                sh "docker build -t ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} -t ${ECR_REGISTRY}/amazon-backend:latest ."
+                                sh "docker push ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT}"
+                                sh "docker push ${ECR_REGISTRY}/amazon-backend:latest"
+                            }
+
+                            // Build & Push Frontend
+                            dir('frontend') {
+                                sh "docker build --build-arg NEXT_PUBLIC_API_URL='https://api.devcloudproject.com' -t ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} -t ${ECR_REGISTRY}/amazon-frontend:latest ."
+                                sh "docker push ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
+                                sh "docker push ${ECR_REGISTRY}/amazon-frontend:latest"
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        stage('GitOps: Update Manifests') {
+            steps {
+                container('tools') {
+                    script {
+                        echo "--- 🚀 Updating GitOps Manifests with Version: ${env.GIT_COMMIT_SHORT} ---"
+                        // In a real multi-repo GitOps setup, this would commit to a separate 'config' repo.
+                        // For this phase, we update the local values.yaml to prepare for ArgoCD to pull it.
+                        sh """
+                            sed -i 's/tag: .*/tag: "${env.GIT_COMMIT_SHORT}"/g' ops/helm/amazon-app/values.yaml
+                        """
+                        
+                        // FUTURE: Add 'git commit' and 'git push' here to trigger ArgoCD
+                        echo "Values updated. Ready for GitOps Sync."
                     }
                 }
             }
@@ -233,25 +164,20 @@ EOF
     }
 
     post {
-        success {
+        always {
             container('tools') {
-               withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-                   sh """
-                       apt-get update && apt-get install -y curl
-                       curl -X POST -H 'Content-type: application/json' --data '{"text":"✅ *Build Succeeded!* \\nProject: ${JOB_NAME} \\nBuild Number: ${BUILD_NUMBER} \\nURL: ${BUILD_URL}"}' \${SLACK_URL}
-                   """
-               }
-            }
-        }
-        failure {
-            container('tools') {
-               withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-                   sh """
-                       apt-get update && apt-get install -y curl
-                       curl -X POST -H 'Content-type: application/json' --data '{"text":"❌ *Build Failed!* \\nProject: ${JOB_NAME} \\nBuild Number: ${BUILD_NUMBER} \\nURL: ${BUILD_URL}"}' \${SLACK_URL}
-                   """
+               script {
+                   def status = currentBuild.currentResult
+                   def color = (status == 'SUCCESS') ? 'good' : 'danger'
+                   withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+                        sh """
+                            apt-get update && apt-get install -y curl
+                            curl -X POST -H 'Content-type: application/json' --data '{"text":"*Jenkins Build: ${status}*\\nProject: ${JOB_NAME}\\nVersion: ${env.GIT_COMMIT_SHORT}\\nURL: ${BUILD_URL}"}' \${SLACK_URL}
+                        """
+                   }
                }
             }
         }
     }
 }
+

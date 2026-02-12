@@ -1,29 +1,35 @@
 # ==========================================
 # Stage 1: Build Stage (Maven)
 # ==========================================
-# Use Maven image with OpenJDK 17 to compile the code
 FROM maven:3.8-openjdk-17 AS build
 WORKDIR /app
-
-# Copy POM first to cache dependencies
-# This creates a layer that only changes when dependencies change
 COPY pom.xml .
-
-# Copy source code
 COPY src ./src
-
-# Build the JAR file, skipping unit tests for speed during build
 RUN mvn clean package -DskipTests
 
+# Stage 2: Extract Layers (Optimized for Docker Caching)
+FROM eclipse-temurin:17-jre-alpine AS extract
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+RUN java -Djarmode=layertools -jar app.jar extract
+
 # ==========================================
-# Stage 2: Run Stage (Runtime)
+# Stage 3: Run Stage (Runtime)
 # ==========================================
-# Use a slim JRE (Java Runtime Environment) image to keep the final image size small
-FROM amazoncorretto:17
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-# Copy only the compiled JAR from the build stage
-COPY --from=build /app/target/*.jar app.jar
+# Senior Best Practice: Run as non-root user for security hardening
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
 
-# Command to run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Copy extracted layers. 
+# Docker will cache 'dependencies' and 'spring-boot-loader' layers.
+# Only 'application' layer changes when you edit code.
+COPY --from=extract /app/dependencies/ ./
+COPY --from=extract /app/spring-boot-loader/ ./
+COPY --from=extract /app/snapshot-dependencies/ ./
+COPY --from=extract /app/application/ ./
+
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+
