@@ -48,6 +48,7 @@ The `Jenkinsfile` was completely refactored.
    - `nvd-api-key`: (Secret Text) for OWASP Dependency-Check.
    - `sonarqube-token`: (Secret Text) for SAST results.
    - `slack-webhook`: (Secret Text) for notifications.
+   - `github-token`: (Secret Text) A Personal Access Token (classic) with `repo` scope to allow Jenkins to push GitOps updates.
 
 ---
 
