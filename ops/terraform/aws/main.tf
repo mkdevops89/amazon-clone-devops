@@ -1,75 +1,277 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.region
 }
+
+# Used to dynamically fetch the current user's ARN for EKS Admin access
+data "aws_caller_identity" "current" {}
 
 # ==========================================
 # VPC Module (Network Layer)
 # ==========================================
-# Creates the networking foundation:
-# - VPC with CIDR 10.0.0.0/16
-# - Public Subnets (for Load Balancers)
-# - Private Subnets (for Apps and Databases)
-# - NAT Gateway (allows private instances to access internet for updates)
 module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
-  name   = "amazon-vpc"
-  cidr   = "10.0.0.0/16"
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+  name   = var.vpc_name
+  cidr   = var.vpc_cidr
 
-  azs             = ["us-east-1a", "us-east-1b"]
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
-  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
+  azs             = var.azs
+  private_subnets = var.private_subnets
+  public_subnets  = var.public_subnets
 
   enable_nat_gateway = true
+  single_nat_gateway = true # Cost Optimization: ~$32/month savings (1 NAT instead of 1 per AZ)
+
+  # Tags required for EKS Load Balancer discovery
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
+  }
 }
 
 # ==========================================
 # EKS Cluster (Compute Layer)
 # ==========================================
-# Provision Elastic Kubernetes Service
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
-  cluster_name    = "amazon-cluster"
-  cluster_version = "1.27"
+  version         = "20.33.1"
+  cluster_name    = var.cluster_name
+  cluster_version = "1.33"
   vpc_id          = module.vpc.vpc_id
   subnet_ids      = module.vpc.private_subnets
+  
+  # Fix: Enable Public Access for kubectl from local machine
+  cluster_endpoint_public_access = true
+  cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
 
   # Worker Nodes Group
   eks_managed_node_groups = {
-    default = {
-      instance_types = ["t3.medium"] # Cost-effective instance type
+    # 1. Critical Node Group (On-Demand)
+    # Purpose: Runs CoreDNS, Ingress, and Stateful Pods (Jenkins/Nexus/Sonar)
+    critical = {
+      name           = "critical-ng"
+      capacity_type  = "ON_DEMAND"
+      instance_types = ["t3.large"] # Cost Optimization: Downsized from t3.xlarge
+      
+      min_size     = 1
+      max_size     = 2
+      desired_size = 1
+
+      # Fix: Restrict Critical Node to us-east-1a ONLY (where Persistent Volumes are)
+      subnet_ids = [module.vpc.private_subnets[0]]
+
+      # Fix: Attach Policy to allow uploading reports to S3
+      iam_role_additional_policies = {
+        scan_reports = aws_iam_policy.reports_upload_policy.arn
+        ecr_access   = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+        cost_explorer = aws_iam_policy.cost_explorer_policy.arn
+      }
+      
+      labels = {
+        "intent" = "critical"
+      }
+
+      tags = {
+        Environment = "Dev"
+      }
     }
+
+    # 2. General Node Group (Spot Instances)
+    # Purpose: Runs Stateless Build Agents and ephemeral workloads
+    spot = {
+      name           = "spot-ng"
+      capacity_type  = "SPOT"
+      instance_types = ["t3.medium", "t3.large"] # Cost Optimization: Downsized from t3.xlarge/2xlarge
+      
+      min_size     = 1
+      max_size     = 5
+      desired_size = 1
+
+      iam_role_additional_policies = {
+        scan_reports = aws_iam_policy.reports_upload_policy.arn
+        ecr_access   = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+        cost_explorer = aws_iam_policy.cost_explorer_policy.arn
+      }
+
+      labels = {
+        "intent"    = "apps"
+        "lifecycle" = "Ec2Spot"
+      }
+
+      tags = {
+        Environment = "Dev"
+      }
+    }
+  }
+
+  # Fix: Grant Cluster Admin permissions to the current caller
+  # Fix: Grant Cluster Admin permissions to the current caller
+  enable_cluster_creator_admin_permissions = true
+
+  # Fix: Allow Inbound Traffic to Worker Nodes for NodePorts (Required for LoadBalancers)
+  # AND Outbound/Inbound for DB Connectivity
+  node_security_group_additional_rules = {
+    ingress_allow_8080 = {
+      description = "Allow Inbound 8080 for Backend"
+      protocol    = "tcp"
+      from_port   = 8080
+      to_port     = 8080
+      type        = "ingress"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+    ingress_allow_3000 = {
+      description = "Allow Inbound 3000 for Frontend"
+      protocol    = "tcp"
+      from_port   = 3000
+      to_port     = 3000
+      type        = "ingress"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+}
+
+# ==========================================
+# Security Groups (Explicitly for Custom VPC)
+# ==========================================
+resource "aws_security_group" "db_sg" {
+  name        = "${var.db_name}-sg"
+  description = "Security group for RDS"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr_block]
+  }
+}
+
+resource "aws_security_group" "redis_sg" {
+  name        = "${var.redis_cluster_id}-sg"
+  description = "Security group for Redis"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    from_port   = 6379
+    to_port     = 6379
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr_block]
+  }
+}
+
+resource "aws_security_group" "mq_sg" {
+  name        = "amazon-mq-sg"
+  description = "Security group for Amazon MQ"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    from_port   = 5671
+    to_port     = 5671
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr_block]
   }
 }
 
 # ==========================================
 # RDS MySQL (Database Layer)
 # ==========================================
-# Managed Relational Database Service
 module "db" {
   source  = "terraform-aws-modules/rds/aws"
-  identifier = "amazon-db"
+  version = "~> 6.0"
+  
+  identifier        = var.db_name
   engine            = "mysql"
   engine_version    = "8.0"
+  major_engine_version = "8.0"
+  family            = "mysql8.0"
   instance_class    = "db.t3.micro" # Free tier eligible
   allocated_storage = 5
-  username = "admin"
-  port     = 3306
-  subnet_ids = module.vpc.private_subnets # Securely placed in private subnet
+  username          = var.db_username
+  port              = 3306
+  
+  # Fix: Skip snapshot on destroy for Dev environments to allow clean teardown
+  skip_final_snapshot = true
+  
+  # Network & Security
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
+  subnet_ids             = module.vpc.private_subnets
+  create_db_subnet_group = true
+  # Dynamic naming prevents collision with ghost resources
+  db_subnet_group_name   = "${var.db_name}-${module.vpc.vpc_id}-subnet-group"
+
+  tags = {
+    Environment = "Dev"
+  }
 }
 
 # ==========================================
 # ElastiCache Redis (Caching Layer)
 # ==========================================
-# Managed Redis for session storage and caching
 module "elasticache" {
-  source = "terraform-aws-modules/elasticache/aws"
+  source  = "terraform-aws-modules/elasticache/aws"
+  version = "~> 1.0"
   
-  cluster_id           = "amazon-redis"
+  cluster_id           = var.redis_cluster_id
+  replication_group_id = "${var.redis_cluster_id}-rep-group"
   engine               = "redis"
   engine_version       = "6.x"
   node_type            = "cache.t3.micro"
   parameter_group_name = "default.redis6.x"
   num_cache_nodes      = 1
   port                 = 6379
-  subnet_ids           = module.vpc.private_subnets
+  
+  # Network & Security
+  vpc_id                = module.vpc.vpc_id
+  create_security_group = false
+  security_group_ids    = [aws_security_group.redis_sg.id]
+  
+  subnet_ids            = module.vpc.private_subnets
+  create_subnet_group   = true
+  # Dynamic naming prevents collision with ghost resources
+  subnet_group_name     = "${var.redis_cluster_id}-${module.vpc.vpc_id}-subnet-group"
+}
+
+# ==========================================
+# Amazon MQ (RabbitMQ)
+# ==========================================
+resource "aws_mq_broker" "rabbitmq" {
+  broker_name = "amazon-mq"
+
+  engine_type        = "RabbitMQ"
+  engine_version     = "3.13"
+  host_instance_type = "mq.t3.micro"
+  
+  # Required for RabbitMQ 3.13+
+  auto_minor_version_upgrade = true
+  
+  publicly_accessible = false
+  subnet_ids          = [module.vpc.private_subnets[0]]
+  
+  # Explicit Security Group
+  security_groups     = [aws_security_group.mq_sg.id]
+
+  user {
+    username = "admin"
+    password = random_password.mq_password.result
+  }
+
+  logs {
+    general = true
+  }
+}
+
+resource "random_password" "mq_password" {
+  length  = 16
+  special = false # Simplest fix: RabbitMQ allows alphanumeric without issues, or we can use specific allowed chars.
+  # If we really want special chars, we'd use: override_special = "_%@"
+}
+
+# ==========================================
+# Phase 5: ACM (SSL Certificate)
+# ==========================================
+module "acm" {
+  source      = "../modules/acm"
+  domain_name = "devcloudproject.com"
 }

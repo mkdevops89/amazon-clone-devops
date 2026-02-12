@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping({ "/api/orders", "/orders" })
 public class OrderController {
 
     @Autowired

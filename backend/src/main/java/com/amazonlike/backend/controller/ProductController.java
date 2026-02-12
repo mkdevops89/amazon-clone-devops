@@ -1,26 +1,29 @@
 package com.amazonlike.backend.controller;
 
 import com.amazonlike.backend.model.Product;
-import com.amazonlike.backend.service.ProductService;
+import com.amazonlike.backend.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping({ "/api/products", "/products" }) // Supports both standard and legacy paths
+@RequestMapping({ "/api/products", "/products" })
 public class ProductController {
 
     @Autowired
-    private ProductService productService;
+    ProductRepository productRepository;
 
-    @GetMapping
-    public List<Product> getAllProducts() {
-        return productService.getAllProducts();
+    @GetMapping("/search")
+    public ResponseEntity<List<Product>> searchProducts(@RequestParam("q") String query) {
+        List<Product> products = productRepository.findByNameContainingIgnoreCase(query);
+        return ResponseEntity.ok(products);
     }
 
-    @PostMapping
-    public Product createProduct(@RequestBody Product product) {
-        return productService.createProduct(product);
+    @GetMapping
+    public ResponseEntity<List<Product>> getAllProducts() {
+        return ResponseEntity.ok(productRepository.findAll());
     }
 }

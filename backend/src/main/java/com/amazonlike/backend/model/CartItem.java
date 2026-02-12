@@ -1,47 +1,65 @@
 package com.amazonlike.backend.model;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
+import jakarta.persistence.*;
 
-public class CartItem implements Serializable {
-    private Long productId;
-    private String productName;
-    private BigDecimal price;
+@Entity
+@Table(name = "cart_items")
+public class CartItem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user; // Logged in user (optional if using session)
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+    @Column(nullable = false)
     private int quantity;
+
+    @Column(name = "session_id")
+    private String sessionId; // For anonymous carts
 
     public CartItem() {
     }
 
-    public CartItem(Long productId, String productName, BigDecimal price, int quantity) {
-        this.productId = productId;
-        this.productName = productName;
-        this.price = price;
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JPA Entity requires mutable access")
+    public CartItem(User user, Product product, int quantity, String sessionId) {
+        this.user = user;
+        this.product = product;
         this.quantity = quantity;
+        this.sessionId = sessionId;
     }
 
-    // Getters/Setters
-    public Long getProductId() {
-        return productId;
+    public Long getId() {
+        return id;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public String getProductName() {
-        return productName;
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "JPA Entity requires mutable access")
+    public User getUser() {
+        return user;
     }
 
-    public void setProductName(String productName) {
-        this.productName = productName;
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JPA Entity requires mutable access")
+    public void setUser(User user) {
+        this.user = user;
     }
 
-    public BigDecimal getPrice() {
-        return price;
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "JPA Entity requires mutable access")
+    public Product getProduct() {
+        return product;
     }
 
-    public void setPrice(BigDecimal price) {
-        this.price = price;
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JPA Entity requires mutable access")
+    public void setProduct(Product product) {
+        this.product = product;
     }
 
     public int getQuantity() {
@@ -50,5 +68,13 @@ public class CartItem implements Serializable {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
     }
 }

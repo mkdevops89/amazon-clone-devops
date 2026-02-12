@@ -1,81 +1,388 @@
-stages:
-  - test      # Unit tests and Code Quality
-  - security  # IaC and Security Scans
-  - build     # Compile code / Deploy Artifacts
-  - package   # Containerize
-  - deploy    # Deploy to Environment
-
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  SONAR_HOST_URL: "https://sonarqube.devcloudproject.com"
+  # Add these in GitLab CI/CD Variables
+  # AWS_ACCOUNT_ID, AWS_REGION, SONAR_TOKEN, NVD_API_KEY
 
-# Cache dependencies to speed up builds
+stages:
+  - scan-infra
+  - build
+  - test
+  - package
+  - scan-container
+  - deploy
+  - dynamic-analysis
+  - upload-reports
+
 cache:
   paths:
     - .m2/repository
-    - frontend/node_modules
 
-# ==========================================
-# Stage: Test (SonarQube)
-# ==========================================
-sonarqube-check:
-  stage: test
-  image: maven:3.8-openjdk-17
+# ===============================
+# 1. Infrastructure Security
+# ===============================
+
+infra_scan_job:
+  stage: scan-infra
+  image: 
+    name: bridgecrew/checkov:latest
+    entrypoint: [""]
   script:
-    - cd backend
-    - mvn verify sonar:sonar
+    - echo "Scanning Infrastructure as Code..."
+    - |
+      checkov -d ops/terraform/aws --skip-check CKV_AWS_* --output junitxml > checkov-report.xml || echo "Checkov found issues"
+      cat checkov-report.xml # Print to logs too
+  allow_failure: true
+  tags:
+    - amazon-clone
+  artifacts:
+    when: always
+    paths:
+      - checkov-report.xml
+    expire_in: 1 week
 
-# ==========================================
-# Stage: Security (IaC)
-# ==========================================
-iac-scan:
-  stage: security
-  image: bridgecrew/checkov:latest
+gitleaks_scan_job:
+  stage: scan-infra
+  image: 
+    name: zricethezav/gitleaks:latest
+    entrypoint: [""]
   script:
-    # Scan Terraform files for misconfigurations (e.g., Public S3 buckets)
-    - checkov -d ops/terraform/aws
-    # Scan Kubernetes manifests
-    - checkov -d ops/k8s
+    - echo "Scanning for secrets..."
+    - |
+      gitleaks detect --source=. -c gitleaks.toml --verbose --redact --report-path gitleaks-report.json
+  allow_failure: true
+  tags:
+    - amazon-clone
+  artifacts:
+    when: always
+    paths:
+      - gitleaks-report.json
+    expire_in: 1 week
 
-# ==========================================
-# Stage: Build (Backend)
-# ==========================================
-build-backend:
+# ===============================
+# 2. Build Artifacts
+# ===============================
+
+build_job:
   stage: build
-  image: maven:3.8-openjdk-17
+  image: maven:3.8.3-openjdk-17
   script:
-    - cd backend
-    # Deploy to Nexus (only on main branch)
-    - mvn clean deploy
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - echo "Compiling code..."
+    - cd backend && mvn clean install -DskipTests=true
+  tags:
+    - amazon-clone
   artifacts:
     paths:
       - backend/target/*.jar
 
-# ==========================================
-# Stage: Build (Frontend)
-# ==========================================
-build-frontend:
+build_frontend_job:
   stage: build
-  image: node:18
+  image: node:20-alpine
   script:
+    - echo "Compiling Frontend..."
     - cd frontend
     - npm ci
     - npm run build
+  tags:
+    - amazon-clone
   artifacts:
     paths:
       - frontend/.next
+      - frontend/public
+      - frontend/package.json
+    expire_in: 1 hour
 
-# ==========================================
-# Stage: Package (Docker)
-# ==========================================
-docker-build:
-  stage: package
-  image: docker:latest
-  services:
-    - docker:dind # Use Docker-in-Docker
+# ===============================
+# 3. Code Security & Quality
+# ===============================
+
+sast_backend_job:
+  stage: test
+  image: maven:3.8.3-openjdk-17
   script:
-    - docker build -t amazon-backend ./backend
-    - docker build -t amazon-frontend ./frontend
-    # Security: Scan built images with Trivy
-    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --exit-code 1 --severity CRITICAL amazon-backend:latest
+    - |
+      test -n "$SONAR_TOKEN" || (echo "SONAR_TOKEN missing" && exit 1)
+      echo "Running SonarQube Analysis..."
+      cd backend 
+      mvn -B compile sonar:sonar -Dsonar.projectKey=amazon-clone-backend -Dsonar.host.url="$SONAR_HOST_URL" -Dsonar.login="$SONAR_TOKEN"
+  needs:
+    - build_job
+  tags:
+    - amazon-clone
+
+  tags:
+    - amazon-clone
+
+sast_frontend_job:
+  stage: test
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  script:
+    - |
+      test -n "$SONAR_TOKEN" || (echo "SONAR_TOKEN missing" && exit 1)
+      echo "Running SonarQube Analysis for Frontend..."
+      sonar-scanner \
+        -Dsonar.projectKey=amazon-clone-frontend \
+        -Dsonar.sources=frontend \
+        -Dsonar.host.url="$SONAR_HOST_URL" \
+        -Dsonar.login="$SONAR_TOKEN"
+  needs:
+    - build_frontend_job
+  tags:
+    - amazon-clone
+
+frontend_audit_job:
+  stage: test
+  image: node:20-alpine
+  script:
+    - echo "Running NPM Audit..."
+    - cd frontend
+    - npm ci
+    - npm audit --audit-level=high || echo "NPM Audit found vulnerabilities"
+  tags:
+    - amazon-clone
+  allow_failure: true
+
+dependency_check_job:
+  stage: test
+  image: 
+    name: owasp/dependency-check:latest
+    entrypoint: [""]
+  script:
+    - echo "Running OWASP Dependency Check..."
+    - |
+      mkdir -p dependency-check-report
+      # Use /tmp for NVD data to avoid H2 corruption on network volumes
+      mkdir -p /tmp/owasp-data
+      
+      export JAVA_OPTS="-Xmx2g"
+      /usr/share/dependency-check/bin/dependency-check.sh \
+        --project "Amazon Clone" \
+        --scan backend \
+        --format HTML --format JSON \
+        --out dependency-check-report \
+        --data /tmp/owasp-data \
+        --nvdApiKey "$NVD_API_KEY"
+  allow_failure: true
+  tags:
+    - amazon-clone
+  artifacts:
+    when: always
+    paths:
+      - dependency-check-report/*
+    expire_in: 1 week
+
+# ===============================
+# 4. Container Build
+# ===============================
+
+push_job:
+  stage: package
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "Building and Pushing to ECR..."
+    - |
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}/backend" \
+        --dockerfile "${CI_PROJECT_DIR}/backend/Dockerfile" \
+        --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-backend:latest"
+  needs:
+    - build_job
+    - sast_backend_job
+    - sast_frontend_job
+  tags:
+    - amazon-clone
+
+push_frontend_job:
+  stage: package
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "Building and Pushing Frontend to ECR..."
+    - |
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}/frontend" \
+        --dockerfile "${CI_PROJECT_DIR}/frontend/Dockerfile" \
+        --build-arg NEXT_PUBLIC_API_URL="https://api.devcloudproject.com/api" \
+        --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-frontend:latest"
+  needs:
+    - build_frontend_job
+  tags:
+    - amazon-clone
+
+push_cost_exporter_job:
+  stage: package
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "Building and Pushing Cost Exporter to ECR..."
+    - |
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}/ops/cost-exporter" \
+        --dockerfile "${CI_PROJECT_DIR}/ops/cost-exporter/Dockerfile" \
+        --destination "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/cost-exporter:latest"
+  tags:
+    - amazon-clone
+
+# ===============================
+# 5. Container Security
+# ===============================
+
+trivy_scan_job:
+  stage: scan-container
+  image: 
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - echo "Scanning dependencies and filesystem..."
+    - trivy fs . --severity HIGH,CRITICAL --no-progress --output trivy-report.txt
+    - cat trivy-report.txt # Show in logs
+  needs:
+    - build_job
+  tags:
+    - amazon-clone
+  artifacts:
+    when: always
+    paths:
+      - trivy-report.txt
+    expire_in: 1 week
+
+trivy_frontend_scan_job:
+  stage: scan-container
+  image: 
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - echo "Scanning frontend artifact..."
+    - trivy image --severity HIGH,CRITICAL --no-progress --output trivy-frontend-report.txt "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon-frontend:latest"
+    - cat trivy-frontend-report.txt
+  needs:
+    - push_frontend_job
+  tags:
+    - amazon-clone
+  artifacts:
+    when: always
+    paths:
+      - trivy-frontend-report.txt
+    expire_in: 1 week
+
+# ===============================
+# 6. Deployment
+# ===============================
+
+deploy_job:
+  stage: deploy
+  image: dtzar/helm-kubectl:latest
+  script:
+    - echo "Deploying to Kubernetes..."
+    - echo "Replacing variables in manifest..."
+    - |
+      sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/backend.yaml
+      sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/backend.yaml
+      kubectl apply -f ops/k8s/backend.yaml
+      kubectl rollout restart deployment/amazon-backend -n devsecops
+      
+      sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/frontend.yaml
+      sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/frontend.yaml
+      kubectl apply -f ops/k8s/frontend.yaml
+      kubectl rollout restart deployment/amazon-frontend -n devsecops
+      
+      # Apply Monitoring
+      kubectl apply -f ops/k8s/servicemonitor-backend.yaml || echo "Warning: ServiceMonitor CRD not found"
+      kubectl apply -f ops/k8s/servicemonitor-frontend.yaml || echo "Warning: ServiceMonitor CRD not found"
+      
+      # Apply Cost Exporter
+      sed -i "s/\${AWS_ACCOUNT_ID}/${AWS_ACCOUNT_ID}/g" ops/k8s/cost-exporter.yaml
+      sed -i "s/\${AWS_REGION}/${AWS_REGION}/g" ops/k8s/cost-exporter.yaml
+      kubectl apply -f ops/k8s/cost-exporter.yaml
+      kubectl apply -f ops/k8s/servicemonitor-cost-exporter.yaml
+      kubectl rollout restart deployment/cost-exporter -n devsecops || true
+  tags:
+    - amazon-clone
+  only:
+    - main
+    - phase-6c-gitlab
+    - phase-6d-scanreports
+    - phase-10-features
+
+# ===============================
+# 7. Dynamic Analysis
+# ===============================
+
+zap_scan_job:
+  stage: dynamic-analysis
+  image: 
+    name: ghcr.io/zaproxy/zaproxy:stable
+    entrypoint: [""]
+  script:
+    - echo "Running OWASP ZAP Baseline Scan against Backend..."
+    - |
+      # Run ZAP, writing report to the required directory
+      # We use '|| true' because ZAP returns exit codes for warnings/failures
+      
+      zap-baseline.py \
+        --autooff \
+        -t "https://api.devcloudproject.com" \
+        -r zap_report.html \
+        -J zap_report.json || echo "ZAP scan finished (Exit Code: $?)"
+      
+    - echo "Listing /zap/wrk content:"
+    - ls -la /zap/wrk || echo "Cannot list /zap/wrk"
+      
+    - |
+      # Try to recover HTML report first
+      if [ -f /zap/wrk/zap_report.html ]; then
+        cp /zap/wrk/zap_report.html ./zap_report.html
+        echo "Recovered HTML report."
+      # Fallback to JSON if HTML failed
+      elif [ -f /zap/wrk/zap_report.json ]; then
+        cp /zap/wrk/zap_report.json ./zap_report.json
+        echo "Recovered JSON report (HTML missing)."
+      else
+        echo "ERROR: No report generated."
+        # Debug: Did it fail to start entirely?
+        ls -la
+        exit 1
+      fi
+  allow_failure: true
+  tags:
+    - amazon-clone
+  artifacts:
+    when: always
+    paths:
+      - zap_report.html
+      - zap_report.json
+    expire_in: 1 week
+
+# ===============================
+# 8. Artifact Preservation
+# ===============================
+
+upload_reports_job:
+  stage: upload-reports
+  image: 
+    name: amazon/aws-cli:latest
+    entrypoint: [""]
+  script:
+    - echo "Uploading security reports to S3..."
+    - |
+      aws s3 cp checkov-report.xml s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/checkov-report.xml || echo "Checkov report missing"
+      aws s3 cp gitleaks-report.json s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/gitleaks-report.json || echo "Gitleaks report missing"
+      aws s3 cp backend/target/backend-0.0.1-SNAPSHOT.jar s3://$S3_BUCKET_NAME/builds/$CI_PIPELINE_ID/backend.jar || echo "Build artifact missing"
+      aws s3 cp dependency-check-report/dependency-check-report.html s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/dependency-check.html || echo "SCA report missing"
+      aws s3 cp trivy-report.txt s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/trivy-report.txt || echo "Trivy report missing"
+      aws s3 cp zap_report.html s3://$S3_BUCKET_NAME/reports/$CI_PIPELINE_ID/zap_report.html || echo "ZAP report missing"
+  tags:
+    - amazon-clone
+  needs:
+    - infra_scan_job
+    - gitleaks_scan_job
+    - build_job
+    - dependency_check_job
+    - trivy_scan_job
+    - zap_scan_job

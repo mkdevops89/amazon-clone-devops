@@ -1,0 +1,18 @@
+grafana:
+  persistence:
+    enabled: true
+    type: pvc
+    storageClassName: gp3
+    size: 10Gi
+  service:
+    type: LoadBalancer
+
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+
+kube-state-metrics:
+  metricLabelsAllowlist:
+    - nodes=[*]

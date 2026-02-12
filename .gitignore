@@ -11,7 +11,7 @@
 # ===========================
 # Ignore markdown files and the docs folder (Local Only)
 /*.md
-docs/
+# docs/ (Commented out to allow tracking)
 git_commit.txt
 !README.md
 
@@ -68,3 +68,43 @@ credentials.json
 *.p12
 
 
+# SSH keys / secrets
+*.pem
+*.ppk
+*.key
+*.pub
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# Common secret files
+.env
+.env.*
+
+# ===========================
+# Local Environment Variables
+# ===========================
+.env
+mkdev
+!phase_3_walkthrough.md
+!phase_3_testcases.md
+!phase_4_walkthrough.md
+!phase_4_testcases.md
+!phase_4.5_walkthrough.md
+!phase_4.5_testcases.md
+ops/k8s/db-secrets.yaml
+!phase_5_walkthrough.md
+!phase_5_testcases.md
+!docs/phase_5_domains.md
+!phase_6_walkthrough.md
+!phase_6_testcases.md
+!phase_6b_walkthrough.md
+!phase_6c_walkthrough.md
+!phase_6c_testcases.md
+!phase_7_walkthrough.md
+!phase_8_walkthrough.md
+!phase_8_5_walkthrough.md
+
+# Prometheus dump
+prometheus_targets.json

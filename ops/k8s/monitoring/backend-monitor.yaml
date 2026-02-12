@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: amazon-backend-monitor
+  namespace: monitoring # Must correspond to where Prometheus Operator looks (config dependent) or labeled correctly
+  labels:
+    release: kube-prom-stack # CRITICAL: This label matches the Prometheus 'serviceMonitorSelector'
+spec:
+  selector:
+    matchLabels:
+      app: amazon-backend # Matches your Service in ops/k8s/backend.yaml
+  namespaceSelector:
+    matchNames:
+      - default # The namespace where your Backend lives
+  endpoints:
+    - port: http # Refers to the named port in the Service, not the number
+      path: /actuator/prometheus
+      interval: 15s
