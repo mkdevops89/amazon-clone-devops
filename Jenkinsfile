@@ -255,8 +255,8 @@ spec:
                                 sed -i 's/tag: .*/tag: "${env.GIT_COMMIT_SHORT}"/g' ops/helm/amazon-app/values.yaml
                                 
                                 # Commit and Push
-                                git config user.email "jenkins@devcloudproject.com"
-                                git config user.name "Jenkins CI"
+                                git config user.email "mlis.dev89@gmail.com"
+                                git config user.name "Micheal L"
                                 git add ops/helm/amazon-app/values.yaml
                                 
                                 # Only commit if there are changes
