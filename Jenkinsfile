@@ -241,18 +241,32 @@ spec:
                         // Ensure git and sed are present in the tools container
                         sh "apt-get update && apt-get install -y git sed"
 
-                        sh """
-                            sed -i 's/tag: .*/tag: "${env.GIT_COMMIT_SHORT}"/g' ops/helm/amazon-app/values.yaml
-                        """
-
                         withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                             sh """
+                                # Avoid "fatal: not in a git directory" by cloning fresh
+                                rm -rf temp-gitops
+                                git clone https://${GITHUB_TOKEN}@github.com/mkdevops89/amazon-clone-devops.git temp-gitops
+                                cd temp-gitops
+                                
+                                # Checkout the correct branch
+                                git checkout phase-11-gitops
+                                
+                                # Update the tag in the fresh clone
+                                sed -i 's/tag: .*/tag: "${env.GIT_COMMIT_SHORT}"/g' ops/helm/amazon-app/values.yaml
+                                
+                                # Commit and Push
                                 git config user.email "jenkins@devcloudproject.com"
                                 git config user.name "Jenkins CI"
                                 git add ops/helm/amazon-app/values.yaml
-                                git commit -m "chore(gitops): update image tag to ${env.GIT_COMMIT_SHORT} [skip ci]"
-                                # Use the token to push via HTTPS
-                                git push https://\${GITHUB_TOKEN}@github.com/mkdevops89/amazon-clone-devops.git HEAD:phase-11-gitops
+                                
+                                # Only commit if there are changes
+                                if ! git diff --cached --quiet; then
+                                    git commit -m "chore(gitops): update image tag to ${env.GIT_COMMIT_SHORT} [skip ci]"
+                                    git push origin phase-11-gitops
+                                    echo "✅ GitOps manifests updated successfully."
+                                else
+                                    echo "No changes to commit."
+                                fi
                             """
                         }
                         echo "Values updated and pushed. ArgoCD will sync shortly."
