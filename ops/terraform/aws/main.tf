@@ -54,7 +54,16 @@ module "eks" {
       name           = "critical-ng"
       capacity_type  = "ON_DEMAND"
       instance_types = ["t3.large"] # Cost Optimization: Downsized from t3.xlarge
-      disk_size      = 50
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 50
+            volume_type           = "gp3"
+            delete_on_termination = true
+          }
+        }
+      }
       
       min_size     = 1
       max_size     = 2
@@ -85,7 +94,16 @@ module "eks" {
       name           = "spot-ng"
       capacity_type  = "SPOT"
       instance_types = ["t3.medium", "t3.large"] # Cost Optimization: Downsized from t3.xlarge/2xlarge
-      disk_size      = 50
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 50
+            volume_type           = "gp3"
+            delete_on_termination = true
+          }
+        }
+      }
       
       min_size     = 1
       max_size     = 5
