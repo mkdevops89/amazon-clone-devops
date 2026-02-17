@@ -75,7 +75,7 @@ resource "aws_lambda_function" "cost_optimizer" {
   filename         = archive_file.cost_optimizer_zip.output_path
   function_name    = "cost_terminator"
   role            = aws_iam_role.lambda_exec.arn
-  handler         = "lambda_function.lambda_handler"
+  handler         = "index.lambda_handler"
   source_code_hash = archive_file.cost_optimizer_zip.output_base64sha256
   runtime         = "python3.9"
   timeout         = 300
@@ -109,7 +109,28 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   source_arn    = aws_cloudwatch_event_rule.nightly_stop.arn
 }
 
+# 3. Auto-Healer Lambda
+resource "archive_file" "auto_healer_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../lambda/auto_healer"
+  output_path = "${path.module}/auto_healer.zip"
+}
 
+resource "aws_lambda_function" "auto_healer" {
+  filename         = archive_file.auto_healer_zip.output_path
+  function_name    = "auto_healer"
+  role            = aws_iam_role.lambda_exec.arn
+  handler         = "index.lambda_handler"
+  source_code_hash = archive_file.auto_healer_zip.output_base64sha256
+  runtime         = "python3.9"
+  timeout         = 60
+  
+  environment {
+    variables = {
+      SNS_TOPIC_ARN = aws_sns_topic.alerts.arn
+    }
+  }
+}
 
 resource "aws_cloudwatch_event_rule" "morning_start" {
   name                = "morning-start"

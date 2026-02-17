@@ -88,8 +88,9 @@ module "eks" {
       disk_size      = 50
       
       min_size     = 1
-      max_size     = 2
+      max_size     = 5
       desired_size = 1
+
 
       iam_role_additional_policies = {
         scan_reports = aws_iam_policy.reports_upload_policy.arn
