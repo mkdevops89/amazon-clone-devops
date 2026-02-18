@@ -77,6 +77,15 @@ spec:
         requests:
           cpu: "50m"
           memory: "256Mi"
+    - name: sonar
+      image: sonarsource/sonar-scanner-cli:latest
+      command:
+        - cat
+      tty: true
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "128Mi"
   volumes:
     - name: nvd-cache
       persistentVolumeClaim:
@@ -88,6 +97,9 @@ spec:
     environment {
         AWS_REGION = "us-east-1"
         ECR_REGISTRY = "406312601212.dkr.ecr.us-east-1.amazonaws.com"
+        DOCKERHUB_USER = "mlis682"
+        S3_REPORT_BUCKET = "amazon-clone-reports-6cc84b5432a5904b"
+        SONAR_PROJECT = "amazon-pipeline"
     }
 
     options {
@@ -104,6 +116,9 @@ spec:
                         def commit = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                         env.GIT_COMMIT_SHORT = commit
                         echo "--- 🛠️ Building Version: ${env.GIT_COMMIT_SHORT} ---"
+                        
+                        // Create a unique report directory for this build
+                        sh "mkdir -p reports"
                     }
                 }
             }
@@ -112,7 +127,17 @@ spec:
         stage('Security: Secrets Scan') {
             steps {
                 container('security') {
-                    sh "trufflehog git file://${WORKSPACE} --only-verified"
+                    // Scan and output JSON report, failing only on Verified High Severity
+                    // || true to allow uploading the report even if it fails later
+                    sh "trufflehog git file://${WORKSPACE} --only-verified --json > reports/trufflehog.json || true"
+                    
+                    // Upload to S3 immediately
+                    container('tools') {
+                        withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                             sh 'apk add --no-cache aws-cli'
+                             sh "aws s3 cp reports/trufflehog.json s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/trufflehog.json"
+                        }
+                    }
                 }
             }
         }
@@ -123,9 +148,13 @@ spec:
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
                         dir('backend') {
                             // Using persistent cache for NVD data and high delay (16s) to avoid 403/Rate limits
-                            // Note: We use || true so a temporary NVD outage doesn't block the whole build
-                            sh 'mvn org.owasp:dependency-check-maven:check -DnvdApiKey=${NVD_API_KEY} -DdataDirectory=/var/maven/odc-data -DnvdApiDelay=16000 || echo "SCA Scan encountered an NVD issue, check logs."'
+                            sh 'mvn org.owasp:dependency-check-maven:check -DnvdApiKey=${NVD_API_KEY} -DdataDirectory=/var/maven/odc-data -DnvdApiDelay=16000 -Dformat=HTML -DoutputDirectory=../reports/ || echo "SCA Scan encountered an NVD issue, check logs."'
                         }
+                    }
+                }
+                container('tools') {
+                    withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                         sh "aws s3 cp reports/dependency-check-report.html s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/dependency-check.html || true"
                     }
                 }
             }
@@ -141,12 +170,33 @@ spec:
             }
         }
 
-        stage('Security: SAST Scan') {
+        stage('Security: SAST (Backend)') {
             steps {
                 container('maven') {
                     dir('backend') {
                         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                            sh 'mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN} -Dsonar.host.url=http://sonarqube'
+                            // Using specific project key requested by user
+                            sh 'mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN} -Dsonar.host.url=http://sonarqube -Dsonar.projectKey=${SONAR_PROJECT} -Dsonar.projectName="Amazon Clone Backend"'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Security: SAST (Frontend)') {
+            steps {
+                container('sonar') {
+                    dir('frontend') {
+                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                            sh """
+                                sonar-scanner \
+                                -Dsonar.projectKey=${SONAR_PROJECT}:frontend \
+                                -Dsonar.projectName="Amazon Clone Frontend" \
+                                -Dsonar.sources=. \
+                                -Dsonar.host.url=http://sonarqube \
+                                -Dsonar.login=${SONAR_TOKEN} \
+                                -Dsonar.exclusions=**/node_modules/**,**/.next/**
+                            """
                         }
                     }
                 }
@@ -156,7 +206,10 @@ spec:
         stage('Build: Docker Images') {
             steps {
                 container('docker') {
-                    withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                    withCredentials([
+                        usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID'),
+                        usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKERHUB_PASS', usernameVariable: 'DOCKERHUB_USER_CREDS')
+                    ]) {
                         script {
                             sh 'dockerd > /var/log/dockerd.log 2>&1 &'
                             sh '''
@@ -168,20 +221,28 @@ spec:
                                 done
                             '''
                             
-                            // Install AWS CLI (it's missing in docker:dind)
+                            // 1. Login to ECR
                             sh 'apk add --no-cache aws-cli'
-                            
-                            // Login to ECR
                             sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
+                            
+                            // 2. Login to Docker Hub
+                            sh "echo ${DOCKERHUB_PASS} | docker login -u ${DOCKERHUB_USER_CREDS} --password-stdin"
 
-                            // Build Backend with both SHA and latest tags
+                            // 3. Build & Tag (Multi-Registry)
                             dir('backend') {
+                                // ECR Tags
                                 sh "docker build -t ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} -t ${ECR_REGISTRY}/amazon-backend:latest ."
+                                // Docker Hub Tags
+                                sh "docker tag ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} ${DOCKERHUB_USER}/amazon-backend:${env.GIT_COMMIT_SHORT}"
+                                sh "docker tag ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} ${DOCKERHUB_USER}/amazon-backend:latest"
                             }
 
-                            // Build Frontend with both SHA and latest tags
                             dir('frontend') {
+                                // ECR Tags
                                 sh "docker build --build-arg NEXT_PUBLIC_API_URL='https://api.devcloudproject.com' -t ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} -t ${ECR_REGISTRY}/amazon-frontend:latest ."
+                                // Docker Hub Tags
+                                sh "docker tag ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} ${DOCKERHUB_USER}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
+                                sh "docker tag ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} ${DOCKERHUB_USER}/amazon-frontend:latest"
                             }
                         }
                     }
@@ -193,10 +254,17 @@ spec:
             steps {
                 container('docker') {
                     script {
+                        // Push to ECR
                         sh "docker push ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT}"
                         sh "docker push ${ECR_REGISTRY}/amazon-backend:latest"
                         sh "docker push ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
                         sh "docker push ${ECR_REGISTRY}/amazon-frontend:latest"
+                        
+                        // Push to Docker Hub
+                        sh "docker push ${DOCKERHUB_USER}/amazon-backend:${env.GIT_COMMIT_SHORT}"
+                        sh "docker push ${DOCKERHUB_USER}/amazon-backend:latest"
+                        sh "docker push ${DOCKERHUB_USER}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
+                        sh "docker push ${DOCKERHUB_USER}/amazon-frontend:latest"
                     }
                 }
             }
@@ -207,12 +275,15 @@ spec:
                 container('trivy') {
                     withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                         script {
-                            // Install AWS CLI in Trivy container to get login token
                             sh 'apk add --no-cache aws-cli'
                             sh "export TRIVY_PASSWORD=\$(aws ecr get-login-password --region ${AWS_REGION}) && \
                                 export TRIVY_USERNAME=AWS && \
-                                trivy image --severity HIGH,CRITICAL --scanners vuln --cache-dir /tmp/trivy-cache ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} && \
-                                trivy image --severity HIGH,CRITICAL --scanners vuln --cache-dir /tmp/trivy-cache ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
+                                trivy image --format json --output reports/trivy-backend.json --severity HIGH,CRITICAL --scanners vuln --cache-dir /tmp/trivy-cache ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} && \
+                                trivy image --format json --output reports/trivy-frontend.json --severity HIGH,CRITICAL --scanners vuln --cache-dir /tmp/trivy-cache ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
+                            
+                            // Upload Reports
+                            sh "aws s3 cp reports/trivy-backend.json s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/trivy-backend.json"
+                            sh "aws s3 cp reports/trivy-frontend.json s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/trivy-frontend.json"
                         }
                     }
                 }
@@ -223,10 +294,16 @@ spec:
             steps {
                 container('zap') {
                     script {
-                        // OWASP ZAP Baseline scan against the app URL
-                        // Note: Using the stable image which has the script in /zap/
-                        sh '/zap/zap-baseline.py -t https://api.devcloudproject.com -I || true' 
-                        sh '/zap/zap-baseline.py -t https://devcloudproject.com -I || true'
+                        // Run ZAP and generate HTML report
+                        sh '/zap/zap-baseline.py -t https://api.devcloudproject.com -r reports/zap-report.html -I || true' 
+                        
+                        // Upload Report
+                        container('tools') {
+                            withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                                 sh 'apk add --no-cache aws-cli'
+                                 sh "aws s3 cp /home/zap/reports/zap-report.html s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/zap-report.html || true"
+                            }
+                        }
                     }
                 }
             }
@@ -236,11 +313,6 @@ spec:
             steps {
                 container('tools') {
                     script {
-                        echo "--- 🚀 Updating GitOps Manifests with Version: ${env.GIT_COMMIT_SHORT} ---"
-                        
-                        // Ensure git and sed are present in the tools container
-                        sh "apt-get update && apt-get install -y git sed"
-
                         withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                             sh """
                                 # Avoid "fatal: not in a git directory" by cloning fresh
@@ -285,7 +357,7 @@ spec:
                    withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
                         sh """
                             apt-get update && apt-get install -y curl
-                            curl -X POST -H 'Content-type: application/json' --data '{"text":"*Jenkins Build: ${status}*\\nProject: ${JOB_NAME}\\nVersion: ${env.GIT_COMMIT_SHORT}\\nURL: ${BUILD_URL}"}' \${SLACK_URL}
+                            curl -X POST -H 'Content-type: application/json' --data '{"text":"*Jenkins Build: ${status}*\\nProject: ${JOB_NAME}\\nVersion: ${env.GIT_COMMIT_SHORT}\\nReport URL: https://s3.console.aws.amazon.com/s3/buckets/${S3_REPORT_BUCKET}?prefix=${env.GIT_COMMIT_SHORT}/"}' \${SLACK_URL}
                         """
                    }
                }
