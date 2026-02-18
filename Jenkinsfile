@@ -195,7 +195,7 @@ spec:
                                 -Dsonar.projectName="Amazon Clone Frontend" \
                                 -Dsonar.sources=. \
                                 -Dsonar.host.url=http://sonarqube \
-                                -Dsonar.login=${SONAR_TOKEN} \
+                                -Dsonar.login=\${SONAR_TOKEN} \
                                 -Dsonar.exclusions=**/node_modules/**,**/.next/**
                             """
                         }
@@ -227,7 +227,7 @@ spec:
                             sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
                             
                             // 2. Login to Docker Hub
-                            sh "echo ${DOCKERHUB_PASS} | docker login -u ${DOCKERHUB_USER_CREDS} --password-stdin"
+                            sh 'echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER_CREDS --password-stdin'
 
                             // 3. Build & Tag (Multi-Registry)
                             dir('backend') {
@@ -324,7 +324,7 @@ spec:
                             sh """
                                 # Avoid "fatal: not in a git directory" by cloning fresh
                                 rm -rf temp-gitops
-                                git clone https://${GITHUB_TOKEN}@github.com/mkdevops89/amazon-clone-devops.git temp-gitops
+                                git clone https://\${GITHUB_TOKEN}@github.com/mkdevops89/amazon-clone-devops.git temp-gitops
                                 cd temp-gitops
                                 
                                 # Checkout the correct branch
