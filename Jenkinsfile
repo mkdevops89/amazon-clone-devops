@@ -33,7 +33,7 @@ spec:
           cpu: "20m"
           memory: "256Mi"
     - name: tools
-      image: ubuntu:latest
+      image: alpine:latest
       command:
         - cat
       tty: true
@@ -154,6 +154,7 @@ spec:
                 }
                 container('tools') {
                     withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                         sh 'apk add --no-cache aws-cli'
                          sh "aws s3 cp reports/dependency-check-report.html s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/dependency-check.html || true"
                     }
                 }
@@ -275,6 +276,7 @@ spec:
                 container('trivy') {
                     withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                         script {
+                            // Install AWS CLI in Trivy container to get login token
                             sh 'apk add --no-cache aws-cli'
                             sh "export TRIVY_PASSWORD=\$(aws ecr get-login-password --region ${AWS_REGION}) && \
                                 export TRIVY_USERNAME=AWS && \
@@ -301,7 +303,7 @@ spec:
                         container('tools') {
                             withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                                  sh 'apk add --no-cache aws-cli'
-                                 sh "aws s3 cp /home/zap/reports/zap-report.html s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/zap-report.html || true"
+                                 sh "aws s3 cp reports/zap-report.html s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/zap-report.html || true"
                             }
                         }
                     }
@@ -313,6 +315,11 @@ spec:
             steps {
                 container('tools') {
                     script {
+                        echo "--- 🚀 Updating GitOps Manifests with Version: ${env.GIT_COMMIT_SHORT} ---"
+                        
+                        // Ensure git and sed are present in the tools container (apk for alpine)
+                        sh "apk add --no-cache git sed openssh-client"
+
                         withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                             sh """
                                 # Avoid "fatal: not in a git directory" by cloning fresh
