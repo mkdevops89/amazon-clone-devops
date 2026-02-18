@@ -363,7 +363,7 @@ spec:
                    def color = (status == 'SUCCESS') ? 'good' : 'danger'
                    withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
                         sh """
-                            apt-get update && apt-get install -y curl
+                            apk add --no-cache curl
                             curl -X POST -H 'Content-type: application/json' --data '{"text":"*Jenkins Build: ${status}*\\nProject: ${JOB_NAME}\\nVersion: ${env.GIT_COMMIT_SHORT}\\nReport URL: https://s3.console.aws.amazon.com/s3/buckets/${S3_REPORT_BUCKET}?prefix=${env.GIT_COMMIT_SHORT}/"}' \${SLACK_URL}
                         """
                    }
