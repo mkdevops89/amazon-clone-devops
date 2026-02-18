@@ -99,6 +99,8 @@ spec:
         ECR_REGISTRY = "406312601212.dkr.ecr.us-east-1.amazonaws.com"
         DOCKERHUB_USER = "mlis682"
         S3_REPORT_BUCKET = "amazon-clone-reports-6cc84b5432a5904b"
+        // New Structured Path
+        S3_REPORT_PATH = "Amazon-pipeline-reports/Report-${BUILD_NUMBER}"
         SONAR_PROJECT = "amazon-pipeline"
     }
 
@@ -128,21 +130,26 @@ spec:
             steps {
                 container('security') {
                     // Scan and output JSON report, failing only on Verified High Severity
-                    // || true to allow uploading the report even if it fails later
-                    sh "trufflehog git file://${WORKSPACE} --only-verified --json > reports/trufflehog.json || true"
-                    
-                    // Upload to S3 immediately
-                    container('tools') {
-                        withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
-                             sh 'apk add --no-cache aws-cli'
-                             sh "aws s3 cp reports/trufflehog.json s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/trufflehog.json"
-                        }
+                    sh "trufflehog git file://${WORKSPACE} --only-verified --json > reports/trufflehog-report.json || true"
+                }
+            }
+        }
+
+        stage('Security: IaC & FS Scan (New)') {
+            steps {
+                container('trivy') {
+                    script {
+                         // FS Scan for Frontend Dependencies (SCA)
+                         sh "trivy fs --format table --output reports/trivy-fs-frontend.txt --scanners vuln,secret,config frontend/"
+                         
+                         // FS Scan for Infrastructure (IaC)
+                         sh "trivy fs --format table --output reports/trivy-iac-ops.txt --scanners config,secret ops/"
                     }
                 }
             }
         }
 
-        stage('Security: SCA Scan') {
+        stage('Security: SCA Scan (Backend)') {
             steps {
                 container('maven') {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
@@ -150,12 +157,6 @@ spec:
                             // Using persistent cache for NVD data and high delay (16s) to avoid 403/Rate limits
                             sh 'mvn org.owasp:dependency-check-maven:check -DnvdApiKey=${NVD_API_KEY} -DdataDirectory=/var/maven/odc-data -DnvdApiDelay=16000 -Dformat=HTML -DoutputDirectory=../reports/ || echo "SCA Scan encountered an NVD issue, check logs."'
                         }
-                    }
-                }
-                container('tools') {
-                    withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
-                         sh 'apk add --no-cache aws-cli'
-                         sh "aws s3 cp reports/dependency-check-report.html s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/dependency-check.html || true"
                     }
                 }
             }
@@ -173,6 +174,10 @@ spec:
 
         stage('Security: SAST (Backend)') {
             steps {
+                container('tools') {
+                     // Install curl for Sonar API fetch
+                     sh "apk add --no-cache curl" 
+                }
                 container('maven') {
                     dir('backend') {
                         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
@@ -189,6 +194,7 @@ spec:
                 container('sonar') {
                     dir('frontend') {
                         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                            // Run the scan
                             sh """
                                 sonar-scanner \
                                 -Dsonar.projectKey=${SONAR_PROJECT}:frontend \
@@ -201,6 +207,26 @@ spec:
                         }
                     }
                 }
+            }
+        }
+        
+        stage('Security: SonarQube Report Fetch') {
+            steps {
+               container('tools') {
+                   withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                       script {
+                           echo "--- 📊 Fetching SonarQube Quality Gate Status ---"
+                           // Give SonarQube a moment to process (simple sleep, or use wait-for-quality-gate)
+                           sleep 5
+                           
+                           // Fetch Backend Status
+                           sh "curl -u \${SONAR_TOKEN}: http://sonarqube/api/qualitygates/project_status?projectKey=${SONAR_PROJECT} > reports/sonar-report-backend.json || true"
+                           
+                           // Fetch Frontend Status
+                           sh "curl -u \${SONAR_TOKEN}: http://sonarqube/api/qualitygates/project_status?projectKey=${SONAR_PROJECT}:frontend > reports/sonar-report-frontend.json || true"
+                       }
+                   }
+               }
             }
         }
 
@@ -280,12 +306,8 @@ spec:
                             sh 'apk add --no-cache aws-cli'
                             sh "export TRIVY_PASSWORD=\$(aws ecr get-login-password --region ${AWS_REGION}) && \
                                 export TRIVY_USERNAME=AWS && \
-                                trivy image --format json --output reports/trivy-backend.json --severity HIGH,CRITICAL --scanners vuln --cache-dir /tmp/trivy-cache ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} && \
-                                trivy image --format json --output reports/trivy-frontend.json --severity HIGH,CRITICAL --scanners vuln --cache-dir /tmp/trivy-cache ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
-                            
-                            // Upload Reports
-                            sh "aws s3 cp reports/trivy-backend.json s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/trivy-backend.json"
-                            sh "aws s3 cp reports/trivy-frontend.json s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/trivy-frontend.json"
+                                trivy image --format table --output reports/trivy-report-backend.txt --severity HIGH,CRITICAL --scanners vuln --cache-dir /tmp/trivy-cache ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} && \
+                                trivy image --format table --output reports/trivy-report-frontend.txt --severity HIGH,CRITICAL --scanners vuln --cache-dir /tmp/trivy-cache ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
                         }
                     }
                 }
@@ -298,14 +320,21 @@ spec:
                     script {
                         // Run ZAP and generate HTML report
                         sh '/zap/zap-baseline.py -t https://api.devcloudproject.com -r reports/zap-report.html -I || true' 
-                        
-                        // Upload Report
-                        container('tools') {
-                            withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
-                                 sh 'apk add --no-cache aws-cli'
-                                 sh "aws s3 cp reports/zap-report.html s3://${S3_REPORT_BUCKET}/${env.GIT_COMMIT_SHORT}/zap-report.html || true"
-                            }
-                        }
+                    }
+                }
+            }
+        }
+
+        stage('Publish: Reports to S3') {
+            steps {
+                container('tools') {
+                    withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                         script {
+                             sh 'apk add --no-cache aws-cli'
+                             echo "--- 📤 Uploading Reports to S3: s3://${S3_REPORT_BUCKET}/${S3_REPORT_PATH} ---"
+                             // Recursive copy of the entire reports folder
+                             sh "aws s3 cp reports/ s3://${S3_REPORT_BUCKET}/${S3_REPORT_PATH}/ --recursive"
+                         }
                     }
                 }
             }
@@ -364,7 +393,7 @@ spec:
                    withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
                         sh """
                             apk add --no-cache curl
-                            curl -X POST -H 'Content-type: application/json' --data '{"text":"*Jenkins Build: ${status}*\\nProject: ${JOB_NAME}\\nVersion: ${env.GIT_COMMIT_SHORT}\\nReport URL: https://s3.console.aws.amazon.com/s3/buckets/${S3_REPORT_BUCKET}?prefix=${env.GIT_COMMIT_SHORT}/"}' \${SLACK_URL}
+                            curl -X POST -H 'Content-type: application/json' --data '{"text":"*Jenkins Build: ${status}*\\nProject: ${JOB_NAME}\\nVersion: ${env.GIT_COMMIT_SHORT}\\nReport URL: https://s3.console.aws.amazon.com/s3/buckets/${S3_REPORT_BUCKET}?prefix=${S3_REPORT_PATH}/"}' \${SLACK_URL}
                         """
                    }
                }
