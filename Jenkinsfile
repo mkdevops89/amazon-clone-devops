@@ -120,7 +120,7 @@ spec:
                         echo "--- 🛠️ Building Version: ${env.GIT_COMMIT_SHORT} ---"
                         
                         // Create a unique report directory for this build
-                        sh "mkdir -p reports"
+                        sh "mkdir -p reports && chmod 777 reports"
                     }
                 }
             }
@@ -318,8 +318,8 @@ spec:
             steps {
                 container('zap') {
                     script {
-                        // Run ZAP and generate HTML report
-                        sh '/zap/zap-baseline.py -t https://api.devcloudproject.com -r reports/zap-report.html -I || true' 
+                        // Run ZAP and generate HTML report using absolute path to ensure writable permissions
+                        sh "/zap/zap-baseline.py -t https://api.devcloudproject.com -r \${WORKSPACE}/reports/zap-report.html -I || true" 
                     }
                 }
             }
