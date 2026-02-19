@@ -70,9 +70,9 @@ spec:
             - name: SPRING_RABBITMQ_SSL_ENABLED
               value: "true"
             - name: AMAZONLIKE_APP_FRONTENDURL
-              value: "https://www.{{ .Values.global.domain }}"
+              value: "https://www.{{ .Values.global.domain }},https://{{ .Values.global.domain }}"
             - name: AMAZONLIKE_APP_FRONTEND_URL
-              value: "https://www.{{ .Values.global.domain }}"
+              value: "https://www.{{ .Values.global.domain }},https://{{ .Values.global.domain }}"
             - name: AMAZONLIKE_APP_JWTSECRET
               valueFrom:
                 secretKeyRef:

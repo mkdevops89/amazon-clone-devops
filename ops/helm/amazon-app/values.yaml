@@ -35,6 +35,9 @@ frontend:
       memory: "512Mi"
   service:
     port: 3000
+  extraEnv:
+    - name: NEXT_PUBLIC_API_URL
+      value: "https://api.devcloudproject.com"
 
 ingress:
   enabled: true
