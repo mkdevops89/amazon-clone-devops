@@ -109,6 +109,10 @@ spec:
         timestamps()
     }
 
+    triggers {
+        pollSCM('* * * * *')
+    }
+
     stages {
         stage('Checkout & Setup') {
             steps {
@@ -266,7 +270,7 @@ spec:
 
                             dir('frontend') {
                                 // ECR Tags
-                                sh "docker build --build-arg NEXT_PUBLIC_API_URL='https://api.devcloudproject.com' -t ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} -t ${ECR_REGISTRY}/amazon-frontend:latest ."
+                                sh "docker build --build-arg NEXT_PUBLIC_API_URL='https://api.devcloudproject.com/api' -t ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} -t ${ECR_REGISTRY}/amazon-frontend:latest ."
                                 // Docker Hub Tags
                                 sh "docker tag ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} ${DOCKERHUB_USER}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
                                 sh "docker tag ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} ${DOCKERHUB_USER}/amazon-frontend:latest"
