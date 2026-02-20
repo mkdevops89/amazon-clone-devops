@@ -9,5 +9,5 @@ INSERT IGNORE INTO products (id, name, description, price, category, image_url) 
 (8, 'Running Shoes', 'Comfortable running shoes for daily use.', 59.99, 'Sports', 'https://images.pexels.com/photos/2526878/pexels-photo-2526878.jpeg?auto=compress&cs=tinysrgb&w=500'),
 (9, 'The Pragmatic Programmer', 'Your journey to mastery.', 45.00, 'Books', 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3'),
 (10, 'Clean Code', 'A Handbook of Agile Software Craftsmanship.', 40.00, 'Books', 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3'),
-(11, 'Espresso Machine', 'Barista quality coffee at home.', 199.99, 'Home', 'https://images.pexels.com/photos/302896/pexels-photo-302896.jpeg?auto=compress&cs=tinysrgb&w=500'),
+(11, 'Espresso Machine', 'Barista quality coffee at home.', 199.99, 'Home', 'https://images.unsplash.com/photo-1588611911571-7eb10526e0e0?q=80&w=500&auto=format&fit=crop'),
 (12, 'Air Fryer', 'Healthy oil-free frying.', 89.99, 'Home', 'https://images.pexels.com/photos/5714704/pexels-photo-5714704.jpeg?auto=compress&cs=tinysrgb&w=500');
