@@ -5,7 +5,7 @@ metadata:
   name: {{ .Release.Name }}-backend-rules
   namespace: {{ .Release.Namespace }}
   labels:
-    release: kube-prometheus-stack
+    release: kube-prom-stack
 spec:
   groups:
   - name: amazon-backend-alerts
