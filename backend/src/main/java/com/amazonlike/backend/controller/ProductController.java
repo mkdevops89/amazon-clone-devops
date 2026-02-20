@@ -16,6 +16,13 @@ public class ProductController {
     @Autowired
     ProductRepository productRepository;
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        return productRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/search")
     public ResponseEntity<List<Product>> searchProducts(@RequestParam("q") String query) {
         List<Product> products = productRepository.findByNameContainingIgnoreCase(query);

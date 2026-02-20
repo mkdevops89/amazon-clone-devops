@@ -48,13 +48,13 @@ export default function ProductCard({ id, title, price, image, category }: Produ
 
     return (
         <div className="bg-white p-4 flex flex-col h-full rounded-sm z-30 relative hover:-translate-y-1 transition-transform duration-200">
-            <div className="relative h-48 w-full mb-4 flex items-center justify-center">
+            <Link href={`/product/${id}`} className="relative h-48 w-full mb-4 flex items-center justify-center group cursor-pointer">
                 <img
                     src={image}
                     alt={title}
-                    className="max-h-full max-w-full object-contain"
+                    className="max-h-full max-w-full object-contain group-hover:opacity-90 transition-opacity"
                 />
-            </div>
+            </Link>
 
             <div className="flex-1 flex flex-col gap-2">
                 <Link
