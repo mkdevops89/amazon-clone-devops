@@ -19,7 +19,7 @@ spec:
           mountPath: /var/maven/odc-data
       resources:
         requests:
-          cpu: "20m"
+          cpu: "10m"
           memory: "128Mi"
     - name: docker
       image: docker:dind
@@ -30,7 +30,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "20m"
+          cpu: "10m"
           memory: "256Mi"
     - name: tools
       image: alpine:latest
@@ -39,7 +39,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "10m"
+          cpu: "5m"
           memory: "64Mi"
     - name: node
       image: node:20-alpine
@@ -48,7 +48,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "20m"
+          cpu: "10m"
           memory: "128Mi"
     - name: security
       image: trufflesecurity/trufflehog:latest
@@ -57,7 +57,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "10m"
+          cpu: "5m"
           memory: "128Mi"
     - name: trivy
       image: aquasec/trivy:latest
@@ -66,7 +66,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "20m"
+          cpu: "10m"
           memory: "256Mi"
     - name: zap
       image: ghcr.io/zaproxy/zaproxy:stable
@@ -75,7 +75,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "20m"
+          cpu: "10m"
           memory: "256Mi"
     - name: sonar
       image: sonarsource/sonar-scanner-cli:latest
@@ -84,7 +84,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "20m"
+          cpu: "10m"
           memory: "128Mi"
   volumes:
     - name: nvd-cache
