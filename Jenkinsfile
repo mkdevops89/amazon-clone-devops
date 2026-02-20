@@ -109,10 +109,6 @@ spec:
         timestamps()
     }
 
-    triggers {
-        pollSCM('* * * * *')
-    }
-
     stages {
         stage('Checkout & Setup') {
             steps {
