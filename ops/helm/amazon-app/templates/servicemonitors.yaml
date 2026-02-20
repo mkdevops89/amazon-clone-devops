@@ -5,7 +5,7 @@ metadata:
   name: {{ .Release.Name }}-backend
   namespace: {{ .Release.Namespace }}
   labels:
-    release: prometheus-stack # Adjust to match your Prometheus installation label
+    release: kube-prometheus-stack # Adjust to match your Prometheus installation label
 spec:
   selector:
     matchLabels:
@@ -21,7 +21,7 @@ metadata:
   name: {{ .Release.Name }}-frontend
   namespace: {{ .Release.Namespace }}
   labels:
-    release: prometheus-stack
+    release: kube-prometheus-stack
 spec:
   selector:
     matchLabels:
