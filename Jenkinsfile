@@ -75,7 +75,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "50m"
+          cpu: "20m"
           memory: "256Mi"
     - name: sonar
       image: sonarsource/sonar-scanner-cli:latest
@@ -84,7 +84,7 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "50m"
+          cpu: "20m"
           memory: "128Mi"
   volumes:
     - name: nvd-cache
