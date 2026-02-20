@@ -37,7 +37,7 @@ frontend:
     port: 3000
   extraEnv:
     - name: NEXT_PUBLIC_API_URL
-      value: "https://api.devcloudproject.com"
+      value: "https://api.devcloudproject.com/api"
 
 ingress:
   enabled: true
