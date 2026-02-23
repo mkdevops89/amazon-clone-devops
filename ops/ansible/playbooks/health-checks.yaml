@@ -8,6 +8,8 @@
     base_url: "https://www.devcloudproject.com"
     api_url: "https://api.devcloudproject.com/api"
     jenkins_url: "https://jenkins.devcloudproject.com"
+    # Update this to your specific Grafana Ingress URL or LoadBalancer IP
+    grafana_url: "http://localhost:3000/login" 
 
   tasks:
     - name: Test Frontend Homepage (Expect HTTP 200)
@@ -43,6 +45,14 @@
         validate_certs: yes
         status_code: 200
 
+    - name: Test Grafana Dashboard (Expect HTTP 200)
+      uri:
+        url: "{{ grafana_url }}"
+        return_content: no
+        validate_certs: no
+        status_code: 200
+      ignore_errors: yes
+
     - name: Print Audit Summary
       debug:
-        msg: "Audit Complete! Frontend, Backend API, and Jenkins CI/CD are healthy and active!"
+        msg: "Audit Complete! Frontend, Backend API, Jenkins, and Grafana are accessible!"

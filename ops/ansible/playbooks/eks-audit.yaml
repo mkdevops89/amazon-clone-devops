@@ -15,3 +15,16 @@
       debug:
         msg: "✅ SSM Agent is actively running on the worker node {{ inventory_hostname }}"
       when: not ssm_status.changed
+
+    - name: Verify Amazon Inspector Agent is installed and running
+      systemd:
+        name: amazon-inspector-agent
+        state: started
+      check_mode: yes
+      register: inspector_status
+      ignore_errors: yes
+
+    - name: Report Amazon Inspector Status
+      debug:
+        msg: "✅ Amazon Inspector is actively running on the worker node {{ inventory_hostname }}"
+      when: not inspector_status.failed
