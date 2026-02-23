@@ -16,8 +16,8 @@
     rds_port: 3306
     rabbitmq_host: "b-xxx.mq.us-east-1.amazonaws.com"
     rabbitmq_port: 5671
-    memcached_host: "memcached-cluster.xxx.cfg.use1.cache.amazonaws.com"
-    memcached_port: 11211
+    redis_host: "redis-cluster.xxx.cfg.use1.cache.amazonaws.com"
+    redis_port: 6379
 
   tasks:
     - name: Test Frontend Homepage (Expect HTTP 200)
@@ -83,10 +83,10 @@
         timeout: 5
       ignore_errors: yes
 
-    - name: Test Memcached Connectivity (Port Check)
+    - name: Test Redis Connectivity (Port Check)
       wait_for:
-        host: "{{ memcached_host }}"
-        port: "{{ memcached_port }}"
+        host: "{{ redis_host }}"
+        port: "{{ redis_port }}"
         timeout: 5
       ignore_errors: yes
 
