@@ -10,6 +10,14 @@
     jenkins_url: "https://jenkins.devcloudproject.com"
     # Update this to your specific Grafana Ingress URL or LoadBalancer IP
     grafana_url: "http://localhost:3000/login" 
+    argocd_url: "https://argocd.devcloudproject.com"
+    # Update these to your actual RDS, MQ, and Memcached endpoints
+    rds_host: "database-1.cluster-xxx.us-east-1.rds.amazonaws.com"
+    rds_port: 3306
+    rabbitmq_host: "b-xxx.mq.us-east-1.amazonaws.com"
+    rabbitmq_port: 5671
+    memcached_host: "memcached-cluster.xxx.cfg.use1.cache.amazonaws.com"
+    memcached_port: 11211
 
   tasks:
     - name: Test Frontend Homepage (Expect HTTP 200)
@@ -53,6 +61,35 @@
         status_code: 200
       ignore_errors: yes
 
+    - name: Test ArgoCD UI (Expect HTTP 200)
+      uri:
+        url: "{{ argocd_url }}"
+        return_content: no
+        validate_certs: no
+        status_code: 200
+      ignore_errors: yes
+
+    - name: Test RDS MySQL Connectivity (Port Check)
+      wait_for:
+        host: "{{ rds_host }}"
+        port: "{{ rds_port }}"
+        timeout: 5
+      ignore_errors: yes
+
+    - name: Test Amazon MQ (RabbitMQ) Connectivity (Port Check)
+      wait_for:
+        host: "{{ rabbitmq_host }}"
+        port: "{{ rabbitmq_port }}"
+        timeout: 5
+      ignore_errors: yes
+
+    - name: Test Memcached Connectivity (Port Check)
+      wait_for:
+        host: "{{ memcached_host }}"
+        port: "{{ memcached_port }}"
+        timeout: 5
+      ignore_errors: yes
+
     - name: Print Audit Summary
       debug:
-        msg: "Audit Complete! Frontend, Backend API, Jenkins, and Grafana are accessible!"
+        msg: "Audit Complete! Frontend, Backend API, Jenkins, Grafana, ArgoCD, and Infrastructure boundaries tested."
