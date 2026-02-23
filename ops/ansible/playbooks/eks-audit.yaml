@@ -1,0 +1,17 @@
+---
+- name: Audit EKS Worker Nodes
+  # Targets the auto-generated group from AWS EC2 tags
+  hosts: tag_kubernetes_io_cluster_amazon_app_eks
+  become: yes
+  tasks:
+    - name: Verify SSM Agent is installed and running
+      systemd:
+        name: amazon-ssm-agent
+        state: started
+      check_mode: yes
+      register: ssm_status
+
+    - name: Report SSM Agent Status
+      debug:
+        msg: "✅ SSM Agent is actively running on the worker node {{ inventory_hostname }}"
+      when: not ssm_status.changed

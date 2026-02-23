@@ -1,0 +1,48 @@
+---
+- name: API and Frontend Health Checks (Post-Deployment Auditing)
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    # Use the public endpoints managed by our ALB and Route53
+    base_url: "https://www.devcloudproject.com"
+    api_url: "https://api.devcloudproject.com/api"
+    jenkins_url: "https://jenkins.devcloudproject.com"
+
+  tasks:
+    - name: Test Frontend Homepage (Expect HTTP 200)
+      uri:
+        url: "{{ base_url }}"
+        return_content: yes
+        validate_certs: yes
+        status_code: 200
+      register: frontend_result
+
+    - name: Verify Frontend content loads properly
+      assert:
+        that: "'amazon-orange' in frontend_result.content or 'amazon-blue' in frontend_result.content"
+        fail_msg: "Frontend returned 200 OK, but expected CSS classes were missing. Is it serving the correct build?"
+
+    - name: Test Backend API Products Endpoint (Expect HTTP 200)
+      uri:
+        url: "{{ api_url }}/products"
+        return_content: yes
+        validate_certs: yes
+        status_code: 200
+      register: api_result
+
+    - name: Verify API returns JSON data
+      assert:
+        that: "api_result.json | type_debug == 'list'"
+        fail_msg: "API did not return a valid JSON list of products."
+
+    - name: Test Jenkins CI/CD Portal (Expect HTTP 200)
+      uri:
+        url: "{{ jenkins_url }}/login"
+        return_content: no
+        validate_certs: yes
+        status_code: 200
+
+    - name: Print Audit Summary
+      debug:
+        msg: "Audit Complete! Frontend, Backend API, and Jenkins CI/CD are healthy and active!"
