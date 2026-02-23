@@ -1,7 +1,7 @@
 ---
 - name: Audit EKS Worker Nodes
   # Targets the auto-generated group from AWS EC2 tags
-  hosts: tag_kubernetes_io_cluster_amazon_app_eks
+  hosts: tag_eks_cluster_name_amazon_cluster
   become: yes
   tasks:
     - name: Verify SSM Agent is installed and running

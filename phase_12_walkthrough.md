@@ -108,8 +108,8 @@ You can run individual ad-hoc commands to verify Track B without running the ful
 ansible-inventory -i inventory/aws_ec2.yaml --graph
 
 # 2. Verify SSM Agent is running on all discovered EKS nodes simultaneously
-ansible -i inventory/aws_ec2.yaml tag_kubernetes_io_cluster_amazon_app_eks -b -m command -a "systemctl status amazon-ssm-agent"
+ansible -i inventory/aws_ec2.yaml tag_eks_cluster_name_amazon_cluster -b -m command -a "systemctl status amazon-ssm-agent"
 
 # 3. Verify Amazon Inspector is running on all discovered EKS nodes
-ansible -i inventory/aws_ec2.yaml tag_kubernetes_io_cluster_amazon_app_eks -b -m command -a "systemctl status amazon-inspector-agent"
+ansible -i inventory/aws_ec2.yaml tag_eks_cluster_name_amazon_cluster -b -m command -a "systemctl status amazon-inspector-agent"
 ```
