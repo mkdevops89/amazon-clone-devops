@@ -9,7 +9,7 @@
         name: "*"
         state: latest
 
-    - name: Install essential DevOps tools
+    - name: Install essential DevOps tools, Docker, and CloudWatch Agent
       dnf:
         name:
           - jq
@@ -17,6 +17,8 @@
           - wget
           - htop
           - fail2ban
+          - docker
+          - amazon-cloudwatch-agent
         state: present
 
     - name: Start and enable fail2ban
@@ -25,13 +27,47 @@
         state: started
         enabled: yes
 
-    - name: Create 'admin' user with sudo privileges
+    - name: Start and enable Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Start and enable CloudWatch Agent
+      systemd:
+        name: amazon-cloudwatch-agent
+        state: started
+        enabled: yes
+
+    - name: Disable root SSH login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+      notify: Restart SSH
+      
+    - name: Configure Firewall (Firewalld - AL2023 native alternative to UFW)
+      dnf:
+        name: firewalld
+        state: present
+
+    - name: Start and enable Firewall
+      systemd:
+        name: firewalld
+        state: started
+        enabled: yes
+
+    - name: Create 'admin' user with sudo privileges and SSH keys
       user:
         name: admin
         groups: wheel
         append: yes
         state: present
         create_home: yes
+        generate_ssh_key: yes
+        ssh_key_bits: 4096
+        ssh_key_file: .ssh/id_rsa
 
     - name: Set up passwordless sudo for admin user
       copy:
@@ -56,3 +92,9 @@
       command: mv /tmp/linux-amd64/helm /usr/local/bin/helm
       args:
         creates: /usr/local/bin/helm
+
+  handlers:
+    - name: Restart SSH
+      systemd:
+        name: sshd
+        state: restarted
