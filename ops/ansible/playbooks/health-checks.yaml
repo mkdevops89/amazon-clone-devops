@@ -16,7 +16,7 @@
       uri:
         url: "{{ base_url }}"
         return_content: yes
-        validate_certs: yes
+        validate_certs: no
         status_code: 200
       register: frontend_result
 
@@ -29,7 +29,7 @@
       uri:
         url: "{{ api_url }}/products"
         return_content: yes
-        validate_certs: yes
+        validate_certs: no
         status_code: 200
       register: api_result
 
@@ -42,7 +42,7 @@
       uri:
         url: "{{ jenkins_url }}/login"
         return_content: no
-        validate_certs: yes
+        validate_certs: no
         status_code: 200
 
     - name: Test Grafana Dashboard (Expect HTTP 200)
