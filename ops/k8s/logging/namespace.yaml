@@ -4,5 +4,3 @@ metadata:
   name: logging
   labels:
     name: logging
-    # This namespace isolates all our heavy logging infrastructure from our lightweight application microservices
-    description: "Namespace dedicated to the centralized ELK logging stack"
