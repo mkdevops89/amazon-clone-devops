@@ -30,6 +30,13 @@ spec:
                 username: ${ELASTICSEARCH_USERNAME}
                 password: ${ELASTICSEARCH_PASSWORD}
                 ssl.verification_mode: none
+              
+              processors:
+                - add_kubernetes_metadata:
+                    host: ${NODE_NAME}
+                    matchers:
+                    - logs_path:
+                        logs_path: "/var/log/containers/"
         
         # Lower the default CPU and Memory footprint so it easily schedules on our Spot/Critical nodes
         resources:
