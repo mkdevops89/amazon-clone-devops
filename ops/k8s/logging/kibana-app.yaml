@@ -29,7 +29,7 @@ spec:
           hosts:
             - host: kibana.devcloudproject.com
               paths:
-                - path: /
+                - path: /*
         
         # Lower the massive default Kibana resource requests so they fit on our EKS nodes
         resources:
