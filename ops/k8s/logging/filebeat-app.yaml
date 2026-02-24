@@ -26,7 +26,10 @@ spec:
               
               # Tell Filebeat to ship all those collected logs to our internal Elasticsearch service network address
               output.elasticsearch:
-                hosts: ["elasticsearch-master:9200"]
+                hosts: ["https://elasticsearch-master:9200"]
+                username: '${ELASTICSEARCH_USERNAME}'
+                password: '${ELASTICSEARCH_PASSWORD}'
+                ssl.verification_mode: none
         
         # Lower the default CPU and Memory footprint so it easily schedules on our Spot/Critical nodes
         resources:
