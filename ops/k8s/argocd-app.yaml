@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/mkdevops89/amazon-clone-devops.git'
-    targetRevision: phase-11-gitops
+    targetRevision: phase-13-elk
     path: ops/helm/amazon-app
     helm:
       valueFiles:
