@@ -19,6 +19,7 @@ spec:
         ingress:
           enabled: true
           className: alb
+          pathtype: Prefix
           annotations:
             alb.ingress.kubernetes.io/group.name: amazon-group
             alb.ingress.kubernetes.io/scheme: internet-facing
@@ -29,7 +30,7 @@ spec:
           hosts:
             - host: kibana.devcloudproject.com
               paths:
-                - path: /*
+                - path: /
         
         # Lower the massive default Kibana resource requests so they fit on our EKS nodes
         resources:
