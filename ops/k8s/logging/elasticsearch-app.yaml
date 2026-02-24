@@ -26,6 +26,7 @@ spec:
         # Request a single 10GB persistent AWS EBS volume to store the raw log data.
         volumeClaimTemplate:
           accessModes: [ "ReadWriteOnce" ]
+          storageClassName: "gp2"
           resources:
             requests:
               storage: 10Gi
