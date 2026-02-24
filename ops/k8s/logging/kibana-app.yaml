@@ -11,6 +11,7 @@ spec:
     targetRevision: 8.5.1
     chart: kibana
     helm:
+      namespace: logging
       values: |
         # We only need 1 UI server
         replicas: 1
