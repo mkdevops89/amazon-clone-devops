@@ -27,6 +27,15 @@ spec:
             - host: kibana.devcloudproject.com
               paths:
                 - path: /
+        
+        # Lower the massive default Kibana resource requests so they fit on our EKS nodes
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: logging
