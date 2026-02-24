@@ -97,6 +97,12 @@
             <version>4.8.3</version>
             <optional>true</optional>
         </dependency>
+        <!-- Formats console logs to JSON for easy parsing by Filebeat in Kubernetes -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.4</version>
+        </dependency>
 	</dependencies>
 
 	<build>

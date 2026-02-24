@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: filebeat
+  namespace: argocd
+  # Filebeat is the lightweight "agent" that runs on the nodes to scrape logs and forward them to Elasticsearch.
+spec:
+  project: default
+  source:
+    repoURL: 'https://helm.elastic.co'
+    targetRevision: 8.5.1
+    chart: filebeat
+    helm:
+      values: |
+        # Filebeat runs as a Kubernetes DaemonSet. 
+        # A DaemonSet guarantees that exactly 1 Filebeat pod runs on EVERY single EC2 worker node in your cluster.
+        daemonset:
+          enabled: true
+          filebeatConfig:
+            filebeat.yml: |
+              # Tell Filebeat to vacuum up every single container log it can find on the physical EC2 node
+              filebeat.inputs:
+              - type: container
+                paths:
+                  - /var/log/containers/*.log
+              
+              # Tell Filebeat to ship all those collected logs to our internal Elasticsearch service network address
+              output.elasticsearch:
+                hosts: ["elasticsearch-master:9200"]
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: logging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kibana
+  namespace: argocd
+  # Kibana is the graphical web UI that connects to Elasticsearch so you can search and visualize the logs.
+spec:
+  project: default
+  source:
+    repoURL: 'https://helm.elastic.co'
+    targetRevision: 8.5.1
+    chart: kibana
+    helm:
+      values: |
+        # We only need 1 UI server
+        replicas: 1
+        
+        # Configure Kubernetes Ingress to expose Kibana to the public internet via the AWS Application Load Balancer
+        ingress:
+          enabled: true
+          className: alb
+          annotations:
+            alb.ingress.kubernetes.io/scheme: internet-facing
+            alb.ingress.kubernetes.io/target-type: ip
+            alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+          hosts:
+            - host: kibana.devcloudproject.com
+              paths:
+                - path: /
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: logging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

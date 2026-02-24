@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: elasticsearch
+  namespace: argocd
+  # Elasticsearch is the massive NoSQL database that actually stores and indexes all your log files.
+spec:
+  project: default
+  source:
+    repoURL: 'https://helm.elastic.co'
+    targetRevision: 8.5.1
+    chart: elasticsearch
+    helm:
+      values: |
+        # Configured as a single-node cluster (1 Master/Data node)
+        # Why? Because running a 3-node HA Elasticsearch cluster is extremely expensive. 
+        # For this dev/portfolio environment, 1 node proves you know how it works without wasting money.
+        replicas: 1
+        minimumMasterNodes: 1
+        
+        # We MUST constrain the Java Virtual Machine (JVM) heap size. 
+        # By default, Elasticsearch will try to consume half of the server's RAM.
+        # Restricting it to 1GB ensures it cleanly fits on your existing EKS EC2 instances without crashing.
+        esJavaOpts: "-Xmx1g -Xms1g"
+        
+        # Request a single 10GB persistent AWS EBS volume to store the raw log data.
+        volumeClaimTemplate:
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: 10Gi
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: logging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
