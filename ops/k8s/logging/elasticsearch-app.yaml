@@ -23,6 +23,15 @@ spec:
         # Restricting it to 1GB ensures it cleanly fits on your existing EKS EC2 instances without crashing.
         esJavaOpts: "-Xmx1g -Xms1g"
         
+        # Override the default 1000m CPU request to 250m so it can schedule on nodes with tighter CPU constraints.
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "1Gi"
+          limits:
+            cpu: "1000m"
+            memory: "2Gi"
+        
         # Request a single 10GB persistent AWS EBS volume to store the raw log data.
         volumeClaimTemplate:
           accessModes: [ "ReadWriteOnce" ]
