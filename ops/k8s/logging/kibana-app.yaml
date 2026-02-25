@@ -13,6 +13,8 @@ spec:
     helm:
       namespace: logging
       values: |
+        podAnnotations:
+          force-sync: "true"
         # We only need 1 UI server
         replicas: 1
         
