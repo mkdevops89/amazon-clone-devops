@@ -17,6 +17,7 @@ spec:
         # For this dev/portfolio environment, 1 node proves you know how it works without wasting money.
         replicas: 1
         minimumMasterNodes: 1
+        clusterHealthCheckParams: "wait_for_status=yellow&timeout=1s"
         
         # We MUST constrain the Java Virtual Machine (JVM) heap size. 
         # By default, Elasticsearch will try to consume half of the server's RAM.
