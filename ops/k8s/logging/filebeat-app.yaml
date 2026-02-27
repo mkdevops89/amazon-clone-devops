@@ -16,6 +16,20 @@ spec:
         # A DaemonSet guarantees that exactly 1 Filebeat pod runs on EVERY single EC2 worker node in your cluster.
         daemonset:
           enabled: true
+          secretMounts:
+            - name: elasticsearch-master-credentials
+              secretName: elasticsearch-master-credentials
+              path: /usr/share/filebeat/certs
+          livenessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - |
+                curl --fail 127.0.0.1:5066/?pretty
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
           filebeatConfig:
             filebeat.yml: |
               # Tell Filebeat to vacuum up every single container log it can find on the physical EC2 node
