@@ -31,7 +31,7 @@ spec:
       resources:
         requests:
           cpu: "5m"
-          memory: "128Mi"
+          memory: "1536Mi"
     - name: tools
       image: alpine:latest
       command:

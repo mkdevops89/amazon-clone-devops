@@ -27,6 +27,9 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# Limit Node.js memory to prevent Jenkins OOM kills during build
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+
 # Build the Next.js application for production
 RUN npm run build
 
