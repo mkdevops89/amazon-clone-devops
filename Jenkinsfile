@@ -100,8 +100,8 @@ spec:
         DOCKERHUB_USER = "mlis682"
         S3_REPORT_BUCKET = "amazon-clone-reports-6cc84b5432a5904b"
         // New Structured Path
-        S3_REPORT_PATH = "Amazon-pipeline-reports/Report-${BUILD_NUMBER}"
-        SONAR_PROJECT = "amazon-pipeline"
+        S3_REPORT_PATH = "chatbot-reports/Report-${BUILD_NUMBER}"
+        SONAR_PROJECT = "chatbot"
     }
 
     options {
