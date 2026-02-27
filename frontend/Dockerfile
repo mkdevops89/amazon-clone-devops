@@ -13,7 +13,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install dependencies (npm ci is faster and stricter than npm install)
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # ==========================================
 # Stage 3: Builder
