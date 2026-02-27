@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ChatBot from "./components/ChatBot";
 
 export const metadata: Metadata = {
   title: "Amazon Clone | Premium Shopping",
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <ChatBot />
       </body>
     </html>
   );

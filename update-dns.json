@@ -1,0 +1,17 @@
+{
+  "Comment": "Update root domain to point to ALB",
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "devcloudproject.com",
+        "Type": "A",
+        "AliasTarget": {
+          "HostedZoneId": "Z35SXDOTRQ7X7K",
+          "DNSName": "dualstack.k8s-amazongroup-629b6c7264-1662522990.us-east-1.elb.amazonaws.com.",
+          "EvaluateTargetHealth": true
+        }
+      }
+    }
+  ]
+}

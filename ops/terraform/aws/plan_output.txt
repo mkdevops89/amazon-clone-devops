@@ -1,0 +1,325 @@
+random_id.reports_bucket_suffix: Refreshing state... [id=bMhLVDKlkEs]
+random_password.mq_password: Refreshing state... [id=none]
+archive_file.cost_optimizer_zip: Refreshing state... [id=d35cab8c22bb3ed4507285c84a7369e29ac55507]
+archive_file.auto_healer_zip: Refreshing state... [id=13942bb4277892905d38ac1d31c476ee6b675a92]
+aws_iam_policy.cost_explorer_policy: Refreshing state... [id=arn:aws:iam::406312601212:policy/AmazonCloneCostExplorerPolicy]
+aws_cloudwatch_event_rule.nightly_stop: Refreshing state... [id=nightly-stop]
+module.acm.data.aws_route53_zone.this: Reading...
+module.eks.data.aws_iam_policy_document.assume_role_policy[0]: Reading...
+aws_cloudwatch_event_rule.morning_start: Refreshing state... [id=morning-start]
+module.db.module.db_instance.data.aws_partition.current: Reading...
+aws_cloudwatch_event_rule.daily_drift_check: Refreshing state... [id=daily-drift-check]
+aws_iam_role.lambda_exec: Refreshing state... [id=cost_optimizer_role]
+aws_s3_bucket.reports: Refreshing state... [id=amazon-clone-reports-6cc84b5432a5904b]
+aws_lambda_function.auto_healer: Refreshing state... [id=auto_healer]
+module.db.module.db_instance.data.aws_partition.current: Read complete after 0s [id=aws]
+module.eks.data.aws_iam_policy_document.assume_role_policy[0]: Read complete after 0s [id=2830595799]
+module.db.module.db_option_group.aws_db_option_group.this[0]: Refreshing state... [id=amazon-db-20260128174621076400000003]
+module.acm.aws_acm_certificate.this: Refreshing state... [id=arn:aws:acm:us-east-1:406312601212:certificate/d3295a68-4c22-4f92-af08-9cb09758966d]
+aws_iam_role.eventbridge_codepipeline: Refreshing state... [id=eventbridge_drift_trigger_role]
+module.db.module.db_parameter_group.aws_db_parameter_group.this[0]: Refreshing state... [id=amazon-db-20260128174621075200000001]
+aws_iam_role.codebuild_exec: Refreshing state... [id=drift_detective_role]
+data.aws_caller_identity.current: Reading...
+module.eks.module.kms.data.aws_partition.current[0]: Reading...
+module.eks.module.kms.data.aws_partition.current[0]: Read complete after 0s [id=aws]
+module.eks.module.kms.data.aws_caller_identity.current[0]: Reading...
+data.aws_caller_identity.current: Read complete after 0s [id=406312601212]
+aws_ecr_repository.cost_exporter: Refreshing state... [id=cost-exporter]
+module.eks.data.aws_partition.current[0]: Reading...
+module.eks.data.aws_partition.current[0]: Read complete after 0s [id=aws]
+module.db.module.db_instance.data.aws_iam_policy_document.enhanced_monitoring: Reading...
+module.eks.aws_cloudwatch_log_group.this[0]: Refreshing state... [id=/aws/eks/amazon-cluster/cluster]
+module.db.module.db_instance.data.aws_iam_policy_document.enhanced_monitoring: Read complete after 0s [id=76086537]
+aws_iam_policy.lambda_policy: Refreshing state... [id=arn:aws:iam::406312601212:policy/cost_optimizer_policy]
+module.eks.module.kms.data.aws_caller_identity.current[0]: Read complete after 0s [id=406312601212]
+module.vpc.aws_vpc.this[0]: Refreshing state... [id=vpc-0a7d44aa09d24f465]
+module.acm.data.aws_route53_zone.this: Read complete after 0s [id=Z04588671ONZYYRU0JQU0]
+aws_sns_topic.alerts: Refreshing state... [id=arn:aws:sns:us-east-1:406312601212:auto-healer-alerts]
+module.elasticache.aws_cloudwatch_log_group.this["slow-log"]: Refreshing state... [id=/aws/elasticache/amazon-redis]
+module.eks.data.aws_caller_identity.current[0]: Reading...
+aws_ecr_repository.backend: Refreshing state... [id=amazon-backend]
+aws_ecr_repository.frontend: Refreshing state... [id=amazon-frontend]
+module.eks.data.aws_caller_identity.current[0]: Read complete after 0s [id=406312601212]
+module.eks.aws_iam_role.this[0]: Refreshing state... [id=amazon-cluster-cluster-20260128174621076300000002]
+module.acm.aws_route53_record.cert_validation["*.devcloudproject.com"]: Refreshing state... [id=Z04588671ONZYYRU0JQU0__536aee2b47849a15bb1b2ac1dda64ca8.devcloudproject.com._CNAME]
+module.acm.aws_route53_record.cert_validation["devcloudproject.com"]: Refreshing state... [id=Z04588671ONZYYRU0JQU0__536aee2b47849a15bb1b2ac1dda64ca8.devcloudproject.com._CNAME]
+aws_codebuild_project.drift_detective: Refreshing state... [id=arn:aws:codebuild:us-east-1:406312601212:project/drift-detective]
+aws_iam_role_policy_attachment.codebuild_admin: Refreshing state... [id=drift_detective_role-20260202200350287200000001]
+module.eks.data.aws_iam_session_context.current[0]: Reading...
+module.eks.data.aws_iam_session_context.current[0]: Read complete after 0s [id=arn:aws:iam::406312601212:user/Devops-User]
+aws_iam_role_policy_attachment.lambda_attach: Refreshing state... [id=cost_optimizer_role-20260202200350574100000002]
+module.eks.data.aws_iam_policy_document.custom[0]: Reading...
+aws_lambda_function.cost_optimizer: Refreshing state... [id=cost_terminator]
+module.eks.data.aws_iam_policy_document.custom[0]: Read complete after 0s [id=513122117]
+aws_budgets_budget.monthly_cost: Refreshing state... [id=406312601212:monthly-budget-50]
+aws_ecr_lifecycle_policy.cost_exporter_policy: Refreshing state... [id=cost-exporter]
+aws_ecr_lifecycle_policy.backend_policy: Refreshing state... [id=amazon-backend]
+module.eks.aws_iam_policy.custom[0]: Refreshing state... [id=arn:aws:iam::406312601212:policy/amazon-cluster-cluster-20260128174621076500000005]
+aws_ecr_lifecycle_policy.frontend_policy: Refreshing state... [id=amazon-frontend]
+module.eks.aws_iam_role_policy_attachment.this["AmazonEKSVPCResourceController"]: Refreshing state... [id=amazon-cluster-cluster-20260128174621076300000002-2026012817462180690000000b]
+module.eks.aws_iam_role_policy_attachment.this["AmazonEKSClusterPolicy"]: Refreshing state... [id=amazon-cluster-cluster-20260128174621076300000002-20260128174621789900000009]
+aws_iam_policy.reports_upload_policy: Refreshing state... [id=arn:aws:iam::406312601212:policy/AmazonCloneReportsUploadPolicy]
+aws_s3_bucket_public_access_block.reports_public_access: Refreshing state... [id=amazon-clone-reports-6cc84b5432a5904b]
+aws_s3_bucket_server_side_encryption_configuration.reports_encryption: Refreshing state... [id=amazon-clone-reports-6cc84b5432a5904b]
+module.acm.aws_acm_certificate_validation.this: Refreshing state... [id=2026-01-28 20:10:27.418 +0000 UTC]
+module.eks.module.kms.data.aws_iam_policy_document.this[0]: Reading...
+aws_cloudwatch_event_target.trigger_codebuild: Refreshing state... [id=daily-drift-check-drift_detective]
+module.eks.module.kms.data.aws_iam_policy_document.this[0]: Read complete after 0s [id=3229120640]
+aws_iam_policy.eventbridge_start_build: Refreshing state... [id=arn:aws:iam::406312601212:policy/eventbridge_start_codebuild]
+module.eks.module.kms.aws_kms_key.this[0]: Refreshing state... [id=694673cd-2890-4d38-a721-7ad507d5a20b]
+module.eks.aws_iam_role_policy_attachment.custom[0]: Refreshing state... [id=amazon-cluster-cluster-20260128174621076300000002-2026012817462179620000000a]
+aws_iam_role_policy_attachment.eventbridge_attach: Refreshing state... [id=eventbridge_drift_trigger_role-20260202200407554200000003]
+aws_lambda_permission.allow_eventbridge_start: Refreshing state... [id=AllowExecutionFromEventBridgeStart]
+aws_cloudwatch_event_target.trigger_start: Refreshing state... [id=morning-start-cost_terminator_start]
+aws_cloudwatch_event_target.trigger_stop: Refreshing state... [id=nightly-stop-cost_terminator_stop]
+aws_lambda_permission.allow_eventbridge: Refreshing state... [id=AllowExecutionFromEventBridge]
+module.eks.module.kms.aws_kms_alias.this["cluster"]: Refreshing state... [id=alias/eks/amazon-cluster]
+module.eks.aws_iam_policy.cluster_encryption[0]: Refreshing state... [id=arn:aws:iam::406312601212:policy/amazon-cluster-cluster-ClusterEncryption20260128174642717100000013]
+module.vpc.aws_default_network_acl.this[0]: Refreshing state... [id=acl-0726a057b1b0c9aa9]
+aws_security_group.redis_sg: Refreshing state... [id=sg-088e98d5ce904b05d]
+aws_security_group.db_sg: Refreshing state... [id=sg-05c4aacaeb64fd06b]
+module.vpc.aws_subnet.public[1]: Refreshing state... [id=subnet-07f6f05ad53731303]
+module.vpc.aws_default_security_group.this[0]: Refreshing state... [id=sg-0b1c017fe6de30030]
+module.vpc.aws_route_table.private[0]: Refreshing state... [id=rtb-09609bb1e41408c53]
+module.vpc.aws_route_table.public[0]: Refreshing state... [id=rtb-03cf2f18edbbed437]
+module.vpc.aws_subnet.public[0]: Refreshing state... [id=subnet-023035f6f69e904a3]
+module.eks.aws_security_group.node[0]: Refreshing state... [id=sg-0c8dd4dd58a51e6a1]
+module.eks.aws_security_group.cluster[0]: Refreshing state... [id=sg-079cbe48859419eae]
+module.vpc.aws_subnet.private[0]: Refreshing state... [id=subnet-0f48cb2545cd73a56]
+module.vpc.aws_internet_gateway.this[0]: Refreshing state... [id=igw-00a7dbfc66e2375d8]
+module.vpc.aws_subnet.private[1]: Refreshing state... [id=subnet-05bc8b7923e717414]
+module.vpc.aws_default_route_table.default[0]: Refreshing state... [id=rtb-09967960ad6d4c5b2]
+aws_security_group.mq_sg: Refreshing state... [id=sg-09c4eda1b2aa8e1e9]
+module.eks.aws_iam_role_policy_attachment.cluster_encryption[0]: Refreshing state... [id=amazon-cluster-cluster-20260128174621076300000002-20260128174643102100000014]
+module.vpc.aws_route_table_association.public[0]: Refreshing state... [id=rtbassoc-09531b7be3d7c9843]
+module.vpc.aws_route_table_association.public[1]: Refreshing state... [id=rtbassoc-0a92c651379c8b14b]
+module.eks.aws_security_group_rule.node["egress_all"]: Refreshing state... [id=sgrule-343450048]
+module.eks.aws_security_group_rule.node["ingress_nodes_ephemeral"]: Refreshing state... [id=sgrule-2834313683]
+module.eks.aws_security_group_rule.node["ingress_allow_8080"]: Refreshing state... [id=sgrule-1004139192]
+module.eks.aws_security_group_rule.node["ingress_cluster_kubelet"]: Refreshing state... [id=sgrule-1268555]
+module.eks.aws_security_group_rule.node["ingress_allow_3000"]: Refreshing state... [id=sgrule-1958328492]
+module.eks.aws_security_group_rule.node["ingress_cluster_9443_webhook"]: Refreshing state... [id=sgrule-1577224589]
+module.eks.aws_security_group_rule.node["ingress_self_coredns_tcp"]: Refreshing state... [id=sgrule-1304019509]
+module.eks.aws_security_group_rule.node["ingress_cluster_4443_webhook"]: Refreshing state... [id=sgrule-3770540529]
+module.eks.aws_security_group_rule.node["ingress_cluster_8443_webhook"]: Refreshing state... [id=sgrule-983808582]
+module.eks.aws_security_group_rule.node["ingress_self_coredns_udp"]: Refreshing state... [id=sgrule-3924189658]
+module.eks.aws_security_group_rule.node["ingress_cluster_443"]: Refreshing state... [id=sgrule-1331370798]
+module.eks.aws_security_group_rule.node["ingress_cluster_6443_webhook"]: Refreshing state... [id=sgrule-704611943]
+module.eks.aws_security_group_rule.cluster["ingress_nodes_443"]: Refreshing state... [id=sgrule-4260174143]
+module.vpc.aws_route.public_internet_gateway[0]: Refreshing state... [id=r-rtb-03cf2f18edbbed4371080289494]
+module.vpc.aws_eip.nat[0]: Refreshing state... [id=eipalloc-03952aa18c1afd687]
+module.vpc.aws_route_table_association.private[1]: Refreshing state... [id=rtbassoc-0cdb60416101f52d0]
+module.vpc.aws_route_table_association.private[0]: Refreshing state... [id=rtbassoc-008fde273ede69274]
+aws_mq_broker.rabbitmq: Refreshing state... [id=b-7bb9ee6e-689b-4739-8a1f-1a315e7897af]
+module.elasticache.aws_elasticache_subnet_group.this[0]: Refreshing state... [id=amazon-redis-vpc-0a7d44aa09d24f465-subnet-group]
+module.db.module.db_subnet_group.aws_db_subnet_group.this[0]: Refreshing state... [id=amazon-db-vpc-0a7d44aa09d24f465-subnet-group-20260128174635738700000010]
+module.eks.module.eks_managed_node_group["spot"].data.aws_caller_identity.current: Reading...
+module.eks.module.eks_managed_node_group["critical"].data.aws_caller_identity.current: Reading...
+module.eks.module.eks_managed_node_group["spot"].data.aws_partition.current: Reading...
+module.eks.module.eks_managed_node_group["critical"].data.aws_partition.current: Reading...
+module.eks.module.eks_managed_node_group["spot"].data.aws_partition.current: Read complete after 0s [id=aws]
+module.eks.module.eks_managed_node_group["critical"].data.aws_partition.current: Read complete after 0s [id=aws]
+module.eks.aws_eks_cluster.this[0]: Refreshing state... [id=amazon-cluster]
+module.eks.module.eks_managed_node_group["critical"].data.aws_iam_policy_document.assume_role_policy[0]: Reading...
+module.eks.module.eks_managed_node_group["spot"].data.aws_iam_policy_document.assume_role_policy[0]: Reading...
+module.eks.module.eks_managed_node_group["spot"].data.aws_iam_policy_document.assume_role_policy[0]: Read complete after 0s [id=2560088296]
+module.eks.module.eks_managed_node_group["spot"].data.aws_caller_identity.current: Read complete after 0s [id=406312601212]
+module.eks.module.eks_managed_node_group["critical"].data.aws_iam_policy_document.assume_role_policy[0]: Read complete after 0s [id=2560088296]
+module.eks.module.eks_managed_node_group["critical"].aws_iam_role.this[0]: Refreshing state... [id=critical-ng-eks-node-group-20260202212405233400000001]
+module.eks.module.eks_managed_node_group["spot"].aws_iam_role.this[0]: Refreshing state... [id=spot-ng-eks-node-group-20260202212405235700000002]
+module.eks.module.eks_managed_node_group["critical"].data.aws_caller_identity.current: Read complete after 0s [id=406312601212]
+module.vpc.aws_nat_gateway.this[0]: Refreshing state... [id=nat-0fed8df3a06670b4d]
+module.vpc.aws_route.private_nat_gateway[0]: Refreshing state... [id=r-rtb-09609bb1e41408c531080289494]
+module.eks.module.eks_managed_node_group["spot"].aws_iam_role_policy_attachment.additional["cost_explorer"]: Refreshing state... [id=spot-ng-eks-node-group-20260202212405235700000002-20260209181427224500000001]
+module.eks.module.eks_managed_node_group["spot"].aws_iam_role_policy_attachment.additional["scan_reports"]: Refreshing state... [id=spot-ng-eks-node-group-20260202212405235700000002-20260202212405757600000003]
+module.eks.module.eks_managed_node_group["critical"].aws_iam_role_policy_attachment.additional["scan_reports"]: Refreshing state... [id=critical-ng-eks-node-group-20260202212405233400000001-20260202212405911600000007]
+module.eks.module.eks_managed_node_group["spot"].aws_iam_role_policy_attachment.additional["ecr_access"]: Refreshing state... [id=spot-ng-eks-node-group-20260202212405235700000002-20260206171203566100000002]
+module.eks.module.eks_managed_node_group["spot"].aws_iam_role_policy_attachment.this["AmazonEKSWorkerNodePolicy"]: Refreshing state... [id=spot-ng-eks-node-group-20260202212405235700000002-20260202212405912800000008]
+module.eks.module.eks_managed_node_group["critical"].aws_iam_role_policy_attachment.additional["ecr_access"]: Refreshing state... [id=critical-ng-eks-node-group-20260202212405233400000001-20260206171203563400000001]
+module.eks.module.eks_managed_node_group["critical"].aws_iam_role_policy_attachment.additional["cost_explorer"]: Refreshing state... [id=critical-ng-eks-node-group-20260202212405233400000001-20260209181427352300000002]
+module.eks.module.eks_managed_node_group["critical"].aws_iam_role_policy_attachment.this["AmazonEKSWorkerNodePolicy"]: Refreshing state... [id=critical-ng-eks-node-group-20260202212405233400000001-20260202212405921400000009]
+module.eks.module.eks_managed_node_group["spot"].aws_iam_role_policy_attachment.this["AmazonEKS_CNI_Policy"]: Refreshing state... [id=spot-ng-eks-node-group-20260202212405235700000002-20260202212405906500000006]
+module.eks.module.eks_managed_node_group["critical"].aws_iam_role_policy_attachment.this["AmazonEC2ContainerRegistryReadOnly"]: Refreshing state... [id=critical-ng-eks-node-group-20260202212405233400000001-20260202212405868200000005]
+module.eks.module.eks_managed_node_group["spot"].aws_iam_role_policy_attachment.this["AmazonEC2ContainerRegistryReadOnly"]: Refreshing state... [id=spot-ng-eks-node-group-20260202212405235700000002-2026020221240594160000000a]
+module.eks.module.eks_managed_node_group["critical"].aws_iam_role_policy_attachment.this["AmazonEKS_CNI_Policy"]: Refreshing state... [id=critical-ng-eks-node-group-20260202212405233400000001-20260202212405793700000004]
+module.eks.aws_eks_access_entry.this["cluster_creator"]: Refreshing state... [id=amazon-cluster:arn:aws:iam::406312601212:user/Devops-User]
+module.eks.data.tls_certificate.this[0]: Reading...
+module.eks.time_sleep.this[0]: Refreshing state... [id=2026-01-28T17:56:43Z]
+module.elasticache.aws_elasticache_replication_group.this[0]: Refreshing state... [id=amazon-redis-rep-group]
+module.db.module.db_instance.aws_db_instance.this[0]: Refreshing state... [id=db-47EQ44BU62CZDQU5WXBIF4SFEM]
+module.eks.module.eks_managed_node_group["spot"].module.user_data.null_resource.validate_cluster_service_cidr: Refreshing state... [id=6796559220214955310]
+module.eks.module.eks_managed_node_group["critical"].module.user_data.null_resource.validate_cluster_service_cidr: Refreshing state... [id=3238933536549255126]
+module.eks.module.eks_managed_node_group["spot"].aws_launch_template.this[0]: Refreshing state... [id=lt-04ee07f5c51be93a2]
+module.eks.module.eks_managed_node_group["critical"].aws_launch_template.this[0]: Refreshing state... [id=lt-0dcb5236d3b1f4acc]
+module.eks.data.tls_certificate.this[0]: Read complete after 0s [id=b1b539daa206035ae3c3e28288b0681fa1b462f3]
+module.eks.aws_iam_openid_connect_provider.oidc_provider[0]: Refreshing state... [id=arn:aws:iam::406312601212:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/5DCB3BACEB8F643260A730A0E577BE4D]
+module.eks.module.eks_managed_node_group["critical"].aws_eks_node_group.this[0]: Refreshing state... [id=amazon-cluster:critical-ng-20260210184050315000000003]
+module.eks.module.eks_managed_node_group["spot"].aws_eks_node_group.this[0]: Refreshing state... [id=amazon-cluster:spot-ng-20260210184050314900000001]
+module.eks.aws_eks_access_policy_association.this["cluster_creator_admin"]: Refreshing state... [id=amazon-cluster#arn:aws:iam::406312601212:user/Devops-User#arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy]
+
+Note: Objects have changed outside of Terraform
+
+Terraform detected the following changes made outside of Terraform since the
+last "terraform apply" which may have affected this plan:
+
+  # archive_file.cost_optimizer_zip has changed
+  ~ resource "archive_file" "cost_optimizer_zip" {
+        id                  = "d35cab8c22bb3ed4507285c84a7369e29ac55507"
+      ~ output_base64sha256 = "Kdttc+aj3VJrfsBhNzNjIaHe446uassBmXC5ZP/QT48=" -> "+ee0qK8S1/m8QXj+JHfGEEIh9UIUrjSxAnYiiPA+sXw="
+        # (9 unchanged attributes hidden)
+    }
+
+
+Unless you have made equivalent changes to your configuration, or ignored the
+relevant attributes using ignore_changes, the following plan may include
+actions to undo or respond to these changes.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+  ~ update in-place
+  - destroy
+-/+ destroy and then create replacement
+
+Terraform planned the following actions, but then encountered a problem:
+
+  # aws_iam_policy.lambda_policy must be replaced
+-/+ resource "aws_iam_policy" "lambda_policy" {
+      ~ arn              = "arn:aws:iam::406312601212:policy/cost_optimizer_policy" -> (known after apply)
+      ~ attachment_count = 1 -> (known after apply)
+      ~ description      = "Permissions for Cost Terminator and Auto-Healer" -> "Permissions for Cost Terminator" # forces replacement
+      ~ id               = "arn:aws:iam::406312601212:policy/cost_optimizer_policy" -> (known after apply)
+        name             = "cost_optimizer_policy"
+      + name_prefix      = (known after apply)
+      ~ policy_id        = "ANPAV5GQ6IZ6F7R2SCEUF" -> (known after apply)
+      - tags             = {} -> null
+      ~ tags_all         = {} -> (known after apply)
+        # (2 unchanged attributes hidden)
+    }
+
+  # aws_iam_role_policy_attachment.lambda_attach must be replaced
+-/+ resource "aws_iam_role_policy_attachment" "lambda_attach" {
+      ~ id         = "cost_optimizer_role-20260202200350574100000002" -> (known after apply)
+      ~ policy_arn = "arn:aws:iam::406312601212:policy/cost_optimizer_policy" -> (known after apply) # forces replacement
+        # (1 unchanged attribute hidden)
+    }
+
+  # aws_lambda_function.auto_healer will be destroyed
+  # (because aws_lambda_function.auto_healer is not in configuration)
+  - resource "aws_lambda_function" "auto_healer" {
+      - architectures                  = [
+          - "x86_64",
+        ] -> null
+      - arn                            = "arn:aws:lambda:us-east-1:406312601212:function:auto_healer" -> null
+      - code_sha256                    = "jfSZYRc7Tm/PLzQ0FHkvdh5xAffummXm1BC70CM7/uY=" -> null
+      - filename                       = "./auto_healer.zip" -> null
+      - function_name                  = "auto_healer" -> null
+      - handler                        = "index.lambda_handler" -> null
+      - id                             = "auto_healer" -> null
+      - invoke_arn                     = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:406312601212:function:auto_healer/invocations" -> null
+      - last_modified                  = "2026-02-02T20:03:59.131+0000" -> null
+      - layers                         = [] -> null
+      - memory_size                    = 128 -> null
+      - package_type                   = "Zip" -> null
+      - publish                        = false -> null
+      - qualified_arn                  = "arn:aws:lambda:us-east-1:406312601212:function:auto_healer:$LATEST" -> null
+      - qualified_invoke_arn           = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:406312601212:function:auto_healer:$LATEST/invocations" -> null
+      - reserved_concurrent_executions = -1 -> null
+      - role                           = "arn:aws:iam::406312601212:role/cost_optimizer_role" -> null
+      - runtime                        = "python3.9" -> null
+      - skip_destroy                   = false -> null
+      - source_code_hash               = "jfSZYRc7Tm/PLzQ0FHkvdh5xAffummXm1BC70CM7/uY=" -> null
+      - source_code_size               = 1519 -> null
+      - tags                           = {} -> null
+      - tags_all                       = {} -> null
+      - timeout                        = 60 -> null
+      - version                        = "$LATEST" -> null
+        # (6 unchanged attributes hidden)
+
+      - environment {
+          - variables = {
+              - "SNS_TOPIC_ARN" = "arn:aws:sns:us-east-1:406312601212:auto-healer-alerts"
+            } -> null
+        }
+
+      - ephemeral_storage {
+          - size = 512 -> null
+        }
+
+      - logging_config {
+          - log_format            = "Text" -> null
+          - log_group             = "/aws/lambda/auto_healer" -> null
+            # (2 unchanged attributes hidden)
+        }
+
+      - tracing_config {
+          - mode = "PassThrough" -> null
+        }
+    }
+
+  # aws_lambda_function.cost_optimizer will be updated in-place
+  ~ resource "aws_lambda_function" "cost_optimizer" {
+      ~ handler                        = "index.lambda_handler" -> "lambda_function.lambda_handler"
+        id                             = "cost_terminator"
+      ~ last_modified                  = "2026-02-03T04:31:28.000+0000" -> (known after apply)
+      ~ source_code_hash               = "Kdttc+aj3VJrfsBhNzNjIaHe446uassBmXC5ZP/QT48=" -> "+ee0qK8S1/m8QXj+JHfGEEIh9UIUrjSxAnYiiPA+sXw="
+        tags                           = {}
+        # (26 unchanged attributes hidden)
+
+        # (4 unchanged blocks hidden)
+    }
+
+  # aws_route53_record.www will be created
+  + resource "aws_route53_record" "www" {
+      + allow_overwrite = (known after apply)
+      + fqdn            = (known after apply)
+      + id              = (known after apply)
+      + name            = "www.amazon-clone.com"
+      + type            = "A"
+      + zone_id         = (known after apply)
+
+      + alias {
+          + evaluate_target_health = true
+          + name                   = "dualstack.k8s-load-balancer-123456789.us-east-1.elb.amazonaws.com"
+          + zone_id                = "Z35SXDOTRQ7X7K"
+        }
+    }
+
+  # aws_route53_zone.primary will be created
+  + resource "aws_route53_zone" "primary" {
+      + arn                 = (known after apply)
+      + comment             = "Managed by Terraform"
+      + force_destroy       = false
+      + id                  = (known after apply)
+      + name                = "amazon-clone.com"
+      + name_servers        = (known after apply)
+      + primary_name_server = (known after apply)
+      + tags_all            = (known after apply)
+      + zone_id             = (known after apply)
+    }
+
+  # module.eks.module.eks_managed_node_group["spot"].aws_eks_node_group.this[0] will be updated in-place
+  ~ resource "aws_eks_node_group" "this" {
+        id                     = "amazon-cluster:spot-ng-20260210184050314900000001"
+        tags                   = {
+            "Environment" = "Dev"
+            "Name"        = "spot-ng"
+        }
+        # (16 unchanged attributes hidden)
+
+      ~ scaling_config {
+          ~ max_size     = 5 -> 2
+            # (2 unchanged attributes hidden)
+        }
+
+        # (3 unchanged blocks hidden)
+    }
+
+Plan: 4 to add, 2 to change, 3 to destroy.
+
+Error: Archive creation error
+
+error creating archive: error archiving directory: could not archive missing
+directory: ./../../lambda/auto_healer

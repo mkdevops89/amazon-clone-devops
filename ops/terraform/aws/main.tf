@@ -74,9 +74,10 @@ module "eks" {
 
       # Fix: Attach Policy to allow uploading reports to S3
       iam_role_additional_policies = {
-        scan_reports = aws_iam_policy.reports_upload_policy.arn
-        ecr_access   = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+        scan_reports  = aws_iam_policy.reports_upload_policy.arn
+        ecr_access    = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
         cost_explorer = aws_iam_policy.cost_explorer_policy.arn
+        bedrock_access = aws_iam_policy.bedrock_invoke_policy.arn
       }
       
       labels = {
@@ -111,9 +112,10 @@ module "eks" {
 
 
       iam_role_additional_policies = {
-        scan_reports = aws_iam_policy.reports_upload_policy.arn
-        ecr_access   = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+        scan_reports  = aws_iam_policy.reports_upload_policy.arn
+        ecr_access    = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
         cost_explorer = aws_iam_policy.cost_explorer_policy.arn
+        bedrock_access = aws_iam_policy.bedrock_invoke_policy.arn
       }
 
       labels = {
