@@ -74,6 +74,9 @@ public class WebSecurityConfig {
                                                                      // Ingress)
                         .requestMatchers("/api/cart/**").permitAll() // Allow anonymous cart access
                         .requestMatchers("/cart/**").permitAll() // Allow anonymous cart access (if prefix stripped)
+                        .requestMatchers("/api/chat/**").permitAll() // Allow unauthenticated AI chat interactions
+                        .requestMatchers("/chat/**").permitAll() // Allow unauthenticated AI chat interactions (if
+                                                                 // prefix stripped)
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // Allow
                                                                                                          // pre-flight
                         .requestMatchers("/actuator/**").permitAll() // Allow health checks
