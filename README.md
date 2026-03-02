@@ -1,103 +1,60 @@
-# 📦 Amazon-Like E-Commerce Platform (DevOps Reference Architecture)
+# 📦 Amazon-Like E-Commerce Platform (Foundation: AWS EC2 ClickOps)
 
-## 🚀 Project Overview
-This repository contains a production-grade, full-stack e-commerce application designed as a **DevOps Reference Architecture**. It demonstrates modern Cloud-Native practices, including Microservices, Infrastructure as Code (IaC), GitOps, and DevSecOps.
+## 🚀 Phase 0 Overview
+This branch (`phase-0-ec2`) represents the **Foundational Infrastructure Phase** of a production-grade e-commerce application. 
+
+Instead of jumping straight to Kubernetes and automation, this phase focuses on understanding the underlying AWS primitives by manually building a robust, highly-available architecture using **AWS Console ClickOps and Auto Scaling Groups (ASGs)**.
+
+This establishes a baseline for understanding VPCs, Security Groups, IAM roles, and Load Balancing before introducing infrastructure-as-code and orchestration in later phases.
 
 ### 🏗 Architecture
-*   **Frontend**: Next.js 14 (React) with a Premium Custom UI.
-*   **Backend**: Spring Boot 3.2 (Java 17) REST API.
-*   **Database**: MySQL 8.0 (Primary) + Redis (Cache/Session).
-*   **Messaging**: RabbitMQ (Asynchronous Order Processing).
+*   **Frontend**: Next.js 14 (React) served via Node.js
+*   **Backend**: Spring Boot 3.2 (Java 17) REST API
+*   **Compute**: AWS EC2 Instances managed by Auto Scaling Groups (ASGs)
+*   **Traffic routing**: AWS Application Load Balancer (ALB)
+*   **Database layer**: MySQL 8.0, Redis (Session/Cache), RabbitMQ (Messaging)
+*   **Security**: Strict AWS Security Group configurations and private subnets.
 
-## 🛠 Technology Stack
+## 🛠 Foundational Setup (Runbooks)
 
-| Category | Tools Used | Location |
-|----------|------------|----------|
-| **Containerization** | Docker, Docker Compose | `Dockerfile`, `docker-compose.yml` |
-| **Orchestration** | Kubernetes (EKS/AKS/GKE), Helm | `ops/k8s`, `ops/helm` |
-| **Infrastructure (IaC)** | Terraform (AWS, Azure, GCP) | `ops/terraform` |
-| **CI/CD** | Jenkins, GitLab CI, Nexus | `Jenkinsfile`, `.gitlab-ci.yml` |
-| **GitOps** | ArgoCD | `ops/argocd` |
-| **Observability** | Prometheus, Grafana, Datadog | `ops/monitoring` |
-| **Security** | Trivy, Checkov, OWASP, SonarQube, **AWS Secrets Manager**, **External Secrets Operator** | CI Pipelines, `ops/k8s/secrets` |
-| **Provisioning** | Ansible, Vagrant | `ops/ansible`, `ops/vagrant` |
+To deploy this infrastructure from scratch, execute the following runbooks in order. These contain step-by-step instructions and the required User Data bootstrap scripts for the EC2 instances.
 
-## 🚀 Key Features (Enterprise Grade)
+1. **[Network Configuration (`phase_0_network_config.md`)](./phase_0_network_config.md)**
+   * VPC creation, Public/Private Subnets, Internet Gateways, and NAT Gateways.
+2. **[Security Groups (`phase_0_security_runbook.md`)](./phase_0_security_runbook.md)**
+   * Defining strict ingress/egress rules between the different application tiers (ALB -> Frontend -> Backend -> Data layer).
+3. **[Data Layer Launch (`phase_0_data_launch_runbook.md`)](./phase_0_data_launch_runbook.md)**
+   * Deploying self-managed MySQL, Redis, and RabbitMQ EC2 instances into private subnets.
+4. **[Application Layer Launch (`phase_0_app_launch_runbook.md`)](./phase_0_app_launch_runbook.md)**
+   * Creating Launch Templates with User Data scripts.
+   * Configuring Target Groups and Application Load Balancers.
+   * Deploying the Frontend and Backend Auto Scaling Groups.
 
-### 🛡️ DevSecOps Pipeline
-*   **SAST**: SonarQube (Static Analysis)
-*   **SCA**: Snyk & Trivy (Dependency Scanning) - *[Added]*
-*   **DAST**: OWASP ZAP (Runtime Attacks) - *[Added]*
-*   **Container Security**: Trivy Image Scanning
+## 📂 Project Structure
+```text
+.
+├── backend/                        # Spring Boot Application Source Code
+├── frontend/                       # Next.js Application Source Code
+├── ops/
+│   ├── docker/                     # Basic Dockerfiles (Preparation for future phases)
+│   ├── scripts/                    # Helper scripts for connecting to instances
+│   └── terraform/                  # Legacy/placeholder infrastructure files
+├── phase_0_app_launch_runbook.md   # Runbook: Launching Frontend/Backend ASGs
+├── phase_0_data_launch_runbook.md  # Runbook: Launching Databases on EC2
+├── phase_0_network_config.md       # Runbook: Setting up AWS VPC & Subnets
+├── phase_0_security_runbook.md     # Runbook: Configuring Security Groups
+└── docker-compose.yml              # Local orchestration for testing the code
+```
 
-### ☁️ Advanced Infrastructure
-*   **Immutable Infrastructure**: HashiCorp Packer (AMI Baking)
-*   **Secret Management**: HashiCorp Vault (Dynamic Secrets)
-*   **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
-*   **GitOps**: ArgoCD (Continuous Deployment)
-*   **Service Mesh**: Istio (Traffic Management) - *[Added]*
-*   **IoC Wrapper**: Terragrunt (DRY Terraform) - *[Added]*
+## ⚡ Local Development
 
+While this phase focuses on manual AWS deployment, you can spin up the application stack locally for development and testing using Docker Compose:
 
-## ⚡ Quick Start
-
-### Option 1: Docker Compose (Easiest)
-Run the full stack locally with one command:
 ```bash
 docker-compose up -d --build
 ```
 *   **Frontend**: [http://localhost:3000](http://localhost:3000)
 *   **Backend API**: [http://localhost:8080](http://localhost:8080)
-*   **SonarQube**: [http://localhost:9000](http://localhost:9000)
-
-### Option 2: Vagrant (VM Isolation)
-Spin up a self-contained Development VM:
-```bash
-cd ops/vagrant
-vagrant up
-```
-*   The VM will automatically provision Docker and start the app at `http://192.168.33.10:3000`.
-
-### Option 3: Kubernetes (Helm)
-Deploy to a cluster:
-```bash
-helm install amazon-shop ./ops/helm
-```
-
-
-## 📚 Documentation
-> **[Start Here: Project Documentation & Learning Guides](./docs/documentation.md)**
-All guides, architectural diagrams, and runbooks have been moved to the `docs/` directory.
-
-## 📂 Project Structure
-```
-.
-├── backend/            # Spring Boot Application
-├── docs/               # 📚 Project Documentation & Learning Guides
-│   ├── career/         # Resume & Interview Prep
-│   ├── diagrams/       # Architecture Diagrams
-│   └── learning/       # Step-by-Step DevOps Guides
-├── frontend/           # Next.js Application
-├── ops/                # DevOps Configurations
-│   ├── ansible/        # Configuration Management
-│   ├── argocd/         # GitOps Manifests
-│   ├── docker/         # Initialization Scripts
-│   ├── helm/           # Helm Charts
-│   ├── k8s/            # Raw Kubernetes Manifests
-│   ├── monitoring/     # Prometheus/Grafana Values
-│   ├── packer/         # AMI Maintenance
-│   ├── terraform/      # Legacy IaC
-│   ├── terragrunt/     # Advanced IaC (DRY)
-│   └── vagrant/        # VM Provisioning
-├── docker-compose.yml  # Local Orchestration
-├── Jenkinsfile         # Jenkins Pipeline
-└── .gitlab-ci.yml      # GitLab Pipeline
-```
-
-## 🔐 Credentials (Demo)
-*   **User/Pass**: `admin` / `admin`
-*   **SonarQube**: `admin` / `admin`
-*   **Grafana**: `admin` / `admin`
 
 ---
-*Created as a Portfolio Masterpiece for DevOps Engineering.*
+*Created as the baseline infrastructure for a DevOps Reference Architecture journey.*
