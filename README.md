@@ -153,24 +153,10 @@ To deploy this infrastructure from scratch, execute the following runbooks in or
 ├── backend/                        # Spring Boot Application Source Code
 ├── frontend/                       # Next.js Application Source Code
 ├── ops/
-│   ├── docker/                     # Basic Dockerfiles (Preparation for future phases)
 │   └── scripts/                    # Helper setup scripts for EC2 instances
 ├── phase_0_app_launch_runbook.md   # Runbook: Launching Frontend/Backend ASGs
 ├── phase_0_data_launch_runbook.md  # Runbook: Launching Databases on EC2
 ├── phase_0_network_config.md       # Runbook: Setting up AWS VPC & Subnets
 ├── phase_0_security_runbook.md     # Runbook: Configuring Security Groups
-└── docker-compose.yml              # Local orchestration for testing the code
-```
-
-## ⚡ Local Development
-
-While this phase focuses on manual AWS deployment, you can spin up the application stack locally for development and testing using Docker Compose:
-
-```bash
-docker-compose up -d --build
-```
-*   **Frontend**: [http://localhost:3000](http://localhost:3000)
-*   **Backend API**: [http://localhost:8080](http://localhost:8080)
-
 ---
 *Created as the baseline infrastructure for a DevOps Reference Architecture journey.*
