@@ -26,80 +26,90 @@ graph TD
         %% Virtual Private Cloud
         subgraph VPC ["Virtual Private Cloud (10.0.0.0/16)"]
             
+            %% ALB Spans Both Public Subnets
+            ALB[Application Load Balancer]
+
             %% Availability Zone 1
             subgraph AZ1 ["Availability Zone 1 (us-east-1a)"]
                 
                 %% AZ1 Public Subnet (10.0.1.0/24)
                 subgraph Public1 ["Public Subnet (10.0.1.0/24)"]
-                    RT_Pub1[Route table]
-                    ALB1[Application Load Balancer Node]
-                    NAT1((VPC NAT gateway))
+                    NAT1((NAT gateway))
                 end
 
                 %% AZ1 Private Subnet (10.0.3.0/24)
                 subgraph Private1 ["Private Subnet (10.0.3.0/24)"]
-                    RT_Priv1[Route table]
-                    EC2_App1[Amazon EC2<br>Frontend & Backend]
-                    DB1[(MySQL DB instance)]
-                    MQ1>RabbitMQ]
+                    EC2_Front1[Frontend EC2 (Next.js)]
+                    EC2_Back1[Backend EC2 (Spring Boot)]
+                    
+                    subgraph DataLayer ["Stateful Data Instances"]
+                        direction TB
+                        DB1[(MySQL 8.0)]
+                        Cache1[(Redis)]
+                        MQ1>RabbitMQ]
+                    end
                 end
             end
             
             %% Availability Zone 2
             subgraph AZ2 ["Availability Zone 2 (us-east-1b)"]
-                
-                %% Bastion placeholder 
-                subgraph BastionSG ["bastion Host security group"]
-                    Bastion[Bastion Host]
-                end
 
                 %% AZ2 Public Subnet (10.0.2.0/24)
                 subgraph Public2 ["Public Subnet (10.0.2.0/24)"]
-                    RT_Pub2[Route table]
-                    ALB2[Application Load Balancer Node]
-                    NAT2((VPC NAT gateway))
+                    %% ALB node is here, but logically represented above for both AZs
+                    %% No NAT gateway here in Phase 0 runbook
                 end
 
                 %% AZ2 Private Subnet (10.0.4.0/24)
                 subgraph Private2 ["Private Subnet (10.0.4.0/24)"]
-                    RT_Priv2[Route table]
-                    EC2_App2[Amazon EC2<br>Frontend & Backend]
-                    Cache2[CACHE<br>cache node]
+                    EC2_Front2[Frontend EC2 (Next.js)]
+                    EC2_Back2[Backend EC2 (Spring Boot)]
+                    %% No databases here (single AZ deployment for Phase 0)
                 end
+            end
+            
+            %% Auto Scaling Groups
+            subgraph ASGs ["Auto Scaling Groups"]
+                direction LR
+                ASG_Front((Frontend ASG))
+                ASG_Back((Backend ASG))
             end
         end
     end
 
     %% Ingress Traffic Flow
     Client --> IGW
+    IGW --> ALB
     
-    %% Route Table Connections to IGW
-    IGW -.-> RT_Pub1
-    IGW -.-> RT_Pub2
+    %% ALB to ASG Routing
+    ALB -- "HTTP 80 (/)" --> ASG_Front
+    ALB -- "HTTP 80 (/api/*)" --> ASG_Back
     
-    %% Traffic flows to ALB
-    RT_Pub1 --> ALB1
-    RT_Pub2 --> ALB2
+    %% ASG logical grouping
+    ASG_Front -.-> EC2_Front1
+    ASG_Front -.-> EC2_Front2
+    ASG_Back -.-> EC2_Back1
+    ASG_Back -.-> EC2_Back2
     
-    %% Load Balancer to private instance flow
-    ALB1 --> EC2_App1
-    ALB2 --> EC2_App2
-    
-    %% Private Subnet traffic outbound to NAT
-    EC2_App1 --> RT_Priv1
-    EC2_App2 --> RT_Priv2
-    RT_Priv1 -.-> NAT1
-    RT_Priv2 -.-> NAT2
-    
-    %% Bastion Access
-    IGW --> Bastion
-    Bastion --> EC2_App1
-    Bastion --> EC2_App2
-    
+    %% Internal API Routing 
+    EC2_Front1 -.->|API Requests| ALB
+    EC2_Front2 -.->|API Requests| ALB
+
     %% Data layer connections
-    EC2_App1 --> DB1
-    EC2_App2 --> Cache2
-    EC2_App1 --> MQ1
+    EC2_Back1 --> DB1
+    EC2_Back1 --> Cache1
+    EC2_Back1 --> MQ1
+    EC2_Back2 --> DB1
+    EC2_Back2 --> Cache1
+    EC2_Back2 --> MQ1
+
+    %% Outbound Traffic to NAT
+    EC2_Front1 -.-> NAT1
+    EC2_Front2 -.-> NAT1
+    EC2_Back1 -.-> NAT1
+    EC2_Back2 -.-> NAT1
+    DB1 -.-> NAT1
+    NAT1 -.-> IGW
 
     %% Styling to closely match image
     classDef aws fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
@@ -108,13 +118,15 @@ graph TD
     classDef orange fill:#ed7d31,stroke:#c55a11,color:white,stroke-width:2px
     classDef gateway fill:#ff9900,stroke:#e07b00,color:white,stroke-width:2px,shape:circle
     classDef db fill:#2173b8,stroke:#175182,color:white,stroke-width:2px
+    classDef asg fill:#ffcc99,stroke:#ff9900,color:black,stroke-width:2px
     
     class AZ1,AZ2 aws
     class Public1,Public2 green
     class Private1,Private2 blue
-    class EC2_App1,EC2_App2,RT_Pub1,RT_Pub2,RT_Priv1,RT_Priv2,Bastion orange
-    class IGW,NAT1,NAT2 gateway
-    class DB1,Cache2,MQ1 db
+    class EC2_Front1,EC2_Front2,EC2_Back1,EC2_Back2,ALB orange
+    class IGW,NAT1 gateway
+    class DB1,Cache1,MQ1 db
+    class ASG_Front,ASG_Back asg
 ```
 
 
