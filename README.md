@@ -106,8 +106,7 @@ To deploy this infrastructure from scratch, execute the following runbooks in or
 ├── frontend/                       # Next.js Application Source Code
 ├── ops/
 │   ├── docker/                     # Basic Dockerfiles (Preparation for future phases)
-│   ├── scripts/                    # Helper scripts for connecting to instances
-│   └── terraform/                  # Legacy/placeholder infrastructure files
+│   └── scripts/                    # Helper setup scripts for EC2 instances
 ├── phase_0_app_launch_runbook.md   # Runbook: Launching Frontend/Backend ASGs
 ├── phase_0_data_launch_runbook.md  # Runbook: Launching Databases on EC2
 ├── phase_0_network_config.md       # Runbook: Setting up AWS VPC & Subnets
