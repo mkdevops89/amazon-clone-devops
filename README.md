@@ -39,13 +39,13 @@ graph TD
 
                 %% AZ1 Private Subnet (10.0.3.0/24)
                 subgraph Private1 ["Private Subnet (10.0.3.0/24)"]
-                    EC2_Front1[Frontend EC2 (Next.js)]
-                    EC2_Back1[Backend EC2 (Spring Boot)]
+                    EC2_Front1["Frontend EC2 (Next.js)"]
+                    EC2_Back1["Backend EC2 (Spring Boot)"]
                     
                     subgraph DataLayer ["Stateful Data Instances"]
                         direction TB
-                        DB1[(MySQL 8.0)]
-                        Cache1[(Redis)]
+                        DB1[("MySQL 8.0")]
+                        Cache1[("Redis")]
                         MQ1>RabbitMQ]
                     end
                 end
@@ -64,8 +64,8 @@ graph TD
 
                 %% AZ2 Private Subnet (10.0.4.0/24)
                 subgraph Private2 ["Private Subnet (10.0.4.0/24)"]
-                    EC2_Front2[Frontend EC2 (Next.js)]
-                    EC2_Back2[Backend EC2 (Spring Boot)]
+                    EC2_Front2["Frontend EC2 (Next.js)"]
+                    EC2_Back2["Backend EC2 (Spring Boot)"]
                     %% No databases here (single AZ deployment for Phase 0)
                 end
             end
