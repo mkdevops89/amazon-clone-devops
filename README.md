@@ -19,57 +19,102 @@ This establishes a baseline for understanding VPCs, Security Groups, IAM roles, 
 graph TD
     Client([Internet / Users])
 
-    subgraph VPC ["VPC (10.0.0.0/16)"]
-        IGW[Internet Gateway]
+    %% AWS Cloud
+    subgraph AWSCloud ["AWS Cloud"]
+        IGW((Internet gateway))
         
-        subgraph Public ["Public Subnets"]
-            ALB[Application Load Balancer]
-            NAT[NAT Gateway]
-        end
-        
-        subgraph Private ["Private Subnets"]
-            FE["Frontend ASG (Next.js)"]
-            BE["Backend ASG (Spring Boot)"]
+        %% Virtual Private Cloud
+        subgraph VPC ["Virtual Private Cloud (10.0.0.0/16)"]
             
-            subgraph DataLayer ["Data Layer"]
-                direction LR
-                MYSQL[(MySQL 8.0)]
-                REDIS[(Redis)]
-                MQ>RabbitMQ]
+            %% Availability Zone 1
+            subgraph AZ1 ["Availability Zone 1 (us-east-1a)"]
+                
+                %% AZ1 Public Subnet (10.0.1.0/24)
+                subgraph Public1 ["Public Subnet (10.0.1.0/24)"]
+                    RT_Pub1[Route table]
+                    ALB1[Application Load Balancer Node]
+                    NAT1((VPC NAT gateway))
+                end
+
+                %% AZ1 Private Subnet (10.0.3.0/24)
+                subgraph Private1 ["Private Subnet (10.0.3.0/24)"]
+                    RT_Priv1[Route table]
+                    EC2_App1[Amazon EC2<br>Frontend & Backend]
+                    DB1[(MySQL DB instance)]
+                    MQ1>RabbitMQ]
+                end
+            end
+            
+            %% Availability Zone 2
+            subgraph AZ2 ["Availability Zone 2 (us-east-1b)"]
+                
+                %% Bastion placeholder 
+                subgraph BastionSG ["bastion Host security group"]
+                    Bastion[Bastion Host]
+                end
+
+                %% AZ2 Public Subnet (10.0.2.0/24)
+                subgraph Public2 ["Public Subnet (10.0.2.0/24)"]
+                    RT_Pub2[Route table]
+                    ALB2[Application Load Balancer Node]
+                    NAT2((VPC NAT gateway))
+                end
+
+                %% AZ2 Private Subnet (10.0.4.0/24)
+                subgraph Private2 ["Private Subnet (10.0.4.0/24)"]
+                    RT_Priv2[Route table]
+                    EC2_App2[Amazon EC2<br>Frontend & Backend]
+                    Cache2[CACHE<br>cache node]
+                end
             end
         end
     end
 
-    %% Inbound Traffic
+    %% Ingress Traffic Flow
     Client --> IGW
-    IGW --> ALB
     
-    %% Load Balancing
-    ALB -- "HTTP: /" --> FE
-    ALB -- "HTTP: /api/*" --> BE
+    %% Route Table Connections to IGW
+    IGW -.-> RT_Pub1
+    IGW -.-> RT_Pub2
     
-    %% Internal API Routing 
-    FE -. "API Requests" .-> ALB
+    %% Traffic flows to ALB
+    RT_Pub1 --> ALB1
+    RT_Pub2 --> ALB2
     
-    %% Database Connections
-    BE --> MYSQL
-    BE --> REDIS
-    BE --> MQ
+    %% Load Balancer to private instance flow
+    ALB1 --> EC2_App1
+    ALB2 --> EC2_App2
+    
+    %% Private Subnet traffic outbound to NAT
+    EC2_App1 --> RT_Priv1
+    EC2_App2 --> RT_Priv2
+    RT_Priv1 -.-> NAT1
+    RT_Priv2 -.-> NAT2
+    
+    %% Bastion Access
+    IGW --> Bastion
+    Bastion --> EC2_App1
+    Bastion --> EC2_App2
+    
+    %% Data layer connections
+    EC2_App1 --> DB1
+    EC2_App2 --> Cache2
+    EC2_App1 --> MQ1
 
-    %% Outbound Traffic
-    FE -. "Outbound" .-> NAT
-    BE -. "Outbound" .-> NAT
-    MYSQL -. "Outbound" .-> NAT
-    NAT -.-> IGW
-
-    %% Styling
-    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:black,stroke-dasharray: 5 5
-    classDef ec2 fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:black
-    classDef db fill:#3b48cc,stroke:#232F3E,stroke-width:2px,color:white
+    %% Styling to closely match image
+    classDef aws fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
+    classDef green fill:#d4ecd3,stroke:#6ab165,stroke-width:2px,color:black
+    classDef blue fill:#d2e5f3,stroke:#5b9bd5,stroke-width:2px,color:black
+    classDef orange fill:#ed7d31,stroke:#c55a11,color:white,stroke-width:2px
+    classDef gateway fill:#ff9900,stroke:#e07b00,color:white,stroke-width:2px,shape:circle
+    classDef db fill:#2173b8,stroke:#175182,color:white,stroke-width:2px
     
-    class IGW,NAT aws
-    class ALB,FE,BE ec2
-    class MYSQL,REDIS,MQ db
+    class AZ1,AZ2 aws
+    class Public1,Public2 green
+    class Private1,Private2 blue
+    class EC2_App1,EC2_App2,RT_Pub1,RT_Pub2,RT_Priv1,RT_Priv2,Bastion orange
+    class IGW,NAT1,NAT2 gateway
+    class DB1,Cache2,MQ1 db
 ```
 
 
