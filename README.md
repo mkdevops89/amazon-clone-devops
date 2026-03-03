@@ -17,69 +17,58 @@ This establishes a baseline for understanding VPCs, Security Groups, IAM roles, 
 
 ```mermaid
 graph TD
-    Client[Internet / Users] --> IGW[Internet Gateway]
+    Client([Internet / Users])
 
     subgraph VPC ["VPC (10.0.0.0/16)"]
-        IGW --> ALB[Application Load Balancer]
+        IGW[Internet Gateway]
         
-        subgraph PublicSubnets ["Public Subnets (us-east-1a & 1b)"]
-            ALB
+        subgraph Public ["Public Subnets"]
+            ALB[Application Load Balancer]
             NAT[NAT Gateway]
         end
         
-        IGW --> NAT
-
-        subgraph PrivateSubnets ["Private Subnets (us-east-1a & 1b)"]
-            %% Frontend Layer
-            subgraph ASG_Front ["Frontend ASG"]
-                FE1["Frontend EC2 (Next.js)"]
-                FE2["Frontend EC2 (Next.js)"]
-            end
+        subgraph Private ["Private Subnets"]
+            FE["Frontend ASG (Next.js)"]
+            BE["Backend ASG (Spring Boot)"]
             
-            %% Backend Layer
-            subgraph ASG_Back ["Backend ASG"]
-                BE1["Backend EC2 (Spring Boot)"]
-                BE2["Backend EC2 (Spring Boot)"]
-            end
-            
-            %% Data Layer
-            subgraph DataLayer ["Data Layer (Stateful)"]
+            subgraph DataLayer ["Data Layer"]
+                direction LR
                 MYSQL[(MySQL 8.0)]
-                REDIS[(Redis Cache)]
+                REDIS[(Redis)]
                 MQ>RabbitMQ]
             end
-            
-            %% Routing/Flows
-            ALB --"HTTP 80 (/) "--> FE1
-            ALB --"HTTP 80 (/) "--> FE2
-            
-            ALB --"HTTP 80 (/api/*) "--> BE1
-            ALB --"HTTP 80 (/api/*) "--> BE2
-            
-            FE1 -. "API Calls loop back through ALB" .-> ALB
-            FE2 -. "API Calls loop back through ALB" .-> ALB
-            
-            BE1 --> MYSQL
-            BE1 --> REDIS
-            BE1 --> MQ
-            BE2 --> MYSQL
-            BE2 --> REDIS
-            BE2 --> MQ
-            
-            %% Outbound internet for updates
-            FE1 -. "Outbound internet" .-> NAT
-            BE1 -. "Outbound internet" .-> NAT
-            MYSQL -. "Outbound internet" .-> NAT
         end
     end
+
+    %% Inbound Traffic
+    Client --> IGW
+    IGW --> ALB
     
+    %% Load Balancing
+    ALB -- "HTTP: /" --> FE
+    ALB -- "HTTP: /api/*" --> BE
+    
+    %% Internal API Routing 
+    FE -. "API Requests" .-> ALB
+    
+    %% Database Connections
+    BE --> MYSQL
+    BE --> REDIS
+    BE --> MQ
+
+    %% Outbound Traffic
+    FE -. "Outbound" .-> NAT
+    BE -. "Outbound" .-> NAT
+    MYSQL -. "Outbound" .-> NAT
+    NAT -.-> IGW
+
     %% Styling
     classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:black,stroke-dasharray: 5 5
     classDef ec2 fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:black
     classDef db fill:#3b48cc,stroke:#232F3E,stroke-width:2px,color:white
     
     class IGW,NAT aws
-    class FE1,FE2,BE1,BE2,ALB ec2
+    class ALB,FE,BE ec2
     class MYSQL,REDIS,MQ db
 ```
 
