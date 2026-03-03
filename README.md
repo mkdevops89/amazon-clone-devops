@@ -49,7 +49,7 @@ graph TD
                         direction TB
                         RDS[("Amazon RDS (MySQL 8.0)")]
                         ElastiCache[("Amazon ElastiCache (Redis)")]
-                        AmazonMQ>"Amazon MQ (RabbitMQ)"]
+                        AmazonMQ("Amazon MQ (RabbitMQ)")
                     end
                 end
             end
