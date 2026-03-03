@@ -15,6 +15,75 @@ This establishes a baseline for understanding VPCs, Security Groups, IAM roles, 
 *   **Database layer**: MySQL 8.0, Redis (Session/Cache), RabbitMQ (Messaging)
 *   **Security**: Strict AWS Security Group configurations and private subnets.
 
+```mermaid
+graph TD
+    Client[Internet / Users] --> IGW[Internet Gateway]
+
+    subgraph VPC ["VPC (10.0.0.0/16)"]
+        IGW --> ALB[Application Load Balancer]
+        
+        subgraph PublicSubnets ["Public Subnets (us-east-1a & 1b)"]
+            ALB
+            NAT[NAT Gateway]
+        end
+        
+        IGW --> NAT
+
+        subgraph PrivateSubnets ["Private Subnets (us-east-1a & 1b)"]
+            %% Frontend Layer
+            subgraph ASG_Front ["Frontend ASG"]
+                FE1["Frontend EC2 (Next.js)"]
+                FE2["Frontend EC2 (Next.js)"]
+            end
+            
+            %% Backend Layer
+            subgraph ASG_Back ["Backend ASG"]
+                BE1["Backend EC2 (Spring Boot)"]
+                BE2["Backend EC2 (Spring Boot)"]
+            end
+            
+            %% Data Layer
+            subgraph DataLayer ["Data Layer (Stateful)"]
+                MYSQL[(MySQL 8.0)]
+                REDIS[(Redis Cache)]
+                MQ>RabbitMQ]
+            end
+            
+            %% Routing/Flows
+            ALB --"HTTP 80 (/) "--> FE1
+            ALB --"HTTP 80 (/) "--> FE2
+            
+            ALB --"HTTP 80 (/api/*) "--> BE1
+            ALB --"HTTP 80 (/api/*) "--> BE2
+            
+            FE1 -. "API Calls loop back through ALB" .-> ALB
+            FE2 -. "API Calls loop back through ALB" .-> ALB
+            
+            BE1 --> MYSQL
+            BE1 --> REDIS
+            BE1 --> MQ
+            BE2 --> MYSQL
+            BE2 --> REDIS
+            BE2 --> MQ
+            
+            %% Outbound internet for updates
+            FE1 -. "Outbound internet" .-> NAT
+            BE1 -. "Outbound internet" .-> NAT
+            MYSQL -. "Outbound internet" .-> NAT
+        end
+    end
+    
+    %% Styling
+    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:black,stroke-dasharray: 5 5
+    classDef ec2 fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:black
+    classDef db fill:#3b48cc,stroke:#232F3E,stroke-width:2px,color:white
+    
+    class IGW,NAT aws
+    class FE1,FE2,BE1,BE2,ALB ec2
+    class MYSQL,REDIS,MQ db
+```
+
+
 ## 🛠 Foundational Setup (Runbooks)
 
 To deploy this infrastructure from scratch, execute the following runbooks in order. These contain step-by-step instructions and the required User Data bootstrap scripts for the EC2 instances.
