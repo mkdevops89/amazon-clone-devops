@@ -58,6 +58,8 @@ graph TD
                 subgraph Public2 ["Public Subnet (10.0.2.0/24)"]
                     %% ALB node is here, but logically represented above for both AZs
                     %% No NAT gateway here in Phase 0 runbook
+                    Placeholder[ ]
+                    style Placeholder display:none;
                 end
 
                 %% AZ2 Private Subnet (10.0.4.0/24)
@@ -82,8 +84,8 @@ graph TD
     IGW --> ALB
     
     %% ALB to ASG Routing
-    ALB -- "HTTP 80 (/)" --> ASG_Front
-    ALB -- "HTTP 80 (/api/*)" --> ASG_Back
+    ALB -->|HTTP 80 /| ASG_Front
+    ALB -->|HTTP 80 /api/*| ASG_Back
     
     %% ASG logical grouping
     ASG_Front -.-> EC2_Front1
