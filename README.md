@@ -1,103 +1,118 @@
-# 📦 Amazon-Like E-Commerce Platform (DevOps Reference Architecture)
+# 📦 Amazon-Like E-Commerce Platform (Phase 7: Senior Automation & Tooling)
 
-## 🚀 Project Overview
-This repository contains a production-grade, full-stack e-commerce application designed as a **DevOps Reference Architecture**. It demonstrates modern Cloud-Native practices, including Microservices, Infrastructure as Code (IaC), GitOps, and DevSecOps.
+## 🚀 Phase 7 Overview
+This branch (`phase-7-automation`) represents a massive leap forward into **Senior-Level Cloud Automation**. 
 
-### 🏗 Architecture
-*   **Frontend**: Next.js 14 (React) with a Premium Custom UI.
-*   **Backend**: Spring Boot 3.2 (Java 17) REST API.
-*   **Database**: MySQL 8.0 (Primary) + Redis (Cache/Session).
-*   **Messaging**: RabbitMQ (Asynchronous Order Processing).
+Moving beyond standard CI/CD pipelines, this phase focuses on Day-2 Operations (Day-2 Ops) by implementing intelligent, event-driven automation using **AWS Lambda (Python)** and custom developer tooling using **Go**.
 
-## 🛠 Technology Stack
+These tools actively monitor, optimize, and heal the AWS environment without human intervention, ensuring the infrastructure remains cost-effective, secure, and highly observable.
 
-| Category | Tools Used | Location |
-|----------|------------|----------|
-| **Containerization** | Docker, Docker Compose | `Dockerfile`, `docker-compose.yml` |
-| **Orchestration** | Kubernetes (EKS/AKS/GKE), Helm | `ops/k8s`, `ops/helm` |
-| **Infrastructure (IaC)** | Terraform (AWS, Azure, GCP) | `ops/terraform` |
-| **CI/CD** | Jenkins, GitLab CI, Nexus | `Jenkinsfile`, `.gitlab-ci.yml` |
-| **GitOps** | ArgoCD | `ops/argocd` |
-| **Observability** | Prometheus, Grafana, Datadog | `ops/monitoring` |
-| **Security** | Trivy, Checkov, OWASP, SonarQube, **AWS Secrets Manager**, **External Secrets Operator** | CI Pipelines, `ops/k8s/secrets` |
-| **Provisioning** | Ansible, Vagrant | `ops/ansible`, `ops/vagrant` |
+### 🤖 Automation Architecture
+1. **The Cost Terminator (FinOps Automation)**
+   * **Technology**: Python, AWS Lambda, Amazon EventBridge.
+   * **Purpose**: Automatically scans the AWS environment for Dev/Staging EC2 instances and shuts them down during non-business hours to drastically reduce compute costs.
+   * **Trigger**: Nightly EventBridge Cron Schedule.
 
-## 🚀 Key Features (Enterprise Grade)
+2. **The Auto-Healer (SecOps Automation)**
+   * **Technology**: Python, AWS Lambda, AWS CloudTrail, Amazon EventBridge.
+   * **Purpose**: Provides real-time event-driven security remediation. If an engineer accidentally opens a Security Group port (e.g., SSH port 22) to the world (`0.0.0.0/0`), EventBridge detects the CloudTrail API call and triggers the Auto-Healer Lambda to instantly revoke the insecure rule.
 
-### 🛡️ DevSecOps Pipeline
-*   **SAST**: SonarQube (Static Analysis)
-*   **SCA**: Snyk & Trivy (Dependency Scanning) - *[Added]*
-*   **DAST**: OWASP ZAP (Runtime Attacks) - *[Added]*
-*   **Container Security**: Trivy Image Scanning
+3. **Ops Check (Custom Kubernetes CLI)**
+   * **Technology**: Go (Golang), Kubernetes client-go.
+   * **Purpose**: A lightning-fast, compiled command-line interface (CLI) tool that interacts directly with the EKS API server to summarize cluster health (Node readiness, Pod statuses) without needing to parse complex `kubectl` JSON/YAML outputs.
 
-### ☁️ Advanced Infrastructure
-*   **Immutable Infrastructure**: HashiCorp Packer (AMI Baking)
-*   **Secret Management**: HashiCorp Vault (Dynamic Secrets)
-*   **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
-*   **GitOps**: ArgoCD (Continuous Deployment)
-*   **Service Mesh**: Istio (Traffic Management) - *[Added]*
-*   **IoC Wrapper**: Terragrunt (DRY Terraform) - *[Added]*
+```mermaid
+graph TD
+    %% AWS Environment
+    subgraph AWS ["AWS Cloud"]
+        
+        %% Event sources
+        EventBridge((EventBridge\nEvent Bus))
+        CloudTrail((AWS CloudTrail))
+        
+        %% FinOps Rule
+        CronRule[Cron Schedule\n(Every Night)]
+        CronRule -->|Triggers| CostTerminator
+        
+        %% SecOps Rule
+        TrailRule[CloudTrail Rule\n(AuthorizeSecurityGroupIngress)]
+        CloudTrail -->|Streams API events| EventBridge
+        EventBridge -->|Matches Rule| TrailRule
+        TrailRule -->|Triggers| AutoHealer
+        
+        %% Serverless Automations
+        subgraph Lambdas ["AWS Lambda (Python)"]
+            CostTerminator[The Cost Terminator\n(FinOps)]
+            AutoHealer[The Auto-Healer\n(SecOps)]
+        end
+        
+        %% AWS Resources
+        EC2[EC2 Instances\n(Tag: Environment=Dev)]
+        SG[AWS Security Groups]
+        
+        %% Lambda Actions
+        CostTerminator -.->|aws ec2 stop-instances| EC2
+        AutoHealer -.->|aws ec2 revoke-security-group-ingress| SG
+        
+        %% Kubernetes Cluster
+        subgraph EKS ["Amazon EKS Cluster"]
+            API[Kubernetes API Server]
+            Nodes[Worker Nodes]
+            Pods[Application Pods]
+        end
+    end
 
+    %% Local Environment
+    subgraph Local ["Developer/Ops Machine"]
+        GoCLI[Ops Check\n(Custom Go CLI)]
+    end
 
-## ⚡ Quick Start
+    %% CLI Actions
+    GoCLI -.->|Reads Health| API
+    API --- Nodes
+    API --- Pods
 
-### Option 1: Docker Compose (Easiest)
-Run the full stack locally with one command:
-```bash
-docker-compose up -d --build
+    %% Styling
+    classDef aws fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
+    classDef lambda fill:#ff9900,stroke:#d35400,color:white,stroke-width:2px
+    classDef event fill:#8e44ad,stroke:#5e3370,color:white,stroke-width:2px
+    classDef gocli fill:#00add8,stroke:#00758f,color:white,stroke-width:2px
+    classDef resource fill:#ed7d31,stroke:#c55a11,color:white,stroke-width:2px
+    
+    class AWS,EKS,Local aws
+    class CostTerminator,AutoHealer lambda
+    class CronRule,TrailRule,EventBridge,CloudTrail event
+    class GoCLI gocli
+    class EC2,SG resource
 ```
-*   **Frontend**: [http://localhost:3000](http://localhost:3000)
-*   **Backend API**: [http://localhost:8080](http://localhost:8080)
-*   **SonarQube**: [http://localhost:9000](http://localhost:9000)
 
-### Option 2: Vagrant (VM Isolation)
-Spin up a self-contained Development VM:
-```bash
-cd ops/vagrant
-vagrant up
-```
-*   The VM will automatically provision Docker and start the app at `http://192.168.33.10:3000`.
+## 🛠 Automation Setup (Runbooks)
 
-### Option 3: Kubernetes (Helm)
-Deploy to a cluster:
-```bash
-helm install amazon-shop ./ops/helm
-```
+To execute the Python automation logic locally, compile the Go CLI, and deploy the EventBridge rules via Terraform, follow the Phase 7 Execution Guide.
 
-
-## 📚 Documentation
-> **[Start Here: Project Documentation & Learning Guides](./docs/documentation.md)**
-All guides, architectural diagrams, and runbooks have been moved to the `docs/` directory.
+1. **[Senior Automation Walkthrough (`phase_7_walkthrough.md`)](./phase_7_walkthrough.md)**
+   * **FinOps**: Running the Cost Optimizer locally to test dry-run scaling, and manually tagging EC2 target resources.
+   * **SecOps**: Injecting synthetic malicious CloudTrail events to test the Auto-Healer's revocation response.
+   * **Custom Tooling**: Compiling and running the `ops-check` Go binary against your configured `~/.kube/config`.
+   * **Deployment**: Selectively applying the automation Lambda infrastructure using Terraform targeting.
 
 ## 📂 Project Structure
-```
+```text
 .
-├── backend/            # Spring Boot Application
-├── docs/               # 📚 Project Documentation & Learning Guides
-│   ├── career/         # Resume & Interview Prep
-│   ├── diagrams/       # Architecture Diagrams
-│   └── learning/       # Step-by-Step DevOps Guides
-├── frontend/           # Next.js Application
-├── ops/                # DevOps Configurations
-│   ├── ansible/        # Configuration Management
-│   ├── argocd/         # GitOps Manifests
-│   ├── docker/         # Initialization Scripts
-│   ├── helm/           # Helm Charts
-│   ├── k8s/            # Raw Kubernetes Manifests
-│   ├── monitoring/     # Prometheus/Grafana Values
-│   ├── packer/         # AMI Maintenance
-│   ├── terraform/      # Legacy IaC
-│   ├── terragrunt/     # Advanced IaC (DRY)
-│   └── vagrant/        # VM Provisioning
-├── docker-compose.yml  # Local Orchestration
-├── Jenkinsfile         # Jenkins Pipeline
-└── .gitlab-ci.yml      # GitLab Pipeline
+├── backend/                       # Source Code 
+├── frontend/                      # Source Code
+├── ops/
+│   ├── cli/
+│   │   └── ops-check/             # 🐹 Custom Go CLI tool for K8s health checks
+│   ├── k8s/                       # Kubernetes App Manifests
+│   ├── lambda/
+│   │   ├── auto_healer/           # 🛡️ Python script for SecOps remediation
+│   │   └── cost_optimizer/        # 💰 Python script for nightly FinOps scaling
+│   ├── scripts/                   # Bootstrapping shell scripts
+│   └── terraform/
+│       └── aws/                   # 🪣 IaC updated to provision Lambdas and EventBridge
+└── phase_7_walkthrough.md         # Master Runbook for compiling, testing, and applying automation
 ```
-
-## 🔐 Credentials (Demo)
-*   **User/Pass**: `admin` / `admin`
-*   **SonarQube**: `admin` / `admin`
-*   **Grafana**: `admin` / `admin`
 
 ---
-*Created as a Portfolio Masterpiece for DevOps Engineering.*
+*Created as the Senior Automation & Event-Driven Operations iteration for a DevOps Reference Architecture journey.*
