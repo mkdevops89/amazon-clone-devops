@@ -1,103 +1,135 @@
-# 📦 Amazon-Like E-Commerce Platform (DevOps Reference Architecture)
+# 📦 Amazon-Like E-Commerce Platform (Phase 6b: Enterprise CI/CD & DevSecOps)
 
-## 🚀 Project Overview
-This repository contains a production-grade, full-stack e-commerce application designed as a **DevOps Reference Architecture**. It demonstrates modern Cloud-Native practices, including Microservices, Infrastructure as Code (IaC), GitOps, and DevSecOps.
+## 🚀 Phase 6b Overview
+This branch (`phase-6b-jenkins`) represents the **Enterprise Self-Hosted CI/CD** milestone of a production-grade e-commerce application. 
 
-### 🏗 Architecture
-*   **Frontend**: Next.js 14 (React) with a Premium Custom UI.
-*   **Backend**: Spring Boot 3.2 (Java 17) REST API.
-*   **Database**: MySQL 8.0 (Primary) + Redis (Cache/Session).
-*   **Messaging**: RabbitMQ (Asynchronous Order Processing).
+Diverging from the cloud-native approach of Phase 6a, this phase simulates a strict enterprise environment by deploying the entire DevSecOps toolchain—including a **Jenkins** orchestration server and a **Sonatype Nexus** artifact repository—directly onto our AWS EKS cluster. 
 
-## 🛠 Technology Stack
+By leveraging the AWS EBS CSI driver and dynamic volume provisioning (`gp3`), we ensure our CI/CD state is persistent and reliable. We then wire up automated GitHub Webhooks to trigger our `Jenkinsfile` pipeline, providing a secure, end-to-end continuous deployment framework that is entirely self-hosted and privately managed.
 
-| Category | Tools Used | Location |
-|----------|------------|----------|
-| **Containerization** | Docker, Docker Compose | `Dockerfile`, `docker-compose.yml` |
-| **Orchestration** | Kubernetes (EKS/AKS/GKE), Helm | `ops/k8s`, `ops/helm` |
-| **Infrastructure (IaC)** | Terraform (AWS, Azure, GCP) | `ops/terraform` |
-| **CI/CD** | Jenkins, GitLab CI, Nexus | `Jenkinsfile`, `.gitlab-ci.yml` |
-| **GitOps** | ArgoCD | `ops/argocd` |
-| **Observability** | Prometheus, Grafana, Datadog | `ops/monitoring` |
-| **Security** | Trivy, Checkov, OWASP, SonarQube, **AWS Secrets Manager**, **External Secrets Operator** | CI Pipelines, `ops/k8s/secrets` |
-| **Provisioning** | Ansible, Vagrant | `ops/ansible`, `ops/vagrant` |
+### 🏯 Enterprise DevSecOps Architecture
+*   **Pipeline Orchestrator**: Self-hosted Jenkins (deployed via K8s Stateful/Deployment manifests)
+*   **Artifact Repository**: Self-hosted Sonatype Nexus (Maven & Docker repositories)
+*   **Persistent Storage**: AWS Elastic Block Store (EBS) managed via the EBS CSI Driver
+*   **Vulnerability Scanning**: OWASP Dependency-Check (NVD API integrated)
+*   **Automation Triggers**: GitHub Webhooks & SCM Polling
+*   **Notifications**: Real-time Slack Webhook alerts for build statuses
+*   **Ingress Routing**: Shared AWS Application Load Balancer (ALB) across App, Grafana, Jenkins, and Nexus
 
-## 🚀 Key Features (Enterprise Grade)
+```mermaid
+graph TD
+    %% Developers
+    Dev([Developer]) -.->|git push| GitHubRepo
+    
+    %% GitHub Platform
+    subgraph GitHub ["GitHub"]
+        GitHubRepo[(Git Repository)]
+        Webhook((Push Webhook))
+        
+        GitHubRepo -->|Triggers| Webhook
+    end
 
-### 🛡️ DevSecOps Pipeline
-*   **SAST**: SonarQube (Static Analysis)
-*   **SCA**: Snyk & Trivy (Dependency Scanning) - *[Added]*
-*   **DAST**: OWASP ZAP (Runtime Attacks) - *[Added]*
-*   **Container Security**: Trivy Image Scanning
+    %% AWS Environment
+    subgraph AWS ["AWS Elastic Kubernetes Service (EKS)"]
+        
+        %% Shared ALB
+        ALB{{"Application Load Balancer (Shared)"}}
+        
+        %% Kubernetes Workloads
+        subgraph EKS_Workloads ["Kubernetes Workloads"]
+            
+            %% Application
+            subgraph AppNs ["Namespace: default"]
+                AppSvc[Frontend & Backend Services]
+            end
+            
+            %% CI/CD Toolchain
+            subgraph JenkinsNs ["Namespace: devsecops"]
+                Jenkins[Jenkins Controller]
+                Nexus[Sonatype Nexus Repository]
+                
+                %% Storage
+                EBS_Jenkins[(EBS Volume: jenkins_home)]
+                EBS_Nexus[(EBS Volume: nexus-data)]
+                EBS_NVD[(EBS Volume: nvd-cache)]
+                
+                Jenkins --- EBS_Jenkins
+                Jenkins --- EBS_NVD
+                Nexus --- EBS_Nexus
+            end
+        end
+    end
 
-### ☁️ Advanced Infrastructure
-*   **Immutable Infrastructure**: HashiCorp Packer (AMI Baking)
-*   **Secret Management**: HashiCorp Vault (Dynamic Secrets)
-*   **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
-*   **GitOps**: ArgoCD (Continuous Deployment)
-*   **Service Mesh**: Istio (Traffic Management) - *[Added]*
-*   **IoC Wrapper**: Terragrunt (DRY Terraform) - *[Added]*
+    %% Webhook triggering Jenkins
+    Webhook -.->|HTTP POST| ALB
+    ALB -->|/github-webhook/| Jenkins
+    
+    %% Jenkins Pipeline Flow
+    subgraph Pipeline ["Jenkins Pipeline Execution"]
+        direction LR
+        Checkout[Checkout Code]
+        Scan[OWASP Dep-Check]
+        Build[Maven Build]
+        PushNexus[Push to Nexus]
+        Deploy[Deploy to EKS]
+        SlackAlert[Slack Notification]
+        
+        Checkout --> Scan
+        Scan --> Build
+        Build --> PushNexus
+        PushNexus --> Deploy
+        Deploy --> SlackAlert
+    end
+    
+    %% Pipeline execution link
+    Jenkins -.->|Spawns Agent Pod| Pipeline
+    Deploy -.->|kubectl apply| AppSvc
+    PushNexus -.->|HTTP POST| Nexus
 
-
-## ⚡ Quick Start
-
-### Option 1: Docker Compose (Easiest)
-Run the full stack locally with one command:
-```bash
-docker-compose up -d --build
+    %% Styling
+    classDef user fill:#fff,stroke:#333,stroke-width:2px
+    classDef github fill:#24292e,stroke:#fff,color:white,stroke-width:2px
+    classDef aws fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
+    classDef jenkins fill:#d32f2f,stroke:#b71c1c,color:white,stroke-width:2px
+    classDef nexus fill:#1b5e20,stroke:#2e7d32,color:white,stroke-width:2px
+    classDef ebs fill:#ed7d31,stroke:#c55a11,color:white,stroke-width:2px,shape:cylinder
+    classDef pipe fill:#e1f5fe,stroke:#0288d1,color:black,stroke-width:1px
+    
+    class Dev user
+    class GitHub,GitHubRepo,Webhook github
+    class ALB,EKS_Workloads aws
+    class Jenkins,Pipeline jenkins
+    class Nexus nexus
+    class EBS_Jenkins,EBS_Nexus,EBS_NVD ebs
+    class Checkout,Scan,Build,PushNexus,Deploy pipe
 ```
-*   **Frontend**: [http://localhost:3000](http://localhost:3000)
-*   **Backend API**: [http://localhost:8080](http://localhost:8080)
-*   **SonarQube**: [http://localhost:9000](http://localhost:9000)
 
-### Option 2: Vagrant (VM Isolation)
-Spin up a self-contained Development VM:
-```bash
-cd ops/vagrant
-vagrant up
-```
-*   The VM will automatically provision Docker and start the app at `http://192.168.33.10:3000`.
+## 🛠 Self-Hosted Setup (Runbooks)
 
-### Option 3: Kubernetes (Helm)
-Deploy to a cluster:
-```bash
-helm install amazon-shop ./ops/helm
-```
+To provision the infrastructure and configure the Jenkins pipelines, follow the Phase 6b Runbooks.
 
-
-## 📚 Documentation
-> **[Start Here: Project Documentation & Learning Guides](./docs/documentation.md)**
-All guides, architectural diagrams, and runbooks have been moved to the `docs/` directory.
+1. **[Enterprise Setup Walkthrough (`phase_6b_walkthrough.md`)](./phase_6b_walkthrough.md)**
+   * Installing the AWS EBS CSI Driver for persistent volume mounting.
+   * Deploying Jenkins and Nexus to the `devsecops` namespace.
+   * Unlocking the CI/CD portals and configuring Jenkins Kubernetes Cloud agents.
+   * Executing the `Jenkinsfile` pipeline and configuring GitHub Webhooks.
 
 ## 📂 Project Structure
-```
+```text
 .
-├── backend/            # Spring Boot Application
-├── docs/               # 📚 Project Documentation & Learning Guides
-│   ├── career/         # Resume & Interview Prep
-│   ├── diagrams/       # Architecture Diagrams
-│   └── learning/       # Step-by-Step DevOps Guides
-├── frontend/           # Next.js Application
-├── ops/                # DevOps Configurations
-│   ├── ansible/        # Configuration Management
-│   ├── argocd/         # GitOps Manifests
-│   ├── docker/         # Initialization Scripts
-│   ├── helm/           # Helm Charts
-│   ├── k8s/            # Raw Kubernetes Manifests
-│   ├── monitoring/     # Prometheus/Grafana Values
-│   ├── packer/         # AMI Maintenance
-│   ├── terraform/      # Legacy IaC
-│   ├── terragrunt/     # Advanced IaC (DRY)
-│   └── vagrant/        # VM Provisioning
-├── docker-compose.yml  # Local Orchestration
-├── Jenkinsfile         # Jenkins Pipeline
-└── .gitlab-ci.yml      # GitLab Pipeline
+├── Jenkinsfile               # 🏯 Jenkins Pipeline Script (Build, Scan, Deploy)
+├── backend/                  # Source Code 
+├── frontend/                 # Source Code
+├── ops/
+│   ├── k8s/                  
+│   │   ├── jenkins/          # K8s Manifests (Jenkins Deployment, PVC, Svc)
+│   │   ├── nexus/            # K8s Manifests (Nexus Deployment, PVC, Svc)
+│   │   └── ...               # App manifests
+│   └── scripts/
+│       ├── install_ebs_driver.sh  # Bootstraps AWS EBS CSI Driver
+│       └── deploy_k8s.sh          # Executed automatically by Jenkins
+└── phase_6b_walkthrough.md   # Master Runbook for self-hosted enterprise CI/CD
 ```
-
-## 🔐 Credentials (Demo)
-*   **User/Pass**: `admin` / `admin`
-*   **SonarQube**: `admin` / `admin`
-*   **Grafana**: `admin` / `admin`
 
 ---
-*Created as a Portfolio Masterpiece for DevOps Engineering.*
+*Created as the Enterprise Jenkins CI/CD iteration for a DevOps Reference Architecture journey.*

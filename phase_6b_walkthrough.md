@@ -12,7 +12,7 @@ Since you want to use the **"Right Resources"** (Persistent Volumes), we need to
 Without this, your pods will stay `Pending` because they can't create disks!
 
 **The Easy Way (Scripted):**
-I've created a script to handle the IAM Role and Add-on installation automatically.
+Created a script to handle the IAM Role and Add-on installation automatically.
 
 Run this:
 ```bash
@@ -35,8 +35,8 @@ Now deploy the apps (which will use the new `gp3` storage).
 
 > [!IMPORTANT]
 > **Resource Optimization Applied:**
-> Due to the cluster running on a single small node (t3.medium or similar), I've reduced the Jenkins and Nexus memory requests to **512Mi** each. 
-> I also scaled down system components like `coredns` and `aws-load-balancer-controller` to 1 replica to free up "pod slots" on the node.
+> Due to the cluster running on a single small node (t3.medium or similar), reduced the Jenkins and Nexus memory requests to **512Mi** each. 
+> Scaled down system components like `coredns` and `aws-load-balancer-controller` to 1 replica to free up "pod slots" on the node.
 
 Run this command to replace the placeholders:
 ```bash
@@ -54,7 +54,7 @@ envsubst < ops/k8s/ingress-grafana.yaml | kubectl apply -f -
 
 > [!TIP]
 > **Troubleshooting: Permission Denied on Volumes?**
-> I've added `initContainers` to both `jenkins.yaml` and `nexus.yaml` that automatically run `chown` on the mount points. This fixes the common "Permission Denied" error when mounting EBS volumes as a non-root user.
+> Added `initContainers` to both `jenkins.yaml` and `nexus.yaml` that automatically run `chown` on the mount points. This fixes the common "Permission Denied" error when mounting EBS volumes as a non-root user.
 
 ---
 
@@ -97,7 +97,7 @@ kubectl get ingress -n default amazon-ingress -o jsonpath='{.status.loadBalancer
 ---
 
 ## 🛠️ Infrastructure Fixes Applied (Post-Mortem)
-During deployment, we encountered and fixed several real-world production issues:
+During deployment, I encountered and fixed several real-world production issues:
 1.  **Storage Engine:** Installed AWS EBS CSI Driver and configured `gp3` StorageClass for dynamic provisioning.
 2.  **Volume Permissions:** Added `initContainers` to handle `chown` for Jenkins (UID 1000) and Nexus (UID 200).
 3.  **Resource Constraints:** Downsized system components and application requests to fit on a single-node cluster.
