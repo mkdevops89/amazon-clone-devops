@@ -50,11 +50,11 @@ graph TD
     end
 
     %% Scheduling Rules
-    Jenkins -.->|nodeSelector| CriticalNodes
-    Nexus -.->|nodeSelector| CriticalNodes
-    SonarQube -.->|nodeSelector| CriticalNodes
-    Backend -.->|Scheduled by K8s| SpotNodes
-    Frontend -.->|Scheduled by K8s| SpotNodes
+    Jenkins -.->|nodeSelector| label1
+    Nexus -.->|nodeSelector| label1
+    SonarQube -.->|nodeSelector| label1
+    Backend -.->|Scheduled by K8s| label2
+    Frontend -.->|Scheduled by K8s| label2
 
     %% Observation Tools
     subgraph Tools ["FinOps Observation Tooling"]
@@ -62,9 +62,9 @@ graph TD
         GoCLI["Go Ops-Check CLI<br/>(Checks Memory/Disk Pressure)"]
     end
 
-    CostLambda -.->|Analyzes CPU Metrics| AWS
-    GoCLI -.->|Queries Kube API| EKS
-    EKS -.->|Incurs Cost| Budget
+    CostLambda -.->|Analyzes CPU Metrics| Budget
+    GoCLI -.->|Queries Kube API| Jenkins
+    label2 -.->|Incurs Cost| Budget
 
     %% Styling
     classDef aws fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
@@ -74,9 +74,8 @@ graph TD
     classDef billing fill:#4caf50,stroke:#1b5e20,color:white,stroke-width:2px
     classDef tool fill:#8e44ad,stroke:#5e3370,color:white,stroke-width:2px
     
-    class AWS,EKS aws
-    class SpotNodes spot
-    class CriticalNodes critical
+    class label2 spot
+    class label1 critical
     class Jenkins,Nexus,SonarQube,Backend,Frontend app
     class Budget billing
     class CostLambda,GoCLI tool
