@@ -28,18 +28,18 @@ In parallel, we execute deep container hardening (running as non-root users, uti
 graph TD
     %% Dev Flow
     Dev[Developer] -->|Push Code| GithubRepo[GitHub Repository]
-    GithubRepo -->|Trigger| GHA[GitHub Actions\n(ci.yaml)]
+    GithubRepo -->|Trigger| GHA[GitHub Actions<br/>(ci.yaml)]
     
     %% CI Layer
     subgraph CI ["Continuous Integration (CI)"]
         GHA -.->|Run| Tests[Unit Tests & Snyk]
         GHA -.->|Run| Security[Trivy & DAST]
-        Jenkins[Jenkins Pipeline\n(Jenkinsfile)]
+        Jenkins[Jenkins Pipeline<br/>(Jenkinsfile)]
     end
     
     GithubRepo -->|Trigger| Jenkins
-    Jenkins -->|1. Build & Tag\n(Git SHA)| ECR[AWS ECR]
-    Jenkins -->|2. Git Commit\n(values.yaml)| GithubRepo
+    Jenkins -->|1. Build & Tag<br/>(Git SHA)| ECR[AWS ECR]
+    Jenkins -->|2. Git Commit<br/>(values.yaml)| GithubRepo
     
     %% CD / GitOps Layer
     subgraph GitOps ["Continuous Deployment (GitOps)"]
@@ -47,7 +47,7 @@ graph TD
     end
     
     Argo -.->|3. Watch Changes| GithubRepo
-    Argo -->|4. Sync Cluster| EKS[EKS Cluster\n(Helm Chart Deployment)]
+    Argo -->|4. Sync Cluster| EKS[EKS Cluster<br/>(Helm Chart Deployment)]
     
     %% Styling
     classDef aws fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
