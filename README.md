@@ -49,9 +49,9 @@ graph TD
 
     %% Dashboards
     subgraph UI ["Grafana User Interface"]
-        D1[FinOps / Cost Savings\n(finops.json)]
-        D2[Node Health / Pressure\n(nodes.json)]
-        D3[App Golden Signals\n(apps.json)]
+        D1["FinOps / Cost Savings<br/>(finops.json)"]
+        D2["Node Health / Pressure<br/>(nodes.json)"]
+        D3["App Golden Signals<br/>(apps.json)"]
     end
     
     Grafana --> D1
