@@ -9,8 +9,7 @@
 # ===========================
 # Documentation
 # ===========================
-# Ignore markdown files and the docs folder (Local Only)
-/*.md
+# Ignore specific docs folder (if needed)
 # docs/ (Commented out to allow tracking)
 !testcases.md
 !docs/testcase.md
