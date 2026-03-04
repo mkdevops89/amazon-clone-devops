@@ -1,103 +1,131 @@
-# 📦 Amazon-Like E-Commerce Platform (DevOps Reference Architecture)
+# 📦 Amazon-Like E-Commerce Platform (Phase 6d: Scan Reports & S3 Archiving)
 
-## 🚀 Project Overview
-This repository contains a production-grade, full-stack e-commerce application designed as a **DevOps Reference Architecture**. It demonstrates modern Cloud-Native practices, including Microservices, Infrastructure as Code (IaC), GitOps, and DevSecOps.
+## 🚀 Phase 6d Overview
+This branch (`phase-6d-scanreports`) represents the **Compliance and Artifact Archiving** milestone of a production-grade e-commerce application. 
 
-### 🏗 Architecture
-*   **Frontend**: Next.js 14 (React) with a Premium Custom UI.
-*   **Backend**: Spring Boot 3.2 (Java 17) REST API.
-*   **Database**: MySQL 8.0 (Primary) + Redis (Cache/Session).
-*   **Messaging**: RabbitMQ (Asynchronous Order Processing).
+Building upon the Hybrid GitLab CI/CD pipeline from Phase 6c, this phase introduces a critical missing piece for enterprise compliance: **Permanent Record Keeping**. While CI/CD platforms usually delete job artifacts after a few days, security audits require historical proof of scans. 
 
-## 🛠 Technology Stack
+To solve this, we use Terraform to provision a private Amazon S3 Bucket and configure IAM OIDC integration. The 10th stage of the GitLab pipeline now authenticates with AWS and pushes all vulnerability reports (IaC, Secrets, SCA, Container, DAST) and the compiled Java build artifact directly into long-term S3 storage before the pipeline finishes.
 
-| Category | Tools Used | Location |
-|----------|------------|----------|
-| **Containerization** | Docker, Docker Compose | `Dockerfile`, `docker-compose.yml` |
-| **Orchestration** | Kubernetes (EKS/AKS/GKE), Helm | `ops/k8s`, `ops/helm` |
-| **Infrastructure (IaC)** | Terraform (AWS, Azure, GCP) | `ops/terraform` |
-| **CI/CD** | Jenkins, GitLab CI, Nexus | `Jenkinsfile`, `.gitlab-ci.yml` |
-| **GitOps** | ArgoCD | `ops/argocd` |
-| **Observability** | Prometheus, Grafana, Datadog | `ops/monitoring` |
-| **Security** | Trivy, Checkov, OWASP, SonarQube, **AWS Secrets Manager**, **External Secrets Operator** | CI Pipelines, `ops/k8s/secrets` |
-| **Provisioning** | Ansible, Vagrant | `ops/ansible`, `ops/vagrant` |
+### 🛡 Archiving & Compliance Architecture
+*   **Pipeline Orchestrator**: GitLab CI (Cloud SaaS)
+*   **Storage Backend**: Amazon S3 (Private Bucket)
+*   **Authentication**: AWS IAM Roles for Service Accounts (IRSA / OIDC via the EKS Node Group)
+*   **Archived Artifacts**:
+    *   `checkov-report.xml` (Terraform misconfigurations)
+    *   `gitleaks-report.json` (Leaked secrets)
+    *   `dependency-check.html` (Vulnerable open-source libraries)
+    *   `trivy-report.txt` (Container OS vulnerabilities)
+    *   `zap_report.html` (Dynamic runtime attacks)
+    *   `backend.jar` (The compiled Java application)
 
-## 🚀 Key Features (Enterprise Grade)
+```mermaid
+graph TD
+    %% Developers
+    Dev([Developer]) -.->|git push| GitLabRepo
+    
+    %% GitLab Platform
+    subgraph GitLabCloud ["GitLab Cloud"]
+        GitLabRepo[(Git Repository)]
+    end
 
-### 🛡️ DevSecOps Pipeline
-*   **SAST**: SonarQube (Static Analysis)
-*   **SCA**: Snyk & Trivy (Dependency Scanning) - *[Added]*
-*   **DAST**: OWASP ZAP (Runtime Attacks) - *[Added]*
-*   **Container Security**: Trivy Image Scanning
+    %% AWS Environment
+    subgraph AWS ["AWS Cloud"]
+        
+        %% Long term storage
+        S3[("Amazon S3 Bucket\n(Compliance Reports)")]
+        
+        %% EKS Cluster
+        subgraph EKS ["Amazon Elastic Kubernetes Service (EKS)"]
+            
+            %% Security Toolchain
+            subgraph SecNs ["Namespace: devsecops"]
+                SonarQube[SonarQube Server]
+            end
+            
+            %% Build Agents
+            subgraph RunnerNs ["Namespace: gitlab-runner"]
+                GitLabRunner[GitLab Runner Agent]
+            end
+        end
+        
+        IAM{{"IAM Node Role\n(S3 PutObject)"}}
+    end
 
-### ☁️ Advanced Infrastructure
-*   **Immutable Infrastructure**: HashiCorp Packer (AMI Baking)
-*   **Secret Management**: HashiCorp Vault (Dynamic Secrets)
-*   **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
-*   **GitOps**: ArgoCD (Continuous Deployment)
-*   **Service Mesh**: Istio (Traffic Management) - *[Added]*
-*   **IoC Wrapper**: Terragrunt (DRY Terraform) - *[Added]*
+    %% Pipeline Flow
+    GitLabRepo -->|Triggers| GitLabRunner
+    
+    %% 10-Stage Pipeline Flow
+    subgraph Pipeline ["GitLab CI Pipeline (.gitlab-ci.yml)"]
+        direction TB
+        S1[1. Checkov: IaC Scan]
+        S2[2. Gitleaks: Secret Scan]
+        S3[3. Maven Build]
+        S4[4. SonarQube: Code Quality]
+        S5[5. OWASP Dep-Check: SCA]
+        S6[6. Kaniko: Build/Push Docker]
+        S7[7. Trivy: Container Scan]
+        S8[8. kubectl apply: Deploy]
+        S9[9. OWASP ZAP: DAST]
+        S10[10. AWS CLI: Upload Reports]
+        
+        S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8 --> S9 --> S10
+    end
+    
+    %% Execution Links
+    GitLabRunner -.->|Executes| Pipeline
+    GitLabRunner -.->|Assumes| IAM
+    
+    %% Upload Links
+    S1 -.->|checkov.xml| S10
+    S2 -.->|gitleaks.json| S10
+    S3 -.->|backend.jar| S10
+    S5 -.->|dependency-check.html| S10
+    S7 -.->|trivy.txt| S10
+    S9 -.->|zap.html| S10
+    
+    %% Final Push
+    S10 ==>|aws s3 cp| S3
 
-
-## ⚡ Quick Start
-
-### Option 1: Docker Compose (Easiest)
-Run the full stack locally with one command:
-```bash
-docker-compose up -d --build
+    %% Styling
+    classDef user fill:#fff,stroke:#333,stroke-width:2px
+    classDef glcloud fill:#292961,stroke:#e24329,color:white,stroke-width:2px
+    classDef aws fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
+    classDef glrunner fill:#fc6d26,stroke:#e24329,color:white,stroke-width:2px
+    classDef s3 fill:#388e3c,stroke:#2e7d32,color:white,stroke-width:2px,shape:cylinder
+    classDef iam fill:#ed7d31,stroke:#c55a11,color:white,stroke-width:2px
+    classDef pipe fill:#dcedc8,stroke:#689f38,color:black,stroke-width:1px
+    
+    class Dev user
+    class GitLabCloud,GitLabRepo glcloud
+    class AWS aws
+    class GitLabRunner glrunner
+    class S3 s3
+    class IAM iam
+    class S1,S2,S3,S4,S5,S6,S7,S8,S9,S10 pipe
 ```
-*   **Frontend**: [http://localhost:3000](http://localhost:3000)
-*   **Backend API**: [http://localhost:8080](http://localhost:8080)
-*   **SonarQube**: [http://localhost:9000](http://localhost:9000)
 
-### Option 2: Vagrant (VM Isolation)
-Spin up a self-contained Development VM:
-```bash
-cd ops/vagrant
-vagrant up
-```
-*   The VM will automatically provision Docker and start the app at `http://192.168.33.10:3000`.
+## 🛠 S3 Archiving Setup
 
-### Option 3: Kubernetes (Helm)
-Deploy to a cluster:
-```bash
-helm install amazon-shop ./ops/helm
-```
+To provision the S3 bucket and execute the 10-stage pipeline:
 
-
-## 📚 Documentation
-> **[Start Here: Project Documentation & Learning Guides](./docs/documentation.md)**
-All guides, architectural diagrams, and runbooks have been moved to the `docs/` directory.
+1. **Provision Infrastructure**: Use Terraform in `ops/terraform/aws` to deploy the S3 bucket.
+2. **Configure IAM**: Ensure your EKS Node Group IAM Role has `s3:PutObject` permissions.
+3. **Set Variables**: Define the `$S3_BUCKET_NAME` variable in your GitLab CI/CD settings.
+4. **Trigger Pipeline**: Push code to GitLab to watch the `upload_reports_job` securely archive your files.
 
 ## 📂 Project Structure
-```
+```text
 .
-├── backend/            # Spring Boot Application
-├── docs/               # 📚 Project Documentation & Learning Guides
-│   ├── career/         # Resume & Interview Prep
-│   ├── diagrams/       # Architecture Diagrams
-│   └── learning/       # Step-by-Step DevOps Guides
-├── frontend/           # Next.js Application
-├── ops/                # DevOps Configurations
-│   ├── ansible/        # Configuration Management
-│   ├── argocd/         # GitOps Manifests
-│   ├── docker/         # Initialization Scripts
-│   ├── helm/           # Helm Charts
-│   ├── k8s/            # Raw Kubernetes Manifests
-│   ├── monitoring/     # Prometheus/Grafana Values
-│   ├── packer/         # AMI Maintenance
-│   ├── terraform/      # Legacy IaC
-│   ├── terragrunt/     # Advanced IaC (DRY)
-│   └── vagrant/        # VM Provisioning
-├── docker-compose.yml  # Local Orchestration
-├── Jenkinsfile         # Jenkins Pipeline
-└── .gitlab-ci.yml      # GitLab Pipeline
+├── .gitlab-ci.yml                 # 🦊 10-Stage Pipeline (Now includes `upload_reports_job`)
+├── backend/                       # Source Code 
+├── frontend/                      # Source Code
+└── ops/
+    ├── k8s/                  
+    ├── scripts/
+    └── terraform/
+        └── aws/main.tf            # 🪣 IaC updated to provision the S3 Artifact Bucket
 ```
-
-## 🔐 Credentials (Demo)
-*   **User/Pass**: `admin` / `admin`
-*   **SonarQube**: `admin` / `admin`
-*   **Grafana**: `admin` / `admin`
 
 ---
-*Created as a Portfolio Masterpiece for DevOps Engineering.*
+*Created as the S3 Artifact Archiving iteration for a DevOps Reference Architecture journey.*
