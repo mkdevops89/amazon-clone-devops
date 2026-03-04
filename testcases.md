@@ -10,7 +10,7 @@ Use this document to strict validate the completion of Phase 1 (Manual/VM) and P
 ### 🧪 1. Infrastructure Checks
 | Check | Command | Expected Output |
 | :--- | :--- | :--- |
-| **Containers Running** | `docker-compose ps` | All services (`frontend`, `backend`, `mysql`, `redis`, `rabbitmq`, `datadog`) state is `Up (healthy)`. |
+| **Containers Running** | `docker compose ps` | All services (`frontend`, `backend`, `mysql`, `redis`, `rabbitmq`, `datadog`) state is `Up (healthy)`. |
 | **Backend Logs** | `docker logs amazon-backend --tail 50` | `Started BackendApplication in X.XXX seconds` (No Stack Traces). |
 | **Frontend Logs** | `docker logs amazon-frontend --tail 50` | `Ready in Xms` and listening on port 3000. |
 
