@@ -12,6 +12,7 @@ services:
       args:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080/api}
     image: ${DOCKER_USERNAME}/amazon-frontend:latest
+    container_name: amazon-frontend
     ports:
       - "3000:3000" # Maps host port 3000 to container port 3000
     environment:
