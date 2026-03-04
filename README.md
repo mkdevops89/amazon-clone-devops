@@ -27,7 +27,7 @@ graph TD
     subgraph AWS ["Amazon Web Services (AWS)"]
         
         %% AWS Billing
-        Budget(("AWS Budget<br/>Alert limit: $50"))
+        Budget["AWS Budget<br/>Alert limit: $50"]
         
         %% EKS Cluster
         subgraph EKS ["AWS Elastic Kubernetes Service (EKS)"]
