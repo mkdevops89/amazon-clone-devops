@@ -27,27 +27,27 @@ graph TD
     subgraph AWS ["AWS Cloud"]
         
         %% Event sources
-        EventBridge((EventBridge\nEvent Bus))
-        CloudTrail((AWS CloudTrail))
+        EventBridge["EventBridge<br/>Event Bus"]
+        CloudTrail["AWS CloudTrail"]
         
         %% FinOps Rule
-        CronRule[Cron Schedule\n(Every Night)]
+        CronRule["Cron Schedule<br/>(Every Night)"]
         CronRule -->|Triggers| CostTerminator
         
         %% SecOps Rule
-        TrailRule[CloudTrail Rule\n(AuthorizeSecurityGroupIngress)]
+        TrailRule["CloudTrail Rule<br/>(AuthorizeSecurityGroupIngress)"]
         CloudTrail -->|Streams API events| EventBridge
         EventBridge -->|Matches Rule| TrailRule
         TrailRule -->|Triggers| AutoHealer
         
         %% Serverless Automations
         subgraph Lambdas ["AWS Lambda (Python)"]
-            CostTerminator[The Cost Terminator\n(FinOps)]
-            AutoHealer[The Auto-Healer\n(SecOps)]
+            CostTerminator["The Cost Terminator<br/>(FinOps)"]
+            AutoHealer["The Auto-Healer<br/>(SecOps)"]
         end
         
         %% AWS Resources
-        EC2[EC2 Instances\n(Tag: Environment=Dev)]
+        EC2["EC2 Instances<br/>(Tag: Environment=Dev)"]
         SG[AWS Security Groups]
         
         %% Lambda Actions
@@ -64,7 +64,7 @@ graph TD
 
     %% Local Environment
     subgraph Local ["Developer/Ops Machine"]
-        GoCLI[Ops Check\n(Custom Go CLI)]
+        GoCLI["Ops Check<br/>(Custom Go CLI)"]
     end
 
     %% CLI Actions
@@ -79,7 +79,6 @@ graph TD
     classDef gocli fill:#00add8,stroke:#00758f,color:white,stroke-width:2px
     classDef resource fill:#ed7d31,stroke:#c55a11,color:white,stroke-width:2px
     
-    class AWS,EKS,Local aws
     class CostTerminator,AutoHealer lambda
     class CronRule,TrailRule,EventBridge,CloudTrail event
     class GoCLI gocli
