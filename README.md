@@ -1,103 +1,114 @@
-# 📦 Amazon-Like E-Commerce Platform (DevOps Reference Architecture)
+# 📦 Amazon-Like E-Commerce Platform (Phase 6a: GitHub Actions CI/CD & DevSecOps)
 
-## 🚀 Project Overview
-This repository contains a production-grade, full-stack e-commerce application designed as a **DevOps Reference Architecture**. It demonstrates modern Cloud-Native practices, including Microservices, Infrastructure as Code (IaC), GitOps, and DevSecOps.
+## 🚀 Phase 6a Overview
+This branch (`phase-6a-githubactions`) represents the **Cloud-Native Continuous Integration & Continuous Deployment (CI/CD)** milestone of a production-grade e-commerce application. 
 
-### 🏗 Architecture
-*   **Frontend**: Next.js 14 (React) with a Premium Custom UI.
-*   **Backend**: Spring Boot 3.2 (Java 17) REST API.
-*   **Database**: MySQL 8.0 (Primary) + Redis (Cache/Session).
-*   **Messaging**: RabbitMQ (Asynchronous Order Processing).
+Building upon the robust AWS EKS infrastructure and secure routing established in previous phases, this phase introduces a fully automated, cloud-hosted pipeline using **GitHub Actions**. Every commit is subjected to a rigorous "Platinum" DevSecOps pipeline that automatically scans for vulnerabilities before packaging the application into Docker containers, pushing them to Elastic Container Registry (ECR), and deploying them to Kubernetes.
 
-## 🛠 Technology Stack
+By embedding security checks directly into the developer workflow (Shift-Left), we ensure a highly secure, automated software supply chain.
 
-| Category | Tools Used | Location |
-|----------|------------|----------|
-| **Containerization** | Docker, Docker Compose | `Dockerfile`, `docker-compose.yml` |
-| **Orchestration** | Kubernetes (EKS/AKS/GKE), Helm | `ops/k8s`, `ops/helm` |
-| **Infrastructure (IaC)** | Terraform (AWS, Azure, GCP) | `ops/terraform` |
-| **CI/CD** | Jenkins, GitLab CI, Nexus | `Jenkinsfile`, `.gitlab-ci.yml` |
-| **GitOps** | ArgoCD | `ops/argocd` |
-| **Observability** | Prometheus, Grafana, Datadog | `ops/monitoring` |
-| **Security** | Trivy, Checkov, OWASP, SonarQube, **AWS Secrets Manager**, **External Secrets Operator** | CI Pipelines, `ops/k8s/secrets` |
-| **Provisioning** | Ansible, Vagrant | `ops/ansible`, `ops/vagrant` |
+### 🛡 DevSecOps CI/CD Architecture
+*   **Pipeline Orchestration**: GitHub Actions
+*   **Secret Scanning**: TruffleHog (Detects leaked API keys/credentials in commit history)
+*   **Static Application Security Testing (SAST)**: SonarCloud (Analyzes code quality and bugs)
+*   **Container Security**: Trivy (Scans the repository for Docker-related vulnerabilities)
+*   **Dynamic Application Security Testing (DAST)**: OWASP ZAP (Scans the live deployed application)
+*   **Deployment**: Automated `kubectl` applying manifests to Amazon EKS
 
-## 🚀 Key Features (Enterprise Grade)
+```mermaid
+graph TD
+    %% Developer Action
+    Dev([Developer]) -.->|git push| GitHubRepo
 
-### 🛡️ DevSecOps Pipeline
-*   **SAST**: SonarQube (Static Analysis)
-*   **SCA**: Snyk & Trivy (Dependency Scanning) - *[Added]*
-*   **DAST**: OWASP ZAP (Runtime Attacks) - *[Added]*
-*   **Container Security**: Trivy Image Scanning
+    %% GitHub Platform
+    subgraph GitHub ["GitHub Cloud"]
+        GitHubRepo[(Git Repository)]
+        
+        %% Pipeline Triggers
+        GitHubRepo -->|Triggers| CI_Pipeline
+        GitHubRepo -->|Triggers| CD_Pipeline
+        
+        %% CI Security Pipeline
+        subgraph CI_Pipeline ["CI: DevSecOps Pipeline (.github/workflows/devsecops-ci.yaml)"]
+            direction TB
+            CheckoutCI[Actions Checkout]
+            TruffleHog[TruffleHog: Secret Scanning]
+            SonarCloud[SonarCloud: SAST & Code Quality]
+            Trivy[Trivy: Container Security]
+            
+            CheckoutCI --> TruffleHog
+            TruffleHog --> SonarCloud
+            SonarCloud --> Trivy
+        end
+        
+        %% CD Deployment Pipeline
+        subgraph CD_Pipeline ["CD: Deployment Pipeline (.github/workflows/deploy-app.yaml)"]
+            direction TB
+            CheckoutCD[Actions Checkout]
+            AWSLogin[Configure AWS Credentials]
+            KubeConfig[Update EKS Kubeconfig]
+            ECRLogin[Login to ECR]
+            Deploy[Run deploy_k8s.sh]
+            DAST[OWASP ZAP: DAST Baseline Scan]
+            
+            CheckoutCD --> AWSLogin
+            AWSLogin --> KubeConfig
+            KubeConfig --> ECRLogin
+            ECRLogin --> Deploy
+            Deploy --> DAST
+        end
+    end
 
-### ☁️ Advanced Infrastructure
-*   **Immutable Infrastructure**: HashiCorp Packer (AMI Baking)
-*   **Secret Management**: HashiCorp Vault (Dynamic Secrets)
-*   **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
-*   **GitOps**: ArgoCD (Continuous Deployment)
-*   **Service Mesh**: Istio (Traffic Management) - *[Added]*
-*   **IoC Wrapper**: Terragrunt (DRY Terraform) - *[Added]*
+    %% AWS Environment Deployment
+    Deploy -.->|Build & Push Images| ECR[(Amazon ECR)]
+    Deploy -.->|kubectl apply| EKS{{"Amazon EKS Cluster"}}
+    
+    %% Live Scanning
+    DAST -.->|Scans Live App| ALB{{"Ingress (ALB)"}}
+    ALB --> EKS
 
-
-## ⚡ Quick Start
-
-### Option 1: Docker Compose (Easiest)
-Run the full stack locally with one command:
-```bash
-docker-compose up -d --build
+    %% Styling
+    classDef user fill:#fff,stroke:#333,stroke-width:2px
+    classDef github fill:#24292e,stroke:#fff,color:white,stroke-width:2px
+    classDef action fill:#0366d6,stroke:#0366d6,color:white,stroke-width:2px
+    classDef sec fill:#d73a49,stroke:#b31d28,color:white,stroke-width:2px
+    classDef aws fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
+    
+    class Dev user
+    class GitHub github
+    class CheckoutCI,CheckoutCD,AWSLogin,KubeConfig,ECRLogin,Deploy action
+    class TruffleHog,SonarCloud,Trivy,DAST sec
+    class ECR,EKS,ALB aws
 ```
-*   **Frontend**: [http://localhost:3000](http://localhost:3000)
-*   **Backend API**: [http://localhost:8080](http://localhost:8080)
-*   **SonarQube**: [http://localhost:9000](http://localhost:9000)
 
-### Option 2: Vagrant (VM Isolation)
-Spin up a self-contained Development VM:
-```bash
-cd ops/vagrant
-vagrant up
-```
-*   The VM will automatically provision Docker and start the app at `http://192.168.33.10:3000`.
+## ⚙️ CI/CD Setup (Runbooks)
 
-### Option 3: Kubernetes (Helm)
-Deploy to a cluster:
-```bash
-helm install amazon-shop ./ops/helm
-```
+To configure the GitHub Actions pipeline secrets and trigger your automated deployments, follow the Phase 6a Runbook.
 
-
-## 📚 Documentation
-> **[Start Here: Project Documentation & Learning Guides](./docs/documentation.md)**
-All guides, architectural diagrams, and runbooks have been moved to the `docs/` directory.
+1. **[GitHub Actions Walkthrough (`phase_6_walkthrough.md`)](./phase_6_walkthrough.md)**
+   * Creating security tokens (SonarCloud).
+   * Configuring AWS IAM Credentials as GitHub Action Secrets.
+   * Triggering the CI (Security) and CD (Deploy) workflows.
+2. **[CI/CD Verification Tests (`phase_6_testcases.md`)](./phase_6_testcases.md)**
+   * Validating successful workflow executions.
+   * Reviewing vulnerability reports from SonarCloud and ZAP.
 
 ## 📂 Project Structure
-```
+```text
 .
-├── backend/            # Spring Boot Application
-├── docs/               # 📚 Project Documentation & Learning Guides
-│   ├── career/         # Resume & Interview Prep
-│   ├── diagrams/       # Architecture Diagrams
-│   └── learning/       # Step-by-Step DevOps Guides
-├── frontend/           # Next.js Application
-├── ops/                # DevOps Configurations
-│   ├── ansible/        # Configuration Management
-│   ├── argocd/         # GitOps Manifests
-│   ├── docker/         # Initialization Scripts
-│   ├── helm/           # Helm Charts
-│   ├── k8s/            # Raw Kubernetes Manifests
-│   ├── monitoring/     # Prometheus/Grafana Values
-│   ├── packer/         # AMI Maintenance
-│   ├── terraform/      # Legacy IaC
-│   ├── terragrunt/     # Advanced IaC (DRY)
-│   └── vagrant/        # VM Provisioning
-├── docker-compose.yml  # Local Orchestration
-├── Jenkinsfile         # Jenkins Pipeline
-└── .gitlab-ci.yml      # GitLab Pipeline
+├── .github/
+│   └── workflows/
+│       ├── deploy-app.yaml       # 🚀 CD Pipeline (Build -> Push -> Deploy -> DAST)
+│       └── devsecops-ci.yaml     # 🛡 CI Pipeline (TruffleHog, SonarCloud, Trivy)
+├── backend/                  # Source Code 
+├── frontend/                 # Source Code
+├── ops/
+│   ├── k8s/                  # Kubernetes Manifests
+│   └── scripts/
+│       └── deploy_k8s.sh     # Executed automatically by the GitHub Action
+├── phase_6_testcases.md      # Verification procedures pipeline success
+└── phase_6_walkthrough.md    # Master Runbook for setting up GitHub Actions
 ```
-
-## 🔐 Credentials (Demo)
-*   **User/Pass**: `admin` / `admin`
-*   **SonarQube**: `admin` / `admin`
-*   **Grafana**: `admin` / `admin`
 
 ---
-*Created as a Portfolio Masterpiece for DevOps Engineering.*
+*Created as the Cloud-Native CI/CD iteration for a DevOps Reference Architecture journey.*
