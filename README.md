@@ -1,103 +1,124 @@
-# 📦 Amazon-Like E-Commerce Platform (DevOps Reference Architecture)
+# 📦 Amazon-Like E-Commerce Platform (Phase 2: Docker & Containerization)
 
-## 🚀 Project Overview
-This repository contains a production-grade, full-stack e-commerce application designed as a **DevOps Reference Architecture**. It demonstrates modern Cloud-Native practices, including Microservices, Infrastructure as Code (IaC), GitOps, and DevSecOps.
+## 🚀 Phase 2 Overview
+This branch (`phase-2-docker`) represents the **Containerization Phase** of a production-grade e-commerce application. 
+
+Building upon the manual setups, this phase packages the entire application stack—Frontend, Backend, Databases, Message Brokers, and Observability tools—into **Docker Containers**. By using `docker-compose`, we can spin up the entire architecture locally or on a single cloud server (EC2) with a single command.
+
+This drastically improves developer experience, ensures consistency across environments ("it works on my machine"), and serves as the foundation for Kubernetes orchestration in future phases.
 
 ### 🏗 Architecture
-*   **Frontend**: Next.js 14 (React) with a Premium Custom UI.
-*   **Backend**: Spring Boot 3.2 (Java 17) REST API.
-*   **Database**: MySQL 8.0 (Primary) + Redis (Cache/Session).
-*   **Messaging**: RabbitMQ (Asynchronous Order Processing).
+*   **Frontend**: Next.js 14 (React) container
+*   **Backend**: Spring Boot 3.2 (Java 17) container
+*   **Database**: MySQL 8.0 container (with mounted volume for data persistence)
+*   **Cache**: Redis Alpine container
+*   **Messaging**: RabbitMQ container
+*   **Code Quality**: SonarQube container
+*   **Observability**: Datadog Agent container (Metrics, APM, Logs)
 
-## 🛠 Technology Stack
+```mermaid
+graph TD
+    Client([Internet / Users])
 
-| Category | Tools Used | Location |
-|----------|------------|----------|
-| **Containerization** | Docker, Docker Compose | `Dockerfile`, `docker-compose.yml` |
-| **Orchestration** | Kubernetes (EKS/AKS/GKE), Helm | `ops/k8s`, `ops/helm` |
-| **Infrastructure (IaC)** | Terraform (AWS, Azure, GCP) | `ops/terraform` |
-| **CI/CD** | Jenkins, GitLab CI, Nexus | `Jenkinsfile`, `.gitlab-ci.yml` |
-| **GitOps** | ArgoCD | `ops/argocd` |
-| **Observability** | Prometheus, Grafana, Datadog | `ops/monitoring` |
-| **Security** | Trivy, Checkov, OWASP, SonarQube, **AWS Secrets Manager**, **External Secrets Operator** | CI Pipelines, `ops/k8s/secrets` |
-| **Provisioning** | Ansible, Vagrant | `ops/ansible`, `ops/vagrant` |
+    %% Host Environment
+    subgraph DockerHost ["Docker Host (Local Machine or EC2)"]
+        
+        %% Docker Compose Network
+        subgraph DockerNetwork ["Docker Bridge Network (app-network)"]
+            
+            %% Ingress
+            Frontend["amazon-frontend (Port 3000)"]
+            Backend["amazon-backend (Port 8080)"]
+            
+            %% Data Services
+            subgraph DataLayer ["Stateful Containers"]
+                direction TB
+                MySQL[("amazon-mysql (Port 3306)")]
+                Redis[("amazon-redis (Port 6379)")]
+                RabbitMQ>"amazon-rabbitmq (Port 5672, 15672)"]
+            end
+            
+            %% Observability & Quality
+            subgraph Tools ["Tooling Containers"]
+                direction TB
+                SonarQube["amazon-sonarqube (Port 9000)"]
+                Datadog["amazon-datadog (Agent)"]
+            end
+        end
+        
+        %% Docker Volumes
+        subgraph Volumes ["Docker Volumes"]
+            VolMySQL[(mysql_data)]
+            VolSonar[(sonarqube_data)]
+        end
+    end
 
-## 🚀 Key Features (Enterprise Grade)
+    %% Ingress Traffic Flow
+    Client -->|HTTP:3000| Frontend
+    Client -->|HTTP:8080| Backend
+    Client -->|HTTP:9000| SonarQube
+    
+    %% Internal API Routing (Container to Container)
+    Frontend -.->|API Requests| Backend
 
-### 🛡️ DevSecOps Pipeline
-*   **SAST**: SonarQube (Static Analysis)
-*   **SCA**: Snyk & Trivy (Dependency Scanning) - *[Added]*
-*   **DAST**: OWASP ZAP (Runtime Attacks) - *[Added]*
-*   **Container Security**: Trivy Image Scanning
+    %% Internal Data Connections
+    Backend --> MySQL
+    Backend --> Redis
+    Backend --> RabbitMQ
 
-### ☁️ Advanced Infrastructure
-*   **Immutable Infrastructure**: HashiCorp Packer (AMI Baking)
-*   **Secret Management**: HashiCorp Vault (Dynamic Secrets)
-*   **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
-*   **GitOps**: ArgoCD (Continuous Deployment)
-*   **Service Mesh**: Istio (Traffic Management) - *[Added]*
-*   **IoC Wrapper**: Terragrunt (DRY Terraform) - *[Added]*
+    %% Volume Mounts
+    MySQL -.->|Persists Data| VolMySQL
+    SonarQube -.->|Persists Data| VolSonar
 
+    %% Styling
+    classDef dockerhost fill:#f9f9f9,stroke:#0db7ed,stroke-dasharray: 5 5,stroke-width:2px
+    classDef network fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:black
+    classDef app fill:#ed7d31,stroke:#c55a11,color:white,stroke-width:2px
+    classDef db fill:#2173b8,stroke:#175182,color:white,stroke-width:2px
+    classDef tool fill:#6ab165,stroke:#388e3c,color:white,stroke-width:2px
+    classDef volume fill:#ffcc99,stroke:#ff9900,color:black,stroke-width:2px
+    
+    class DockerHost dockerhost
+    class DockerNetwork network
+    class Frontend,Backend app
+    class MySQL,Redis,RabbitMQ db
+    class SonarQube,Datadog tool
+    class VolMySQL,VolSonar volume
+```
 
 ## ⚡ Quick Start
 
-### Option 1: Docker Compose (Easiest)
+### Local Development (Docker Compose)
 Run the full stack locally with one command:
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 *   **Frontend**: [http://localhost:3000](http://localhost:3000)
 *   **Backend API**: [http://localhost:8080](http://localhost:8080)
 *   **SonarQube**: [http://localhost:9000](http://localhost:9000)
 
-### Option 2: Vagrant (VM Isolation)
-Spin up a self-contained Development VM:
-```bash
-cd ops/vagrant
-vagrant up
-```
-*   The VM will automatically provision Docker and start the app at `http://192.168.33.10:3000`.
+*(To stop the stack and remove containers: `docker compose down`)*
 
-### Option 3: Kubernetes (Helm)
-Deploy to a cluster:
-```bash
-helm install amazon-shop ./ops/helm
-```
+## 📚 Technical Playbooks & Walkthroughs
 
+The detailed step-by-step guides for utilizing this architecture are provided below:
 
-## 📚 Documentation
-> **[Start Here: Project Documentation & Learning Guides](./docs/documentation.md)**
-All guides, architectural diagrams, and runbooks have been moved to the `docs/` directory.
+*   **[Phase 2 Walkthrough (`phase_2_walkthrough.md`)](./phase_2_walkthrough.md)** - Instructions on how to build, run, and troubleshoot the Dockerized stack locally or on an EC2 instance.
+*   **[Test Cases (`testcases.md`)](./testcases.md)** - Verification procedures to ensure all containers, APIs, and the Datadog integration are functioning correctly.
 
 ## 📂 Project Structure
-```
+```text
 .
-├── backend/            # Spring Boot Application
-├── docs/               # 📚 Project Documentation & Learning Guides
-│   ├── career/         # Resume & Interview Prep
-│   ├── diagrams/       # Architecture Diagrams
-│   └── learning/       # Step-by-Step DevOps Guides
-├── frontend/           # Next.js Application
-├── ops/                # DevOps Configurations
-│   ├── ansible/        # Configuration Management
-│   ├── argocd/         # GitOps Manifests
-│   ├── docker/         # Initialization Scripts
-│   ├── helm/           # Helm Charts
-│   ├── k8s/            # Raw Kubernetes Manifests
-│   ├── monitoring/     # Prometheus/Grafana Values
-│   ├── packer/         # AMI Maintenance
-│   ├── terraform/      # Legacy IaC
-│   ├── terragrunt/     # Advanced IaC (DRY)
-│   └── vagrant/        # VM Provisioning
-├── docker-compose.yml  # Local Orchestration
-├── Jenkinsfile         # Jenkins Pipeline
-└── .gitlab-ci.yml      # GitLab Pipeline
+├── backend/                  # Spring Boot Application Source Code & Dockerfile
+├── frontend/                 # Next.js Application Source Code & Dockerfile
+├── ops/
+│   ├── docker/               # Database Initialization Scripts (e.g., init.sql)
+│   ├── scripts/              # EC2 Setup Script (install Docker on Ubuntu)
+│   └── vagrant/              # Vagrant configs for local VM-based testing
+├── docker-compose.yml        # Orchestrates the 6 containers
+├── phase_2_walkthrough.md    # Master Runbook for Docker deployment
+└── testcases.md              # Infrastructure and API Verification
 ```
-
-## 🔐 Credentials (Demo)
-*   **User/Pass**: `admin` / `admin`
-*   **SonarQube**: `admin` / `admin`
-*   **Grafana**: `admin` / `admin`
 
 ---
-*Created as a Portfolio Masterpiece for DevOps Engineering.*
+*Created as the Containerization iteration for a DevOps Reference Architecture journey.*
