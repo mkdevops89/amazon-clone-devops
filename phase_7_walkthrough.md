@@ -27,39 +27,30 @@ cd ops/lambda/cost_optimizer
 pip3 install -r requirements.txt
 ```
 
-### Step 2: Test the Logic
-Create a temporary `test_local.py` file to invoke the handler:
+### Step 2: Stop the System (Simulate Night)
+Once the Lambda is deployed via Terraform, you can trigger it remotely using the AWS CLI.
 
+**Invoke the Lambda function (Stop):**
 ```bash
-cat <<EOF > test_local.py
-from index import lambda_handler
-
-# Verify the function loads and prints "Stop" action
-print("🚀 Simulating Nightly Stop Event...")
-lambda_handler({"action": "stop"}, {})
-EOF
+aws lambda invoke --function-name cost_terminator \
+  --payload '{"action": "stop"}' \
+  --cli-binary-format raw-in-base64-out \
+  response.json && cat response.json
 ```
+*Expected Output*: "Scale down", "Stop instances", or "cleanup".
 
-Run the test:
+### Step 3: Restore the System (Simulate Morning)
+To bring everything back up manually:
+
+**Invoke the Lambda function (Start):**
 ```bash
-# Ensure AWS Credentials are active
-export AWS_PROFILE=default  # Change if needed
-
-python3 test_local.py
-```
-*Expected Output*: Logs showing "Scale down", "Stop instances", or "cleanup".
-
-### Step 3: Restore the System (Start)
-To bring everything back up manually (simulate morning start):
-
-**Run this Python one-liner:**
-```bash
-cd ops/lambda/cost_optimizer
-python3 -c "from index import lambda_handler; lambda_handler({'action': 'start'}, {})"
+aws lambda invoke --function-name cost_terminator \
+  --payload '{"action": "start"}' \
+  --cli-binary-format raw-in-base64-out \
+  response.json && cat response.json
 ```
 *Expected Output*: "Restoring EKS Node Groups...", "Starting Dev EC2 Instances..."
 
-```
 ### Step 4: Tag Your Resources (Required)
 The automation **only** touches resources with the tag `Environment=Dev`. 
 If your instances are running after the test, they are likely missing this tag.
@@ -167,6 +158,9 @@ terraform apply -target=aws_lambda_function.cost_optimizer \
 ## 🧹 Cleanup (After Testing)
 To remove the local test files:
 ```bash
+# Return to the root of the repository
+cd ../../../
+
 rm ops/lambda/cost_optimizer/test_local.py
 rm ops/lambda/auto_healer/test_healer.py
 rm ops/cli/ops-check/ops-check
