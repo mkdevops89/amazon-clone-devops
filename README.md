@@ -85,11 +85,11 @@ graph TD
 
 To configure the GitHub Actions pipeline secrets and trigger your automated deployments, follow the Phase 6a Runbook.
 
-1. **[GitHub Actions Walkthrough (`phase_6_walkthrough.md`)](./phase_6_walkthrough.md)**
+1. **[GitHub Actions Walkthrough (`phase_6a_walkthrough.md`)](./phase_6a_walkthrough.md)**
    * Creating security tokens (SonarCloud).
    * Configuring AWS IAM Credentials as GitHub Action Secrets.
    * Triggering the CI (Security) and CD (Deploy) workflows.
-2. **[CI/CD Verification Tests (`phase_6_testcases.md`)](./phase_6_testcases.md)**
+2. **[CI/CD Verification Tests (`phase_6a_testcases.md`)](./phase_6a_testcases.md)**
    * Validating successful workflow executions.
    * Reviewing vulnerability reports from SonarCloud and ZAP.
 
@@ -106,8 +106,8 @@ To configure the GitHub Actions pipeline secrets and trigger your automated depl
 │   ├── k8s/                  # Kubernetes Manifests
 │   └── scripts/
 │       └── deploy_k8s.sh     # Executed automatically by the GitHub Action
-├── phase_6_testcases.md      # Verification procedures pipeline success
-└── phase_6_walkthrough.md    # Master Runbook for setting up GitHub Actions
+├── phase_6a_testcases.md      # Verification procedures pipeline success
+└── phase_6a_walkthrough.md    # Master Runbook for setting up GitHub Actions
 ```
 
 ---
