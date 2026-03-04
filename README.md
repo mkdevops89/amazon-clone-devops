@@ -34,7 +34,7 @@ graph TD
             
             %% Critical Tier
             subgraph CriticalNodes ["Critical Node Group (On-Demand)"]
-                label1[Label: intent=critical]
+                label1["Label: intent=critical"]
                 Jenkins[Jenkins Controller]
                 Nexus[Sonatype Nexus]
                 SonarQube[SonarQube Server]
@@ -42,7 +42,7 @@ graph TD
             
             %% Spot Tier
             subgraph SpotNodes ["Spot Node Group (Ephemeral/Cheap)"]
-                label2[Label: lifecycle=Ec2Spot]
+                label2["Label: lifecycle=Ec2Spot"]
                 Backend[Amazon Backend Pods]
                 Frontend[Amazon Frontend Pods]
             end
