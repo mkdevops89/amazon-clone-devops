@@ -1,103 +1,46 @@
-# 📦 Amazon-Like E-Commerce Platform (DevOps Reference Architecture)
+# 📦 Amazon-Like E-Commerce Platform (Phase 12: Ansible Configuration & Auditing)
 
-## 🚀 Project Overview
-This repository contains a production-grade, full-stack e-commerce application designed as a **DevOps Reference Architecture**. It demonstrates modern Cloud-Native practices, including Microservices, Infrastructure as Code (IaC), GitOps, and DevSecOps.
+## 🚀 Phase 12 Overview
+This branch (`phase-12-ansible`) introduces **Ansible** to the DevOps toolchain, showcasing how Configuration Management evolves in a modern cloud-native architecture.
 
-### 🏗 Architecture
-*   **Frontend**: Next.js 14 (React) with a Premium Custom UI.
-*   **Backend**: Spring Boot 3.2 (Java 17) REST API.
-*   **Database**: MySQL 8.0 (Primary) + Redis (Cache/Session).
-*   **Messaging**: RabbitMQ (Asynchronous Order Processing).
+Rather than using Ansible to forcefully mutate container state (which is an anti-pattern when using Kubernetes and ArgoCD), we demonstrate two distinct tracks of infrastructure management and compliance auditing:
 
-## 🛠 Technology Stack
+1. **Track A (The Pet)**: Managing traditional static infrastructure (like our secure EC2 Bastion host).
+2. **Track B (The Cattle)**: Utilizing AWS Dynamic Inventory to actively audit GitOps deliverables and auto-discover ephemeral EKS nodes.
 
-| Category | Tools Used | Location |
-|----------|------------|----------|
-| **Containerization** | Docker, Docker Compose | `Dockerfile`, `docker-compose.yml` |
-| **Orchestration** | Kubernetes (EKS/AKS/GKE), Helm | `ops/k8s`, `ops/helm` |
-| **Infrastructure (IaC)** | Terraform (AWS, Azure, GCP) | `ops/terraform` |
-| **CI/CD** | Jenkins, GitLab CI, Nexus | `Jenkinsfile`, `.gitlab-ci.yml` |
-| **GitOps** | ArgoCD | `ops/argocd` |
-| **Observability** | Prometheus, Grafana, Datadog | `ops/monitoring` |
-| **Security** | Trivy, Checkov, OWASP, SonarQube, **AWS Secrets Manager**, **External Secrets Operator** | CI Pipelines, `ops/k8s/secrets` |
-| **Provisioning** | Ansible, Vagrant | `ops/ansible`, `ops/vagrant` |
-
-## 🚀 Key Features (Enterprise Grade)
-
-### 🛡️ DevSecOps Pipeline
-*   **SAST**: SonarQube (Static Analysis)
-*   **SCA**: Snyk & Trivy (Dependency Scanning) - *[Added]*
-*   **DAST**: OWASP ZAP (Runtime Attacks) - *[Added]*
-*   **Container Security**: Trivy Image Scanning
-
-### ☁️ Advanced Infrastructure
-*   **Immutable Infrastructure**: HashiCorp Packer (AMI Baking)
-*   **Secret Management**: HashiCorp Vault (Dynamic Secrets)
-*   **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
-*   **GitOps**: ArgoCD (Continuous Deployment)
-*   **Service Mesh**: Istio (Traffic Management) - *[Added]*
-*   **IoC Wrapper**: Terragrunt (DRY Terraform) - *[Added]*
-
-
-## ⚡ Quick Start
-
-### Option 1: Docker Compose (Easiest)
-Run the full stack locally with one command:
-```bash
-docker-compose up -d --build
-```
-*   **Frontend**: [http://localhost:3000](http://localhost:3000)
-*   **Backend API**: [http://localhost:8080](http://localhost:8080)
-*   **SonarQube**: [http://localhost:9000](http://localhost:9000)
-
-### Option 2: Vagrant (VM Isolation)
-Spin up a self-contained Development VM:
-```bash
-cd ops/vagrant
-vagrant up
-```
-*   The VM will automatically provision Docker and start the app at `http://192.168.33.10:3000`.
-
-### Option 3: Kubernetes (Helm)
-Deploy to a cluster:
-```bash
-helm install amazon-shop ./ops/helm
-```
-
-
-## 📚 Documentation
-> **[Start Here: Project Documentation & Learning Guides](./docs/documentation.md)**
-All guides, architectural diagrams, and runbooks have been moved to the `docs/` directory.
+### 🛠️ Key Architectural Inclusions
+1. **AWS EC2 Dynamic Inventory (`aws_ec2.yaml`)**
+   * **The Capability**: Instead of maintaining a hardcoded list of IP addresses in a static `hosts` file, Ansible uses the AWS API (via `boto3`) to dynamically query our cloud account. 
+   * **The Polish**: Ansible automatically targets instances based purely on their Terraform Tags (e.g., `tag_Name_ansible_bastion` or `tag_eks_cluster_name_amazon_cluster`), meaning the inventory perfectly scales up alongside the EKS cluster.
+2. **Traditional Configuration Management (Track A)**
+   * **The Use Case**: The `admin-server.yaml` playbook targets our dedicated EC2 Bastion host. 
+   * **The Execution**: It locks down the host by installing `fail2ban`, explicitly denying `Root` SSH access over the network, configuring a secure custom `admin` user, and bootstrapping necessary DevOps CLIs (like `kubectl`, `helm`, and `docker`).
+3. **Dynamic GitOps Auditing (Track B)**
+   * **The Concept**: Since ArgoCD handles deploying the application code, we pivot Ansible into an external "Audit Engine".
+   * **The Execution**: The `health-checks.yaml` playbook runs locally and fires HTTP tests against the live API, Frontend, and Jenkins instances to definitively prove that the GitOps pipeline delivered the expected code to the public endpoints.
+4. **EKS Node Compliance (Track B)**
+   * **The Use Case**: The `eks-audit.yaml` playbook targets the dynamically discovered EKS worker nodes to ensure AWS management and security agents (like `amazon-ssm-agent` and `amazon-inspector-agent`) are actively running on the underlying hardware.
 
 ## 📂 Project Structure
-```
+```text
 .
-├── backend/            # Spring Boot Application
-├── docs/               # 📚 Project Documentation & Learning Guides
-│   ├── career/         # Resume & Interview Prep
-│   ├── diagrams/       # Architecture Diagrams
-│   └── learning/       # Step-by-Step DevOps Guides
-├── frontend/           # Next.js Application
-├── ops/                # DevOps Configurations
-│   ├── ansible/        # Configuration Management
-│   ├── argocd/         # GitOps Manifests
-│   ├── docker/         # Initialization Scripts
-│   ├── helm/           # Helm Charts
-│   ├── k8s/            # Raw Kubernetes Manifests
-│   ├── monitoring/     # Prometheus/Grafana Values
-│   ├── packer/         # AMI Maintenance
-│   ├── terraform/      # Legacy IaC
-│   ├── terragrunt/     # Advanced IaC (DRY)
-│   └── vagrant/        # VM Provisioning
-├── docker-compose.yml  # Local Orchestration
-├── Jenkinsfile         # Jenkins Pipeline
-└── .gitlab-ci.yml      # GitLab Pipeline
+├── .github/workflows/             # 🐙 GitHub Actions Pipelines (DevSecOps Scans & Unit Tests)
+├── .gitlab-ci.yml                 # 🦊 GitLab CI Pipeline (Legacy Deployments)
+├── Jenkinsfile                    # 🕴️ Jenkins Pipeline (GitOps Image Building & Helm Commits)
+├── backend/                       # ✅ Spring Boot App 
+├── frontend/                      # ✅ React App 
+└── ops/
+    ├── ansible/                   # ⚙️ Ansible Configuration Management
+    │   ├── inventory/             
+    │   │   └── aws_ec2.yaml       # Dynamic AWS Account querying plugin
+    │   └── playbooks/
+    │       ├── admin-server.yaml  # Configures & secures the EC2 Bastion host
+    │       ├── eks-audit.yaml     # Audits the AWS EKS Worker Nodes
+    │       └── health-checks.yaml # HTTP tester for public GitOps endpoints
+    ├── helm/                      # ☸️ The Portable Amazon-App Helm Chart
+    ├── k8s/                       # 🐙 ArgoCD Application definition manifest
+    └── terraform/                 # 🏗️ Terraform (Now provisions the EC2 Bastion Host)
 ```
-
-## 🔐 Credentials (Demo)
-*   **User/Pass**: `admin` / `admin`
-*   **SonarQube**: `admin` / `admin`
-*   **Grafana**: `admin` / `admin`
 
 ---
-*Created as a Portfolio Masterpiece for DevOps Engineering.*
+*Created as the Configuration Management iteration for a DevOps Reference Architecture journey.*
