@@ -1,103 +1,74 @@
-# 📦 Amazon-Like E-Commerce Platform (DevOps Reference Architecture)
+# 📦 Amazon-Like E-Commerce Platform (Phase 11: Advanced CI & GitOps)
 
-## 🚀 Project Overview
-This repository contains a production-grade, full-stack e-commerce application designed as a **DevOps Reference Architecture**. It demonstrates modern Cloud-Native practices, including Microservices, Infrastructure as Code (IaC), GitOps, and DevSecOps.
+## 🚀 Phase 11 Overview
+This branch (`phase-11-gitops`) graduates the repository from "Basic Automation" to a **"Senior/Staff" Architecture**. 
 
-### 🏗 Architecture
-*   **Frontend**: Next.js 14 (React) with a Premium Custom UI.
-*   **Backend**: Spring Boot 3.2 (Java 17) REST API.
-*   **Database**: MySQL 8.0 (Primary) + Redis (Cache/Session).
-*   **Messaging**: RabbitMQ (Asynchronous Order Processing).
+We tackle the ultimate cloud-native maturity goal: **GitOps**. By replacing our static Kubernetes manifests with dynamic Helm Charts, and delegating the cluster synchronization to **ArgoCD**, the Git repository becomes the single source of truth for all environments. 
 
-## 🛠 Technology Stack
+In parallel, we execute deep container hardening (running as non-root users, utilizing layered JAR caching) and expand our hybrid CI/CD toolchain to leverage GitHub Actions for deep application testing and Jenkins for GitOps automation.
 
-| Category | Tools Used | Location |
-|----------|------------|----------|
-| **Containerization** | Docker, Docker Compose | `Dockerfile`, `docker-compose.yml` |
-| **Orchestration** | Kubernetes (EKS/AKS/GKE), Helm | `ops/k8s`, `ops/helm` |
-| **Infrastructure (IaC)** | Terraform (AWS, Azure, GCP) | `ops/terraform` |
-| **CI/CD** | Jenkins, GitLab CI, Nexus | `Jenkinsfile`, `.gitlab-ci.yml` |
-| **GitOps** | ArgoCD | `ops/argocd` |
-| **Observability** | Prometheus, Grafana, Datadog | `ops/monitoring` |
-| **Security** | Trivy, Checkov, OWASP, SonarQube, **AWS Secrets Manager**, **External Secrets Operator** | CI Pipelines, `ops/k8s/secrets` |
-| **Provisioning** | Ansible, Vagrant | `ops/ansible`, `ops/vagrant` |
+### 🛠️ Key Architectural Shifts
+1. **GitHub Actions (`ci.yaml`) - The DevSecOps Engine**
+   * **The Role**: Executes rapid feedback loops. It compiles the Java/Next.js code, runs unit tests, executes Snyk dependency scanning, and performs Trivy docker image scanning (passing or failing the build before it ever reaches Staging).
+2. **Jenkins - The GitOps Trigger**
+   * **The Role**: The `Jenkinsfile` is now a deterministic GitOps orchestrator. It builds the Docker images, tags them with the exact Git commit SHA (e.g., `amazon-backend:a1b2c3d`), pushes them to ECR, and then *automatically commits* that new SHA tag into the `values.yaml` file of the Helm Chart.
+3. **ArgoCD - The GitOps Controller**
+   * **The Role**: An ArgoCD server runs inside the EKS cluster, constantly watching the `ops/helm/amazon-app/` directory in GitHub. When Jenkins pushes a new image tag to the `values.yaml` file, ArgoCD detects the drift and automatically synchronizes the cluster to match the exact state defined in Git.
+   * **Features**: State Persistence (Redis PVC), Custom Route53 DNS (`argocd.devcloudproject.com`), and Prometheus metric scraping.
+4. **Helmification & Docker Hardening**
+   * **Helm**: Replaced static YAMLs with a scalable `amazon-app` Helm Chart, allowing infinite environment deployments (Dev, Staging, Prod) purely by supplying different variables.
+   * **Docker**: Refactored the `Dockerfile`s to run as low-privilege `spring` and `nextjs` users. Enabled Maven Layered JARs to aggressively cache 400MB+ dependencies.
 
-## 🚀 Key Features (Enterprise Grade)
-
-### 🛡️ DevSecOps Pipeline
-*   **SAST**: SonarQube (Static Analysis)
-*   **SCA**: Snyk & Trivy (Dependency Scanning) - *[Added]*
-*   **DAST**: OWASP ZAP (Runtime Attacks) - *[Added]*
-*   **Container Security**: Trivy Image Scanning
-
-### ☁️ Advanced Infrastructure
-*   **Immutable Infrastructure**: HashiCorp Packer (AMI Baking)
-*   **Secret Management**: HashiCorp Vault (Dynamic Secrets)
-*   **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
-*   **GitOps**: ArgoCD (Continuous Deployment)
-*   **Service Mesh**: Istio (Traffic Management) - *[Added]*
-*   **IoC Wrapper**: Terragrunt (DRY Terraform) - *[Added]*
-
-
-## ⚡ Quick Start
-
-### Option 1: Docker Compose (Easiest)
-Run the full stack locally with one command:
-```bash
-docker-compose up -d --build
+```mermaid
+graph TD
+    %% Dev Flow
+    Dev[Developer] -->|Push Code| GithubRepo[GitHub Repository]
+    GithubRepo -->|Trigger| GHA[GitHub Actions\n(ci.yaml)]
+    
+    %% CI Layer
+    subgraph CI ["Continuous Integration (CI)"]
+        GHA -.->|Run| Tests[Unit Tests & Snyk]
+        GHA -.->|Run| Security[Trivy & DAST]
+        Jenkins[Jenkins Pipeline\n(Jenkinsfile)]
+    end
+    
+    GithubRepo -->|Trigger| Jenkins
+    Jenkins -->|1. Build & Tag\n(Git SHA)| ECR[AWS ECR]
+    Jenkins -->|2. Git Commit\n(values.yaml)| GithubRepo
+    
+    %% CD / GitOps Layer
+    subgraph GitOps ["Continuous Deployment (GitOps)"]
+        Argo[ArgoCD Controller]
+    end
+    
+    Argo -.->|3. Watch Changes| GithubRepo
+    Argo -->|4. Sync Cluster| EKS[EKS Cluster\n(Helm Chart Deployment)]
+    
+    %% Styling
+    classDef aws fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
+    classDef ci fill:#e1f5fe,stroke:#0288d1,color:black,stroke-width:1px
+    classDef cd fill:#e8f5e9,stroke:#388e3c,color:black,stroke-width:1px
+    
+    class ECR,EKS aws
+    class GHA,Jenkins,Tests,Security ci
+    class Argo cd
 ```
-*   **Frontend**: [http://localhost:3000](http://localhost:3000)
-*   **Backend API**: [http://localhost:8080](http://localhost:8080)
-*   **SonarQube**: [http://localhost:9000](http://localhost:9000)
-
-### Option 2: Vagrant (VM Isolation)
-Spin up a self-contained Development VM:
-```bash
-cd ops/vagrant
-vagrant up
-```
-*   The VM will automatically provision Docker and start the app at `http://192.168.33.10:3000`.
-
-### Option 3: Kubernetes (Helm)
-Deploy to a cluster:
-```bash
-helm install amazon-shop ./ops/helm
-```
-
-
-## 📚 Documentation
-> **[Start Here: Project Documentation & Learning Guides](./docs/documentation.md)**
-All guides, architectural diagrams, and runbooks have been moved to the `docs/` directory.
 
 ## 📂 Project Structure
-```
+```text
 .
-├── backend/            # Spring Boot Application
-├── docs/               # 📚 Project Documentation & Learning Guides
-│   ├── career/         # Resume & Interview Prep
-│   ├── diagrams/       # Architecture Diagrams
-│   └── learning/       # Step-by-Step DevOps Guides
-├── frontend/           # Next.js Application
-├── ops/                # DevOps Configurations
-│   ├── ansible/        # Configuration Management
-│   ├── argocd/         # GitOps Manifests
-│   ├── docker/         # Initialization Scripts
-│   ├── helm/           # Helm Charts
-│   ├── k8s/            # Raw Kubernetes Manifests
-│   ├── monitoring/     # Prometheus/Grafana Values
-│   ├── packer/         # AMI Maintenance
-│   ├── terraform/      # Legacy IaC
-│   ├── terragrunt/     # Advanced IaC (DRY)
-│   └── vagrant/        # VM Provisioning
-├── docker-compose.yml  # Local Orchestration
-├── Jenkinsfile         # Jenkins Pipeline
-└── .gitlab-ci.yml      # GitLab Pipeline
+├── .github/workflows/             # 🐙 GitHub Actions Pipelines (DevSecOps Scans & Unit Tests)
+├── .gitlab-ci.yml                 # 🦊 GitLab CI Pipeline (Legacy UI/API Deployments)
+├── Jenkinsfile                    # 🕴️ Jenkins Pipeline (GitOps Automation & SHA Tagging)
+├── backend/                       # ✅ Spring Boot App (Layered JARs & Non-Root Docker)
+├── frontend/                      # ✅ React App (Next.js Standalone Build & Non-Root Docker)
+└── ops/
+    ├── helm/                      # ☸️ The Portable Amazon-App Helm Chart
+    ├── k8s/                       
+    │   └── argocd-app.yaml        # 🐙 ArgoCD Application definition manifest
+    └── scripts/                   
+        └── deploy_k8s.sh          # Legacy deployment script (Deprecating in favor of ArgoCD)
 ```
-
-## 🔐 Credentials (Demo)
-*   **User/Pass**: `admin` / `admin`
-*   **SonarQube**: `admin` / `admin`
-*   **Grafana**: `admin` / `admin`
 
 ---
-*Created as a Portfolio Masterpiece for DevOps Engineering.*
+*Created as the Advanced CI & GitOps iteration for a DevOps Reference Architecture journey.*
