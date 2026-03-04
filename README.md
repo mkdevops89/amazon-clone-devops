@@ -1,103 +1,115 @@
-# 📦 Amazon-Like E-Commerce Platform (DevOps Reference Architecture)
+# 📦 Amazon-Like E-Commerce Platform (Phase 4.5: Observability)
 
-## 🚀 Project Overview
-This repository contains a production-grade, full-stack e-commerce application designed as a **DevOps Reference Architecture**. It demonstrates modern Cloud-Native practices, including Microservices, Infrastructure as Code (IaC), GitOps, and DevSecOps.
+## 🚀 Phase 4.5 Overview
+This branch (`phase-4.5-observability`) introduces **"Eyes on Glass" Observability** to our Kubernetes application using the **Kube Prometheus Stack**. 
 
-### 🏗 Architecture
-*   **Frontend**: Next.js 14 (React) with a Premium Custom UI.
-*   **Backend**: Spring Boot 3.2 (Java 17) REST API.
-*   **Database**: MySQL 8.0 (Primary) + Redis (Cache/Session).
-*   **Messaging**: RabbitMQ (Asynchronous Order Processing).
+Building upon the EKS deployments from Phase 4, this phase implements an industry-standard monitoring and alerting foundation. By deploying Prometheus to scrape metrics and Grafana to visualize them, we gain critical real-time insights into exactly how the Java backend and Node.js frontend perform under load.
 
-## 🛠 Technology Stack
+This transition from "blindly running" code to actively monitoring resource consumption (CPU/Memory) and application health (Request Latency/Throughput) is a crucial step towards production readiness.
 
-| Category | Tools Used | Location |
-|----------|------------|----------|
-| **Containerization** | Docker, Docker Compose | `Dockerfile`, `docker-compose.yml` |
-| **Orchestration** | Kubernetes (EKS/AKS/GKE), Helm | `ops/k8s`, `ops/helm` |
-| **Infrastructure (IaC)** | Terraform (AWS, Azure, GCP) | `ops/terraform` |
-| **CI/CD** | Jenkins, GitLab CI, Nexus | `Jenkinsfile`, `.gitlab-ci.yml` |
-| **GitOps** | ArgoCD | `ops/argocd` |
-| **Observability** | Prometheus, Grafana, Datadog | `ops/monitoring` |
-| **Security** | Trivy, Checkov, OWASP, SonarQube, **AWS Secrets Manager**, **External Secrets Operator** | CI Pipelines, `ops/k8s/secrets` |
-| **Provisioning** | Ansible, Vagrant | `ops/ansible`, `ops/vagrant` |
+### 🏗 Observability Architecture
+*   **Orchestrator**: Helm (Kubernetes Package Manager)
+*   **Metrics Engine**: **Prometheus** (Time-series database and scraper)
+*   **Visualization**: **Grafana** (Dashboards for JVM and Node.js metrics)
+*   **Alerting**: Alertmanager (Routing critical system alerts)
+*   **Target Selection**: `ServiceMonitor` Custom Resource Definitions (CRDs) actively discovering application endpoints (`/actuator/prometheus`).
 
-## 🚀 Key Features (Enterprise Grade)
+```mermaid
+graph TD
+    %% Users
+    Admin([DevOps / SRE])
+    Users([Customers])
 
-### 🛡️ DevSecOps Pipeline
-*   **SAST**: SonarQube (Static Analysis)
-*   **SCA**: Snyk & Trivy (Dependency Scanning) - *[Added]*
-*   **DAST**: OWASP ZAP (Runtime Attacks) - *[Added]*
-*   **Container Security**: Trivy Image Scanning
+    subgraph AWS ["AWS Elastic Kubernetes Service (EKS)"]
+        
+        %% Core Application Space
+        subgraph AppNamespace ["Application Namespace (default)"]
+            SvcFront[Frontend Service]
+            SvcBack[Backend Service]
+            
+            PodFront1(Frontend Pod 1)
+            PodFront2(Frontend Pod 2)
+            
+            PodBack1(Backend Pod 1)
+            PodBack2(Backend Pod 2)
+            
+            %% Describe traffic flow
+            SvcFront --> PodFront1 & PodFront2
+            SvcBack --> PodBack1 & PodBack2
+        end
+        
+        %% Observability Space
+        subgraph MonNamespace ["Monitoring Namespace (monitoring)"]
+            
+            %% Grafana
+            Grafana{{"Grafana Dashboard"}}
+            
+            %% Prometheus Stack
+            Prometheus[("Prometheus Server")]
+            Alertmanager[Alertmanager]
+            
+            %% Service Monitors tell Prom what to scrape
+            SvcMonBack[ServiceMonitor: backend]
+            
+            %% Discovery Flow
+            SvcMonBack -.->|Discovers| SvcBack
+        end
+    end
 
-### ☁️ Advanced Infrastructure
-*   **Immutable Infrastructure**: HashiCorp Packer (AMI Baking)
-*   **Secret Management**: HashiCorp Vault (Dynamic Secrets)
-*   **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
-*   **GitOps**: ArgoCD (Continuous Deployment)
-*   **Service Mesh**: Istio (Traffic Management) - *[Added]*
-*   **IoC Wrapper**: Terragrunt (DRY Terraform) - *[Added]*
+    %% Human Interaction
+    Admin -->|Views Metrics| Grafana
+    Admin -.->|Receives Alerts| Alertmanager
+    Users -->|Uses App| SvcFront
+    
+    %% Prometheus Internal Flow
+    Grafana -->|Queries Data| Prometheus
+    Prometheus -->|Triggers| Alertmanager
+    
+    %% Scraping Flow
+    Prometheus -->|Scrapes /actuator/prometheus| PodBack1 & PodBack2
 
-
-## ⚡ Quick Start
-
-### Option 1: Docker Compose (Easiest)
-Run the full stack locally with one command:
-```bash
-docker-compose up -d --build
+    %% Styling
+    classDef aws fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
+    classDef app fill:#d4ecd3,stroke:#388e3c,color:black
+    classDef svc fill:#ffeb3b,stroke:#fbc02d,color:black
+    classDef mon fill:#d2e5f3,stroke:#175182,color:white,stroke-width:2px
+    classDef dash fill:#ed7d31,stroke:#c55a11,color:white,stroke-width:2px,shape:hexagon
+    
+    class AWS aws
+    class PodFront1,PodFront2,PodBack1,PodBack2 app
+    class SvcFront,SvcBack svc
+    class Prometheus,Alertmanager,SvcMonBack mon
+    class Grafana dash
 ```
-*   **Frontend**: [http://localhost:3000](http://localhost:3000)
-*   **Backend API**: [http://localhost:8080](http://localhost:8080)
-*   **SonarQube**: [http://localhost:9000](http://localhost:9000)
 
-### Option 2: Vagrant (VM Isolation)
-Spin up a self-contained Development VM:
-```bash
-cd ops/vagrant
-vagrant up
-```
-*   The VM will automatically provision Docker and start the app at `http://192.168.33.10:3000`.
+## 🔭 Monitoring Setup (Runbooks)
 
-### Option 3: Kubernetes (Helm)
-Deploy to a cluster:
-```bash
-helm install amazon-shop ./ops/helm
-```
+To easily deploy the Observability Stack onto your existing EKS cluster, follow the Phase 4.5 Runbook.
 
-
-## 📚 Documentation
-> **[Start Here: Project Documentation & Learning Guides](./docs/documentation.md)**
-All guides, architectural diagrams, and runbooks have been moved to the `docs/` directory.
+1. **[Observability Deployment Runbook (`phase_4.5_walkthrough.md`)](./phase_4.5_walkthrough.md)**
+   * Using Helm to install the `kube-prometheus-stack`.
+   * Configuring the `ServiceMonitor` to discover the Spring Boot application.
+   * Accessing Grafana and importing standard JVM tracking dashboards.
+2. **[Observability Verification Tests (`phase_4.5_testcases.md`)](./phase_4.5_testcases.md)**
+   * Validating that metrics are successfully ingested.
+   * Simulating traffic to observe live Grafana graph spikes.
 
 ## 📂 Project Structure
-```
+```text
 .
-├── backend/            # Spring Boot Application
-├── docs/               # 📚 Project Documentation & Learning Guides
-│   ├── career/         # Resume & Interview Prep
-│   ├── diagrams/       # Architecture Diagrams
-│   └── learning/       # Step-by-Step DevOps Guides
-├── frontend/           # Next.js Application
-├── ops/                # DevOps Configurations
-│   ├── ansible/        # Configuration Management
-│   ├── argocd/         # GitOps Manifests
-│   ├── docker/         # Initialization Scripts
-│   ├── helm/           # Helm Charts
-│   ├── k8s/            # Raw Kubernetes Manifests
-│   ├── monitoring/     # Prometheus/Grafana Values
-│   ├── packer/         # AMI Maintenance
-│   ├── terraform/      # Legacy IaC
-│   ├── terragrunt/     # Advanced IaC (DRY)
-│   └── vagrant/        # VM Provisioning
-├── docker-compose.yml  # Local Orchestration
-├── Jenkinsfile         # Jenkins Pipeline
-└── .gitlab-ci.yml      # GitLab Pipeline
+├── backend/                  # Application code (exports /actuator/prometheus)
+├── frontend/                 # Application code
+├── ops/
+│   ├── k8s/
+│   │   ├── backend.yaml      # Includes annotations for Prometheus scraping
+│   │   └── monitoring/       # 📊 Observability Configuration
+│   │       ├── backend-monitor.yaml    # ServiceMonitor for Backend
+│   │       └── prometheus-values.yaml  # Custom Helm overrides for the Stack
+│   └── scripts/
+│       └── ...               # Deployment scripts from previous phases
+├── phase_4.5_testcases.md    # Verification procedures for ingested metrics
+└── phase_4.5_walkthrough.md  # Master Runbook for Helm/Prometheus installation
 ```
-
-## 🔐 Credentials (Demo)
-*   **User/Pass**: `admin` / `admin`
-*   **SonarQube**: `admin` / `admin`
-*   **Grafana**: `admin` / `admin`
 
 ---
-*Created as a Portfolio Masterpiece for DevOps Engineering.*
+*Created as the Observability iteration for a DevOps Reference Architecture journey.*
