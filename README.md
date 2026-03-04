@@ -20,10 +20,13 @@ Additionally, we mature the Terraform codebase by migrating from local state fil
    * **The Process**: The `main.tf` configuration was updated to use a remote `s3` backend. This safely stores the infrastructure state in AWS, enables team collaboration via DynamoDB locking, and prevents accidental drift or state corruption.
 5. **Hybrid Node Resizing**
    * **The Process**: The EKS managed node groups were resized and the EKS module was strictly pinned to version `20.33.1` to prevent Terraform drift detection issues observed during CI/CD pipeline runs. Jenkins and SonarQube CPU requests were also downsized to guarantee scheduling.
+6. **GitLab CI Deployments**
+   * **The Process**: The application code updates in this phase are deployed via the `.gitlab-ci.yml` pipeline (inherited from Phase 6). The pipeline builds the application, scans the artifacts, and pushes the new manifests to the EKS cluster.
 
 ## 📂 Project Structure
 ```text
 .
+├── .gitlab-ci.yml                 # 🦊 GitLab CI Pipeline (Deploying Phase 10 Updates)
 ├── backend/                       # ✅ Spring Boot App (API Bug Fixes applied)
 ├── frontend/                      # ✅ React App (Cart Sync & UI Modernization applied)
 └── ops/
