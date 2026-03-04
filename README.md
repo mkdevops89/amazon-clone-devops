@@ -20,14 +20,15 @@ Additionally, we mature the Terraform codebase by migrating from local state fil
    * **The Process**: The `main.tf` configuration was updated to use a remote `s3` backend. This safely stores the infrastructure state in AWS, enables team collaboration via DynamoDB locking, and prevents accidental drift or state corruption.
 5. **Hybrid Node Resizing**
    * **The Process**: The EKS managed node groups were resized and the EKS module was strictly pinned to version `20.33.1` to prevent Terraform drift detection issues observed during CI/CD pipeline runs. Jenkins and SonarQube CPU requests were also downsized to guarantee scheduling.
-6. **Dual CI/CD Deployments (GitHub Actions & GitLab CI)**
-   * **The Process**: The application code updates and infrastructure sizing fixes in this phase were actively deployed using both `.github/workflows/` (for DevSecOps scans and EKS app deployment) and `.gitlab-ci.yml` pipelines, showcasing a flexible hybrid CI/CD strategy.
+6. **Triple CI/CD Deployments (GitHub Actions, GitLab CI & Jenkins)**
+   * **The Process**: The application code updates and infrastructure sizing fixes in this phase were actively deployed using a flexible, hybrid combination of three different pipeline orchestrators: `.github/workflows/`, `.gitlab-ci.yml`, and a newly polished `Jenkinsfile`.
 
 ## 📂 Project Structure
 ```text
 .
 ├── .github/workflows/             # 🐙 GitHub Actions Pipelines (DevSecOps CI & EKS Deploy)
 ├── .gitlab-ci.yml                 # 🦊 GitLab CI Pipeline (Deploying Phase 10 Updates)
+├── Jenkinsfile                    # 🕴️ Jenkins Pipeline (Phase 10 Hybrid CI/CD Orchestration)
 ├── backend/                       # ✅ Spring Boot App (API Bug Fixes applied)
 ├── frontend/                      # ✅ React App (Cart Sync & UI Modernization applied)
 └── ops/
