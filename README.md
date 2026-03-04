@@ -18,6 +18,8 @@ In parallel, we execute deep container hardening (running as non-root users, uti
 4. **Helmification & Docker Hardening**
    * **Helm**: Replaced static YAMLs with a scalable `amazon-app` Helm Chart, allowing infinite environment deployments (Dev, Staging, Prod) purely by supplying different variables.
    * **Docker**: Refactored the `Dockerfile`s to run as low-privilege `spring` and `nextjs` users. Enabled Maven Layered JARs to aggressively cache 400MB+ dependencies.
+5. **FinOps Observability Restoration (`cost-exporter`)**
+   * **The Fix**: The custom Python `cost-exporter` service (originally built in Phase 8.5 to scrape the AWS Billing API and feed the Grafana `finops.json` dashboard) was accidentally lost during a previous phase transition. This branch explicitly restored the service and its accompanying Kubernetes ServiceMonitors to ensure the FinOps dashboard remains operational under the new GitOps architecture.
 
 ```mermaid
 graph TD
@@ -63,6 +65,7 @@ graph TD
 ├── backend/                       # ✅ Spring Boot App (Layered JARs & Non-Root Docker)
 ├── frontend/                      # ✅ React App (Next.js Standalone Build & Non-Root Docker)
 └── ops/
+    ├── cost-exporter/             # 💸 Python FinOps Exporter (Restored for AWS Billing Metrics)
     ├── helm/                      # ☸️ The Portable Amazon-App Helm Chart
     ├── k8s/                       
     │   └── argocd-app.yaml        # 🐙 ArgoCD Application definition manifest
