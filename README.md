@@ -1,103 +1,114 @@
-# 📦 Amazon-Like E-Commerce Platform (DevOps Reference Architecture)
+# 📦 Amazon-Like E-Commerce Platform (Phase 8: Advanced FinOps & Optimization)
 
-## 🚀 Project Overview
-This repository contains a production-grade, full-stack e-commerce application designed as a **DevOps Reference Architecture**. It demonstrates modern Cloud-Native practices, including Microservices, Infrastructure as Code (IaC), GitOps, and DevSecOps.
+## 🚀 Phase 8 Overview
+This branch (`phase-8-finops`) represents the **Advanced Financial Operations (FinOps) and Optimization** milestone of our production-grade e-commerce application. 
 
-### 🏗 Architecture
-*   **Frontend**: Next.js 14 (React) with a Premium Custom UI.
-*   **Backend**: Spring Boot 3.2 (Java 17) REST API.
-*   **Database**: MySQL 8.0 (Primary) + Redis (Cache/Session).
-*   **Messaging**: RabbitMQ (Asynchronous Order Processing).
+As cloud infrastructure scales, costs can rapidly spiral out of control. This phase focuses entirely on cost reduction, workload optimization, and budget safety using a combination of Terraform infrastructure changes and Kubernetes scheduling intelligence.
 
-## 🛠 Technology Stack
+By splitting our single monolithic EKS Node Group into a **Hybrid Architecture** (combining reliable On-Demand "Critical" nodes with cheap, ephemeral "Spot" nodes) and pinning our stateful applications to the critical tier, we dramatically lower our monthly AWS bill without sacrificing the stability of our CI/CD toolchain.
 
-| Category | Tools Used | Location |
-|----------|------------|----------|
-| **Containerization** | Docker, Docker Compose | `Dockerfile`, `docker-compose.yml` |
-| **Orchestration** | Kubernetes (EKS/AKS/GKE), Helm | `ops/k8s`, `ops/helm` |
-| **Infrastructure (IaC)** | Terraform (AWS, Azure, GCP) | `ops/terraform` |
-| **CI/CD** | Jenkins, GitLab CI, Nexus | `Jenkinsfile`, `.gitlab-ci.yml` |
-| **GitOps** | ArgoCD | `ops/argocd` |
-| **Observability** | Prometheus, Grafana, Datadog | `ops/monitoring` |
-| **Security** | Trivy, Checkov, OWASP, SonarQube, **AWS Secrets Manager**, **External Secrets Operator** | CI Pipelines, `ops/k8s/secrets` |
-| **Provisioning** | Ansible, Vagrant | `ops/ansible`, `ops/vagrant` |
+### 💸 FinOps Architecture & Features
+1. **Hybrid EKS Node Groups (Spot + On-Demand)**
+   * **Technology**: AWS EKS, EC2 Spot Instances, Terraform.
+   * **Purpose**: Provisions a "Critical" Node Group (On-Demand) for stable databases and CI/CD tools, alongside a "Spot" Node Group (excess AWS capacity at up to 90% discount) for stateless application replicas.
+2. **Intelligent Kubernetes Scheduling**
+   * **Technology**: Kubernetes `nodeSelector` and `nodeAffinity`.
+   * **Purpose**: Modifies the `jenkins.yaml`, `nexus.yaml`, and `sonarqube.yaml` manifests to explicitly bind these stateful applications to the `intent=critical` nodes, preventing them from being evicted when AWS reclaims Spot instances.
+3. **Automated Cost Protection (AWS Budgets)**
+   * **Technology**: AWS Budgets (via Terraform).
+   * **Purpose**: Acts as a financial safety net native to AWS. If the projected monthly cost of the environment exceeds the defined limit ($50), an alert is immediately triggered.
+4. **Right-Sizing AI & Memory Pressure Checks**
+   * **Technology**: Go (Custom CLI), Python (AWS Lambda).
+   * **Purpose**: Enhances the Phase 7 automation scripts. The `ops-check` CLI now actively detects Memory and Disk pressure across the cluster, while the `cost_optimizer` Lambda analyzes CPU utilization trends to recommend EC2 instance downgrades.
 
-## 🚀 Key Features (Enterprise Grade)
+```mermaid
+graph TD
+    %% AWS Environment
+    subgraph AWS ["Amazon Web Services (AWS)"]
+        
+        %% AWS Billing
+        Budget((AWS Budget\nAlert limit: $50))
+        
+        %% EKS Cluster
+        subgraph EKS ["AWS Elastic Kubernetes Service (EKS)"]
+            
+            %% Critical Tier
+            subgraph CriticalNodes ["Critical Node Group (On-Demand)"]
+                label1[Label: intent=critical]
+                Jenkins[Jenkins Controller]
+                Nexus[Sonatype Nexus]
+                SonarQube[SonarQube Server]
+            end
+            
+            %% Spot Tier
+            subgraph SpotNodes ["Spot Node Group (Ephemeral/Cheap)"]
+                label2[Label: lifecycle=Ec2Spot]
+                Backend[Amazon Backend Pods]
+                Frontend[Amazon Frontend Pods]
+            end
+        end
+    end
 
-### 🛡️ DevSecOps Pipeline
-*   **SAST**: SonarQube (Static Analysis)
-*   **SCA**: Snyk & Trivy (Dependency Scanning) - *[Added]*
-*   **DAST**: OWASP ZAP (Runtime Attacks) - *[Added]*
-*   **Container Security**: Trivy Image Scanning
+    %% Scheduling Rules
+    Jenkins -.->|nodeSelector| CriticalNodes
+    Nexus -.->|nodeSelector| CriticalNodes
+    SonarQube -.->|nodeSelector| CriticalNodes
+    Backend -.->|Scheduled by K8s| SpotNodes
+    Frontend -.->|Scheduled by K8s| SpotNodes
 
-### ☁️ Advanced Infrastructure
-*   **Immutable Infrastructure**: HashiCorp Packer (AMI Baking)
-*   **Secret Management**: HashiCorp Vault (Dynamic Secrets)
-*   **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
-*   **GitOps**: ArgoCD (Continuous Deployment)
-*   **Service Mesh**: Istio (Traffic Management) - *[Added]*
-*   **IoC Wrapper**: Terragrunt (DRY Terraform) - *[Added]*
+    %% Observation Tools
+    subgraph Tools ["FinOps Observation Tooling"]
+        CostLambda[Python Cost Optimizer Lambda\n(Right-Sizing Intelligence)]
+        GoCLI[Go Ops-Check CLI\n(Checks Memory/Disk Pressure)]
+    end
 
+    CostLambda -.->|Analyzes CPU Metrics| AWS
+    GoCLI -.->|Queries Kube API| EKS
+    EKS -.->|Incurs Cost| Budget
 
-## ⚡ Quick Start
-
-### Option 1: Docker Compose (Easiest)
-Run the full stack locally with one command:
-```bash
-docker-compose up -d --build
+    %% Styling
+    classDef aws fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
+    classDef spot fill:#dcedc8,stroke:#689f38,color:black,stroke-width:2px
+    classDef critical fill:#ffcc80,stroke:#e65100,color:black,stroke-width:2px
+    classDef app fill:#e1f5fe,stroke:#0288d1,color:black,stroke-width:1px
+    classDef billing fill:#4caf50,stroke:#1b5e20,color:white,stroke-width:2px
+    classDef tool fill:#8e44ad,stroke:#5e3370,color:white,stroke-width:2px
+    
+    class AWS,EKS aws
+    class SpotNodes spot
+    class CriticalNodes critical
+    class Jenkins,Nexus,SonarQube,Backend,Frontend app
+    class Budget billing
+    class CostLambda,GoCLI tool
 ```
-*   **Frontend**: [http://localhost:3000](http://localhost:3000)
-*   **Backend API**: [http://localhost:8080](http://localhost:8080)
-*   **SonarQube**: [http://localhost:9000](http://localhost:9000)
 
-### Option 2: Vagrant (VM Isolation)
-Spin up a self-contained Development VM:
-```bash
-cd ops/vagrant
-vagrant up
-```
-*   The VM will automatically provision Docker and start the app at `http://192.168.33.10:3000`.
+## 🛠 FinOps Setup (Runbooks)
 
-### Option 3: Kubernetes (Helm)
-Deploy to a cluster:
-```bash
-helm install amazon-shop ./ops/helm
-```
+To provision the Hybrid Spot Architecture, enforce the Kubernetes scheduling constraints, and run the new optimization tooling, follow the Phase 8 Execution Guide.
 
-
-## 📚 Documentation
-> **[Start Here: Project Documentation & Learning Guides](./docs/documentation.md)**
-All guides, architectural diagrams, and runbooks have been moved to the `docs/` directory.
+1. **[Advanced FinOps Walkthrough (`phase_8_walkthrough.md`)](./phase_8_walkthrough.md)**
+   * Applying the updated Terraform to split the EKS Node Groups and create the AWS Budget.
+   * Applying the updated Kubernetes manifests to pin stateful apps to the Critical Nodes.
+   * Verifying the cluster's mixed capacity architecture using `kubectl get nodes`.
 
 ## 📂 Project Structure
-```
+```text
 .
-├── backend/            # Spring Boot Application
-├── docs/               # 📚 Project Documentation & Learning Guides
-│   ├── career/         # Resume & Interview Prep
-│   ├── diagrams/       # Architecture Diagrams
-│   └── learning/       # Step-by-Step DevOps Guides
-├── frontend/           # Next.js Application
-├── ops/                # DevOps Configurations
-│   ├── ansible/        # Configuration Management
-│   ├── argocd/         # GitOps Manifests
-│   ├── docker/         # Initialization Scripts
-│   ├── helm/           # Helm Charts
-│   ├── k8s/            # Raw Kubernetes Manifests
-│   ├── monitoring/     # Prometheus/Grafana Values
-│   ├── packer/         # AMI Maintenance
-│   ├── terraform/      # Legacy IaC
-│   ├── terragrunt/     # Advanced IaC (DRY)
-│   └── vagrant/        # VM Provisioning
-├── docker-compose.yml  # Local Orchestration
-├── Jenkinsfile         # Jenkins Pipeline
-└── .gitlab-ci.yml      # GitLab Pipeline
+├── backend/                       # Source Code 
+├── frontend/                      # Source Code
+├── ops/
+│   ├── cli/
+│   │   └── ops-check/             # Enhanced Go CLI (Memory/Disk pressure checks)
+│   ├── k8s/                       
+│   │   ├── jenkins/               # Jenkins Manifests (Added nodeSelector)
+│   │   ├── nexus/                 # Nexus Manifests (Added nodeSelector)
+│   │   └── sonarqube/             # SonarQube Manifests (Added nodeSelector)
+│   ├── lambda/
+│   │   └── cost_optimizer/        # Enhanced Python Lambda (Right-Sizing AI logic)
+│   └── terraform/
+│       └── aws/                   # 🪣 IaC updated for Spot Nodes and Budgets
+└── phase_8_walkthrough.md         # Master Runbook for Hybrid Architecture & Cost Controls
 ```
-
-## 🔐 Credentials (Demo)
-*   **User/Pass**: `admin` / `admin`
-*   **SonarQube**: `admin` / `admin`
-*   **Grafana**: `admin` / `admin`
 
 ---
-*Created as a Portfolio Masterpiece for DevOps Engineering.*
+*Created as the Advanced FinOps and Workload Optimization iteration for a DevOps Reference Architecture journey.*
