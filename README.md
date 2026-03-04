@@ -27,7 +27,7 @@ graph TD
     subgraph AWS ["Amazon Web Services (AWS)"]
         
         %% AWS Billing
-        Budget((AWS Budget\nAlert limit: $50))
+        Budget(("AWS Budget<br/>Alert limit: $50"))
         
         %% EKS Cluster
         subgraph EKS ["AWS Elastic Kubernetes Service (EKS)"]
@@ -58,8 +58,8 @@ graph TD
 
     %% Observation Tools
     subgraph Tools ["FinOps Observation Tooling"]
-        CostLambda[Python Cost Optimizer Lambda\n(Right-Sizing Intelligence)]
-        GoCLI[Go Ops-Check CLI\n(Checks Memory/Disk Pressure)]
+        CostLambda["Python Cost Optimizer Lambda<br/>(Right-Sizing Intelligence)"]
+        GoCLI["Go Ops-Check CLI<br/>(Checks Memory/Disk Pressure)"]
     end
 
     CostLambda -.->|Analyzes CPU Metrics| AWS
