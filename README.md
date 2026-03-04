@@ -20,6 +20,9 @@ In parallel, we execute deep container hardening (running as non-root users, uti
    * **Docker**: Refactored the `Dockerfile`s to run as low-privilege `spring` and `nextjs` users. Enabled Maven Layered JARs to aggressively cache 400MB+ dependencies.
 5. **FinOps Observability Restoration (`cost-exporter`)**
    * **The Fix**: The custom Python `cost-exporter` service (originally built in Phase 8.5 to scrape the AWS Billing API and feed the Grafana `finops.json` dashboard) was accidentally lost during a previous phase transition. This branch explicitly restored the service and its accompanying Kubernetes ServiceMonitors to ensure the FinOps dashboard remains operational under the new GitOps architecture.
+6. **Product Pages & GitOps Polish (Phase 11.5)**
+   * **Application**: The frontend was enhanced to support dynamic, individual product detail pages (`/product/[id]`), dramatically improving the authenticity of the e-commerce storefront.
+   * **GitOps Observability**: The `amazon-app` Helm Chart was expanded to include Prometheus `PrometheusRule`s for native CPU/Memory alerting, and `ServiceMonitor`s were activated to track ArgoCD's internal synchronization metrics within Grafana.
 
 ```mermaid
 graph TD
