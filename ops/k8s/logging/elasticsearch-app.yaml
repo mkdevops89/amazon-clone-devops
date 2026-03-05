@@ -23,6 +23,10 @@ spec:
         # Restricting it to 1GB ensures it cleanly fits on your existing EKS EC2 instances without crashing.
         esJavaOpts: "-Xmx1g -Xms1g"
         
+        # A single-node cluster will always have unassigned replicas (status: yellow).
+        # We must configure the Kuberentes Readiness probe to accept yellow instead of the default green!
+        clusterHealthCheckParams: "wait_for_status=yellow&timeout=1s"
+        
         # Disable the Helm chart's default password generation.
         # We are using an ExternalSecret to map the credentials from AWS Secrets Manager instead!
         secret:
