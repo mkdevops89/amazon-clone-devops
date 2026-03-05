@@ -13,8 +13,6 @@ To cap off the application's capabilities, this phase introduces **Generative AI
 2. **The React UI (Next.js Chat Interface)**
    * **Technology**: React, TailwindCSS, Next.js.
    * **Purpose**: A floating action button was added to the storefront UI that expands into a sleek chat window. It maintains conversation history locally and interfaces with the new `/api/chat` backend endpoint.
-3. **Local Architecture Parity (`docker-compose.yml`)**
-   * **Purpose**: To allow developers to run the entire backend stack locally, a comprehensive `docker-compose.yml` file was introduced. It seamlessly spins up the Spring Boot and Next.js containers alongside their dependencies (MySQL, RabbitMQ, Redis), as well as local instances of SonarQube for code analysis and Datadog agents for observability testing.
 
 ```mermaid
 graph TD
@@ -65,7 +63,6 @@ graph TD
 ├── backend/                       # ✅ Spring Boot App 
 │   ├── build.gradle               # 📦 Updated with spring-ai-bedrock dependencies
 │   └── src/main/java.../chat/     # 🧠 ChatModel controllers and service abstractions
-├── docker-compose.yml             # 🐳 Comprehensive local stack (Frontend, Backend, DBs, Datadog, SonarQube)
 ├── frontend/                      # ✅ React App 
 │   └── src/components/ChatBot.tsx # 💬 New React chatbot component UI
 └── ops/
