@@ -4,6 +4,9 @@ global:
   region: "us-east-1"
   domain: "devcloudproject.com"
 
+db:
+  masterSecretArn: "arn:aws:secretsmanager:us-east-1:406312601212:secret:rds!db-fe8e7c13-2c4f-48a7-88a1-2cb060cddcda-4Jnfwp"
+
 backend:
   replicaCount: 1
   image:
