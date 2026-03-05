@@ -18,6 +18,11 @@ spec:
         replicas: 1
         minimumMasterNodes: 1
         
+        # Set static passwords so the Helm chart doesn't generate random ones and drift from the PVC.
+        secret:
+          enabled: true
+          password: "Forever123"
+        
         # We MUST constrain the Java Virtual Machine (JVM) heap size. 
         # By default, Elasticsearch will try to consume half of the server's RAM.
         # Restricting it to 1GB ensures it cleanly fits on your existing EKS EC2 instances without crashing.
