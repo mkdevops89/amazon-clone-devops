@@ -36,6 +36,13 @@ spec:
           limits:
             cpu: "1000m"
             memory: "2Gi"
+            
+        extraEnvs:
+          - name: ELASTIC_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: elasticsearch-master-credentials
+                key: password
         
         # Request a single 10GB persistent AWS EBS volume to store the raw log data.
         volumeClaimTemplate:
