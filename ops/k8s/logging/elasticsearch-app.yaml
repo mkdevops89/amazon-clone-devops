@@ -23,6 +23,11 @@ spec:
         # Restricting it to 1GB ensures it cleanly fits on your existing EKS EC2 instances without crashing.
         esJavaOpts: "-Xmx1g -Xms1g"
         
+        # Disable the Helm chart's default password generation.
+        # We are using an ExternalSecret to map the credentials from AWS Secrets Manager instead!
+        secret:
+          enabled: false
+        
         # Override the default 1000m CPU request to 250m so it can schedule on nodes with tighter CPU constraints.
         resources:
           requests:
