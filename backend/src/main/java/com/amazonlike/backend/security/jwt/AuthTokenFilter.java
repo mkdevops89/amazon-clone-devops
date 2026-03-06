@@ -34,7 +34,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         logger.info("AuthTokenFilter processing path: {}", path);
 
-        if (path.equals("/") || path.startsWith("/api/cart") || path.startsWith("/actuator")) {
+        if (path.equals("/") || path.startsWith("/api/cart") || path.startsWith("/actuator")
+                || path.startsWith("/api/chat")) {
             logger.info("Skipping JWT check for public path: {}", path);
             filterChain.doFilter(request, response);
             return;
