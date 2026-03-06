@@ -82,6 +82,7 @@ public class WebSecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // Allow
                                                                                                          // pre-flight
                         .requestMatchers("/actuator/**").permitAll() // Allow health checks
+                        .requestMatchers("/error").permitAll() // Expose 500 errors instead of 401s
                         .requestMatchers("/").permitAll() // Allow ALB health check
                         .anyRequest().authenticated());
 
