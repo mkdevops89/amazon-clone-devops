@@ -8,8 +8,6 @@ metadata:
   labels:
     some-label: some-value
 spec:
-  nodeSelector:
-    intent: apps
   containers:
     - name: maven
       image: maven:3.8.6-openjdk-18
