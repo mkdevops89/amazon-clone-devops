@@ -9,14 +9,17 @@ const api = axios.create({
     },
 });
 
+import { fetchAuthSession } from 'aws-amplify/auth';
+
 api.interceptors.request.use(
-    (config) => {
-        const user = typeof window !== "undefined" ? localStorage.getItem("user") : null;
-        if (user) {
-            const parsedUser = JSON.parse(user);
-            if (parsedUser && parsedUser.accessToken) {
-                config.headers["Authorization"] = "Bearer " + parsedUser.accessToken;
+    async (config) => {
+        try {
+            const session = await fetchAuthSession();
+            if (session?.tokens?.accessToken) {
+                config.headers["Authorization"] = `Bearer ${session.tokens.accessToken.toString()}`;
             }
+        } catch (e) {
+            // Not authenticated, send request anonymously.
         }
         return config;
     },
