@@ -18,10 +18,9 @@ resource "aws_cognito_user_pool" "pool" {
   }
 
   verification_message_template {
-    default_email_options {
-      email_subject = "Your verification code for DevCloudProject"
-      email_message = "Your verification code is {####}."
-    }
+    default_email_option = "CONFIRM_WITH_CODE"
+    email_subject        = "Your verification code for DevCloudProject"
+    email_message        = "Your verification code is {####}."
   }
 
   schema {
