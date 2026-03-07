@@ -63,3 +63,22 @@ output "s3_reports_bucket" {
   description = "S3 Bucket Name for Security Reports"
   value       = aws_s3_bucket.reports.id
 }
+
+# ==========================================
+# Amazon Cognito Outputs
+# ==========================================
+
+output "cognito_user_pool_id" {
+  description = "The ID of the Cognito User Pool"
+  value       = aws_cognito_user_pool.pool.id
+}
+
+output "cognito_app_client_id" {
+  description = "The ID of the Cognito App Client"
+  value       = aws_cognito_user_pool_client.client.id
+}
+
+output "cognito_domain" {
+  description = "The Hosted UI Domain prefix"
+  value       = "${aws_cognito_user_pool_domain.main.domain}.auth.${var.region}.amazoncognito.com"
+}
