@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "ai": "^3.0.0",
+    "@ai-sdk/amazon-bedrock": "^4.0.77",
+    "@aws-sdk/client-bedrock-runtime": "^3.1004.0",
+    "ai": "^6.0.116",
     "axios": "^1.13.4",
     "framer-motion": "^12.34.0",
     "lucide-react": "^0.563.0",
