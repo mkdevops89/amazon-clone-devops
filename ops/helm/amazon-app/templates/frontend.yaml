@@ -21,6 +21,9 @@ spec:
           imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.frontend.service.port }}
+          envFrom:
+            - secretRef:
+                name: aws-secrets
           env:
             {{- if .Values.frontend.extraEnv }}
             {{- toYaml .Values.frontend.extraEnv | nindent 12 }}
