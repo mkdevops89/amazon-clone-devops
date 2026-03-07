@@ -86,8 +86,10 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: "5m"
-          memory: "64Mi"
+          cpu: "100m"
+          memory: "512Mi"
+        limits:
+          memory: "1024Mi"
   volumes:
     - name: nvd-cache
       persistentVolumeClaim:
@@ -201,7 +203,7 @@ spec:
                                 sonar-scanner \
                                 -Dsonar.projectKey=${SONAR_PROJECT}:frontend \
                                 -Dsonar.projectName="Amazon Clone Frontend" \
-                                -Dsonar.sources=. \
+                                -Dsonar.sources=src \
                                 -Dsonar.host.url=http://sonarqube \
                                 -Dsonar.login=\${SONAR_TOKEN} \
                                 -Dsonar.exclusions=**/node_modules/**,**/.next/**
