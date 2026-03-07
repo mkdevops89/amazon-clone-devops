@@ -1,4 +1,4 @@
-import { bedrock } from '@ai-sdk/amazon-bedrock';
+import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
 import { streamText } from 'ai';
 
 // Allow streaming responses up to 30 seconds
@@ -10,6 +10,12 @@ export async function POST(req: Request) {
 
         const systemPrompt = "You are a helpful and friendly shop assistant for an e-commerce platform called AmazonLike. " +
             "You help users find products, recommend gifts, and answer questions about the catalog.";
+
+        const bedrock = createAmazonBedrock({
+            bedrockOptions: {
+                region: process.env.AWS_REGION || 'us-east-1',
+            }
+        });
 
         const result = await streamText({
             // @ts-ignore: AWS SDK provider version mismatch with legacy ai@3
