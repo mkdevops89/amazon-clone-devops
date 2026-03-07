@@ -10,6 +10,7 @@ export default function ChatBot() {
     // Vercel AI SDK hook that automatically manages the streaming state and history
     const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
         api: '/api/chat',
+        maxToolRoundtrips: 5,
     });
 
     return (
