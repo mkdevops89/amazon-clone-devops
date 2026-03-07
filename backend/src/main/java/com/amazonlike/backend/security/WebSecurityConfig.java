@@ -16,9 +16,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.amazonlike.backend.security.jwt.AuthEntryPointJwt;
-import com.amazonlike.backend.security.jwt.AuthTokenFilter;
-import com.amazonlike.backend.security.services.UserDetailsServiceImpl;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.Arrays;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,25 +29,15 @@ import java.util.Arrays;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class WebSecurityConfig {
-    @Autowired
-    UserDetailsServiceImpl userDetailsService;
-
-    @Autowired
-    AuthEntryPointJwt unauthorizedHandler;
-
     @Value("${amazonlike.app.frontendUrl}")
     private String frontendUrl;
-
-    @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
-    }
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
 
-        authProvider.setUserDetailsService(userDetailsService);
+        // authProvider.setUserDetailsService(userDetailsService); // Deprecated in
+        // favor of Cognito OAuth2
         authProvider.setPasswordEncoder(passwordEncoder());
 
         return authProvider;
@@ -65,7 +56,7 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
@@ -89,9 +80,13 @@ public class WebSecurityConfig {
         // Fix: Explicit CORS configuration
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
-        http.authenticationProvider(authenticationProvider());
+        // Enable OAuth2 Resource Server for JWT (Hooks into Cognito JWKS URI)
+        http.oauth2ResourceServer(oauth2 -> oauth2.jwt(org.springframework.security.config.Customizer.withDefaults()));
 
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        // We no longer manually register our legacy AuthTokenFilter. Spring handles it.
+        // http.authenticationProvider(authenticationProvider());
+        // http.addFilterBefore(authenticationJwtTokenFilter(),
+        // UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

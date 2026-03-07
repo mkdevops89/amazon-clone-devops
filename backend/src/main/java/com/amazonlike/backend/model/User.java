@@ -26,8 +26,11 @@ public class User {
     @Size(max = 50)
     @Email
     private String email;
+    private String email;
 
-    @NotBlank
+    @Column(name = "cognito_sub", unique = true)
+    private String cognitoSub;
+
     @Size(max = 120)
     private String password;
 
@@ -42,6 +45,13 @@ public class User {
         this.username = username;
         this.email = email;
         this.password = password;
+    }
+
+    public User(String username, String email, String password, String cognitoSub) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.cognitoSub = cognitoSub;
     }
 
     public Long getId() {
@@ -74,6 +84,14 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getCognitoSub() {
+        return cognitoSub;
+    }
+
+    public void setCognitoSub(String cognitoSub) {
+        this.cognitoSub = cognitoSub;
     }
 
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "JPA Entity requires mutable access")
