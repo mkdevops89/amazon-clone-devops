@@ -94,7 +94,7 @@ module "eks" {
     spot = {
       name           = "spot-ng"
       capacity_type  = "SPOT"
-      instance_types = ["t3.medium", "t3.large"] # Cost Optimization: Downsized from t3.xlarge/2xlarge
+      instance_types = ["t3.large", "t3.xlarge"] # Scaled up to support SAST scanning limits
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"
