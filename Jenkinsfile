@@ -105,7 +105,7 @@ spec:
         S3_REPORT_BUCKET = "amazon-clone-reports-6cc84b5432a5904b"
         // New Structured Path
         S3_REPORT_PATH = "chatbot-reports/Report-${BUILD_NUMBER}"
-        SONAR_PROJECT = "chatbot"
+        SONAR_PROJECT = "Cognito"
     }
 
     options {
@@ -186,7 +186,7 @@ spec:
                     dir('backend') {
                         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                             // Using specific project key requested by user
-                            sh 'mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN} -Dsonar.host.url=http://sonarqube -Dsonar.projectKey=${SONAR_PROJECT} -Dsonar.projectName="Amazon Clone Backend"'
+                            sh 'mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN} -Dsonar.host.url=http://sonarqube -Dsonar.projectKey=${SONAR_PROJECT} -Dsonar.projectName="Cognito"'
                         }
                     }
                 }
