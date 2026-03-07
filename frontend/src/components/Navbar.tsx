@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, ShoppingCart, MapPin } from 'lucide-react';
+import { Search, ShoppingCart, MapPin, LogOut } from 'lucide-react';
+import { fetchAuthSession, fetchUserAttributes, signOut } from 'aws-amplify/auth';
 import CategoryBar from './CategoryBar';
 
 export default function Navbar() {
     const [searchQuery, setSearchQuery] = useState("");
     const [cartCount, setCartCount] = useState(0);
+    const [user, setUser] = useState<any>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -36,6 +38,21 @@ export default function Navbar() {
 
         updateCartCount();
         window.addEventListener('cart-updated', updateCartCount);
+
+        // Fetch AWS Cognito Session Identity
+        const checkUserSession = async () => {
+            try {
+                const session = await fetchAuthSession();
+                if (session.tokens) {
+                    const attributes = await fetchUserAttributes();
+                    setUser(attributes);
+                }
+            } catch (err) {
+                // Not signed in
+            }
+        };
+        checkUserSession();
+
         return () => window.removeEventListener('cart-updated', updateCartCount);
     }, []);
 
@@ -43,6 +60,16 @@ export default function Navbar() {
         e.preventDefault();
         if (searchQuery.trim()) {
             router.push(`/?search=${encodeURIComponent(searchQuery.trim())}`);
+        }
+    };
+
+    const handleSignOut = async () => {
+        try {
+            await signOut();
+            setUser(null);
+            router.push('/');
+        } catch (error) {
+            console.error('error signing out: ', error);
         }
     };
 
@@ -88,10 +115,22 @@ export default function Navbar() {
                 <div className="flex items-center gap-2">
 
                     {/* Account & Lists */}
-                    <Link href="/login" className="hidden md:flex flex-col leading-tight hover:outline hover:outline-1 hover:outline-white p-2 rounded-sm">
-                        <span className="text-xs">Hello, sign in</span>
-                        <span className="font-bold text-sm">Account & Lists</span>
-                    </Link>
+                    {user ? (
+                        <div className="hidden md:flex flex-row items-center gap-2 group relative">
+                            <div className="flex flex-col leading-tight p-2 hover:outline hover:outline-1 hover:outline-white rounded-sm cursor-pointer">
+                                <span className="text-xs">Hello, {user.email?.split('@')[0]}</span>
+                                <span className="font-bold text-sm">Account & Lists</span>
+                            </div>
+                            <button onClick={handleSignOut} className="hidden group-hover:flex items-center gap-1 bg-amazon-light px-2 py-1 rounded hover:bg-red-600 transition-colors text-xs font-bold absolute -bottom-8 left-0">
+                                <LogOut size={14} /> Sign Out
+                            </button>
+                        </div>
+                    ) : (
+                        <Link href="/login" className="hidden md:flex flex-col leading-tight hover:outline hover:outline-1 hover:outline-white p-2 rounded-sm cursor-pointer">
+                            <span className="text-xs">Hello, sign in</span>
+                            <span className="font-bold text-sm">Account & Lists</span>
+                        </Link>
+                    )}
 
                     {/* Returns & Orders */}
                     <Link href="/orders" className="hidden md:flex flex-col leading-tight hover:outline hover:outline-1 hover:outline-white p-2 rounded-sm">
