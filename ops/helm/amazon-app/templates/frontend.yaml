@@ -21,9 +21,6 @@ spec:
           imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.frontend.service.port }}
-          envFrom:
-            - secretRef:
-                name: aws-secrets
           env:
             - name: AWS_REGION
               value: "{{ .Values.global.region }}"
