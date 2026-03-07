@@ -1,5 +1,5 @@
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
-import { streamText, tool } from 'ai';
+import { streamText, tool, convertToCoreMessages } from 'ai';
 import { z } from 'zod';
 import axios from 'axios';
 
@@ -9,6 +9,10 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
     try {
         const { messages } = await req.json();
+
+        // Convert React frontend UI messages (which store tool results on the assistant payload)
+        // into CoreMessages (which splits them logically for LLM ingestion)
+        const coreMessages = convertToCoreMessages(messages);
 
         const systemPrompt = "You are a helpful and friendly shop assistant for an e-commerce platform called AmazonLike. " +
             "You help users find products, recommend gifts, and answer questions about the catalog.";
@@ -23,7 +27,7 @@ export async function POST(req: Request) {
             // @ts-ignore: AWS SDK provider version mismatch with legacy ai@3
             model: bedrock('anthropic.claude-3-haiku-20240307-v1:0'),
             system: systemPrompt,
-            messages,
+            messages: coreMessages,
             temperature: 0.7,
             maxSteps: 5,
             tools: {
