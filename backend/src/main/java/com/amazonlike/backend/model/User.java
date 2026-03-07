@@ -26,7 +26,6 @@ public class User {
     @Size(max = 50)
     @Email
     private String email;
-    private String email;
 
     @Column(name = "cognito_sub", unique = true)
     private String cognitoSub;
