@@ -25,6 +25,7 @@ export async function POST(req: Request) {
             system: systemPrompt,
             messages,
             temperature: 0.7,
+            maxSteps: 5,
             tools: {
                 searchProducts: tool({
                     description: 'Search for products in the AmazonLike catalog by name, category, or keyword to check their current selling prices and details.',
@@ -33,7 +34,11 @@ export async function POST(req: Request) {
                     }),
                     execute: async ({ query }) => {
                         try {
-                            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+                            // Route internally within EKS to bypass Loopback NAT drops
+                            const apiUrl = process.env.NODE_ENV === 'production'
+                                ? 'http://amazon-backend.devsecops.svc.cluster.local:8080/api'
+                                : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api');
+
                             const response = await axios.get(`${apiUrl}/products`);
 
                             const products = response.data;
