@@ -195,6 +195,8 @@ function LoginInner() {
                 }}>
                     <Authenticator
                         components={components}
+                        loginMechanisms={['email']}
+                        signUpAttributes={['name']}
                     >
                     </Authenticator>
                 </div>
