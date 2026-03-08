@@ -171,7 +171,7 @@ function LoginInner() {
             fontFamily: 'system-ui, -apple-system, sans-serif'
         }}>
             <style>{`
-                    .amplify-tabs { display: none !important; }
+                    .amplify-tabs__list { display: none !important; }
                     .amplify-router { box-shadow: none !important; border: none !important; }
                     [data-amplify-authenticator] { box-shadow: none !important; }
                 `}</style>
