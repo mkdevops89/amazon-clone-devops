@@ -62,7 +62,7 @@ module "eks" {
     critical = {
       name           = "critical-ng"
       capacity_type  = "ON_DEMAND"
-      instance_types = ["t3.large"] # Cost Optimization: Downsized from t3.xlarge
+      instance_types = ["t3.xlarge"] # Rollback: Upgraded from t3.large to prevent CPU Starvation on core databases.
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"
