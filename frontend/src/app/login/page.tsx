@@ -130,8 +130,27 @@ const components = {
 };
 
 export default function Login() {
+    return (
+        <Authenticator.Provider>
+            <LoginInner />
+        </Authenticator.Provider>
+    );
+}
+
+function LoginInner() {
     const router = useRouter();
 
+    // Handle redirect when user is authenticated
+    const { user } = useAuthenticator((context) => [context.user]);
+    useEffect(() => {
+        if (user) {
+            router.push("/");
+            // Force a hard reload to clear cache and show logged-in state in Navbar
+            setTimeout(() => window.location.reload(), 200);
+        }
+    }, [user, router]);
+
+    // Handle initial session check
     useEffect(() => {
         fetchAuthSession()
             .then((session) => {
@@ -143,52 +162,43 @@ export default function Login() {
     }, [router]);
 
     return (
-        <Authenticator.Provider>
-            <div style={{
-                minHeight: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                background: '#ffffff',
-                fontFamily: 'system-ui, -apple-system, sans-serif'
-            }}>
-                <style>{`
+        <div style={{
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            background: '#ffffff',
+            fontFamily: 'system-ui, -apple-system, sans-serif'
+        }}>
+            <style>{`
                     .amplify-tabs { display: none !important; }
                     .amplify-router { box-shadow: none !important; border: none !important; }
                     [data-amplify-authenticator] { box-shadow: none !important; }
                 `}</style>
 
-                {/* 1. Logo Outside of typical box */}
-                <div style={{ textAlign: 'center', marginBottom: '1rem', marginTop: '2rem' }}>
-                    <Link href="/" style={{ fontSize: '2.5rem', fontWeight: 'bold', textDecoration: 'none', color: 'black' }}>
-                        Amazon<span style={{ color: '#ff9900' }}></span>
-                    </Link>
-                </div>
-
-                <ThemeProvider theme={amazonTheme}>
-                    <div style={{
-                        width: '100%',
-                        maxWidth: '350px',
-                        padding: '1.5rem 2rem',
-                        borderRadius: '8px',
-                        backgroundColor: 'white',
-                        border: '1px solid #ddd',
-                        marginBottom: '2rem'
-                    }}>
-                        <Authenticator
-                            components={components}
-                        >
-                            {({ user }) => {
-                                if (user) {
-                                    router.push("/");
-                                    setTimeout(() => window.location.reload(), 200);
-                                }
-                                return <></>;
-                            }}
-                        </Authenticator>
-                    </div>
-                </ThemeProvider>
+            {/* 1. Logo Outside of typical box */}
+            <div style={{ textAlign: 'center', marginBottom: '1rem', marginTop: '2rem' }}>
+                <Link href="/" style={{ fontSize: '2.5rem', fontWeight: 'bold', textDecoration: 'none', color: 'black' }}>
+                    Amazon<span style={{ color: '#ff9900' }}></span>
+                </Link>
             </div>
-        </Authenticator.Provider>
+
+            <ThemeProvider theme={amazonTheme}>
+                <div style={{
+                    width: '100%',
+                    maxWidth: '350px',
+                    padding: '1.5rem 2rem',
+                    borderRadius: '8px',
+                    backgroundColor: 'white',
+                    border: '1px solid #ddd',
+                    marginBottom: '2rem'
+                }}>
+                    <Authenticator
+                        components={components}
+                    >
+                    </Authenticator>
+                </div>
+            </ThemeProvider>
+        </div>
     );
 }
