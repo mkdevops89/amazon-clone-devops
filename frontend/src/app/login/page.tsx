@@ -1,6 +1,6 @@
 "use client";
 
-import { Authenticator, ThemeProvider, Theme, useTheme } from '@aws-amplify/ui-react';
+import { Authenticator, ThemeProvider, Theme, useAuthenticator, View } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -9,8 +9,7 @@ import { fetchAuthSession } from 'aws-amplify/auth';
 
 // -------------------------------------------------------------
 // AWS Amplify Custom Theme: Amazon.com Persona
-// By overriding Amplify's design tokens, we morph the default 
-// Cognito UI into a pixel-perfect Amazon Sign-In replicate.
+// Overriding Amplify's design tokens
 // -------------------------------------------------------------
 const amazonTheme: Theme = {
     name: 'AmazonAuthTheme',
@@ -36,6 +35,7 @@ const amazonTheme: Theme = {
                 router: {
                     borderWidth: { value: '0' },
                     backgroundColor: { value: 'transparent' },
+                    boxShadow: { value: 'none' }, // Remove default glow/shadow
                 },
             },
             button: {
@@ -62,14 +62,11 @@ const amazonTheme: Theme = {
                 paddingBlockStart: { value: '0.6rem' },
                 paddingBlockEnd: { value: '0.6rem' },
                 borderColor: { value: '#a6a6a6' },
-                borderRadius: { value: '3px' },
                 _focus: {
                     borderColor: { value: '#e77600' }, // Amazon Orange Focus
                     boxShadow: { value: '0 0 3px 2px rgba(228,121,17,.5)' }
                 }
             },
-            text: {
-            }
         },
     },
 };
@@ -77,10 +74,10 @@ const amazonTheme: Theme = {
 const components = {
     Header() {
         return (
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem', marginTop: '3rem' }}>
-                <Link href="/" style={{ fontSize: '2.5rem', fontWeight: 'bold', textDecoration: 'none', color: 'black' }}>
-                    Amazon<span style={{ color: '#ff9900' }}>Clone</span>
-                </Link>
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                <h1 style={{ fontSize: '1.8rem', fontWeight: '500', textAlign: 'left', marginBottom: '1rem', color: '#111' }}>
+                    Sign in
+                </h1>
             </div>
         );
     },
@@ -92,64 +89,106 @@ const components = {
                     <span style={{ color: '#0066c0', cursor: 'pointer' }}>Privacy Notice</span> &nbsp;&nbsp;&nbsp;
                     <span style={{ color: '#0066c0', cursor: 'pointer' }}>Help</span>
                 </div>
-                <div>© 1996-2024, AmazonClone.com, Inc. or its affiliates</div>
+                <div>© 1996-2026, AmazonClone.com, Inc. or its affiliates</div>
             </div>
         );
     },
+    SignIn: {
+        Footer() {
+            const { toSignUp } = useAuthenticator();
+            return (
+                <View textAlign="center" padding="0">
+                    <div style={{ marginTop: '1.5rem', fontSize: '0.75rem', lineHeight: '1.4', textAlign: 'left' }}>
+                        By continuing, you agree to Amazon Clone's <span style={{ color: '#0066c0', cursor: 'pointer' }}>Conditions of Use</span> and <span style={{ color: '#0066c0', cursor: 'pointer' }}>Privacy Notice</span>.
+                    </div>
+                    {/* New to Amazon */}
+                    <div style={{ marginTop: '1.5rem', width: '100%', textAlign: 'center' }}>
+                        <div style={{ position: 'relative', borderBottom: '1px solid #e7e7e7', marginBottom: '1.2rem', marginTop: '0.5rem' }}>
+                            <span style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: '#fff', padding: '0 10px', color: '#767676', fontSize: '0.75rem' }}>
+                                New to Amazon?
+                            </span>
+                        </div>
+                        <button
+                            onClick={toSignUp}
+                            style={{
+                                width: '100%',
+                                padding: '0.5rem',
+                                background: 'linear-gradient(to bottom, #f7f8fa, #e7e9ec)',
+                                border: '1px solid #adb1b8',
+                                borderRadius: '3px',
+                                cursor: 'pointer',
+                                fontSize: '0.8rem',
+                                color: '#111'
+                            }}>
+                            Create your Amazon account
+                        </button>
+                    </div>
+                </View>
+            );
+        }
+    }
 };
 
 export default function Login() {
     const router = useRouter();
 
     useEffect(() => {
-        // Check if they are already logged in to skip UI
         fetchAuthSession()
             .then((session) => {
                 if (session.tokens) {
                     router.push('/');
                 }
             })
-            .catch(() => { /* not logged in, show UI */ });
+            .catch(() => { });
     }, [router]);
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            background: 'linear-gradient(to bottom, #f0f2f2, #ffffff)',
-            fontFamily: 'system-ui, -apple-system, sans-serif'
-        }}>
-            <ThemeProvider theme={amazonTheme}>
-                <div style={{
-                    width: '100%',
-                    maxWidth: '350px',
-                    padding: '1.5rem 2rem',
-                    borderRadius: '8px',
-                    backgroundColor: 'white',
-                    border: '1px solid #ddd',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                    marginTop: '1rem',
-                    marginBottom: '2rem'
-                }}>
-                    <Authenticator
-                        components={components}
-                        hideSignUp={false}
-                    >
-                        {({ signOut, user }) => {
-                            // Immediately push them to the home page once Cognito validation succeeds!
-                            // The next-js router will automatically synchronize with our Spring Boot API 
-                            // on the next page load.
-                            if (user) {
-                                router.push("/");
-                                setTimeout(() => window.location.reload(), 200);
-                            }
-                            return <></>;
-                        }}
-                    </Authenticator>
+        <Authenticator.Provider>
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                background: '#ffffff',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}>
+                <style>{`
+                    .amplify-tabs { display: none !important; }
+                    .amplify-router { box-shadow: none !important; border: none !important; }
+                    [data-amplify-authenticator] { box-shadow: none !important; }
+                `}</style>
+
+                {/* 1. Logo Outside of typical box */}
+                <div style={{ textAlign: 'center', marginBottom: '1rem', marginTop: '2rem' }}>
+                    <Link href="/" style={{ fontSize: '2.5rem', fontWeight: 'bold', textDecoration: 'none', color: 'black' }}>
+                        Amazon<span style={{ color: '#ff9900' }}></span>
+                    </Link>
                 </div>
-            </ThemeProvider>
-        </div>
+
+                <ThemeProvider theme={amazonTheme}>
+                    <div style={{
+                        width: '100%',
+                        maxWidth: '350px',
+                        padding: '1.5rem 2rem',
+                        borderRadius: '8px',
+                        backgroundColor: 'white',
+                        border: '1px solid #ddd',
+                        marginBottom: '2rem'
+                    }}>
+                        <Authenticator
+                            components={components}
+                        >
+                            {({ user }) => {
+                                if (user) {
+                                    router.push("/");
+                                    setTimeout(() => window.location.reload(), 200);
+                                }
+                                return <></>;
+                            }}
+                        </Authenticator>
+                    </div>
+                </ThemeProvider>
+            </div>
+        </Authenticator.Provider>
     );
 }
