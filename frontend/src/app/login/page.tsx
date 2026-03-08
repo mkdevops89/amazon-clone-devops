@@ -126,6 +126,36 @@ const components = {
                 </View>
             );
         }
+    },
+    SignUp: {
+        Footer() {
+            const { toSignIn } = useAuthenticator();
+            return (
+                <View textAlign="center" padding="0">
+                    <div style={{ marginTop: '1.5rem', width: '100%', textAlign: 'center' }}>
+                        <div style={{ position: 'relative', borderBottom: '1px solid #e7e7e7', marginBottom: '1.2rem', marginTop: '0.5rem' }}>
+                            <span style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: '#fff', padding: '0 10px', color: '#767676', fontSize: '0.75rem' }}>
+                                Already have an account?
+                            </span>
+                        </div>
+                        <button
+                            onClick={toSignIn}
+                            style={{
+                                width: '100%',
+                                padding: '0.5rem',
+                                background: 'linear-gradient(to bottom, #f7f8fa, #e7e9ec)',
+                                border: '1px solid #adb1b8',
+                                borderRadius: '3px',
+                                cursor: 'pointer',
+                                fontSize: '0.8rem',
+                                color: '#111'
+                            }}>
+                            Sign in
+                        </button>
+                    </div>
+                </View>
+            );
+        }
     }
 };
 
