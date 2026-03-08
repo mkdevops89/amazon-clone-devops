@@ -14,9 +14,6 @@ spec:
       command:
         - cat
       tty: true
-      volumeMounts:
-        - name: nvd-cache
-          mountPath: /var/maven/odc-data
       resources:
         requests:
           cpu: "5m"
@@ -90,10 +87,6 @@ spec:
           memory: "512Mi"
         limits:
           memory: "1024Mi"
-  volumes:
-    - name: nvd-cache
-      persistentVolumeClaim:
-        claimName: jenkins-nvd-cache
 '''
         }
     }
@@ -158,8 +151,8 @@ spec:
                 container('maven') {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
                         dir('backend') {
-                            // Using persistent cache for NVD data and high delay (16s) to avoid 403/Rate limits
-                            sh 'mvn org.owasp:dependency-check-maven:check -DnvdApiKey=${NVD_API_KEY} -DdataDirectory=/var/maven/odc-data -DnvdApiDelay=16000 -Dformat=HTML -DoutputDirectory=../reports/ || echo "SCA Scan encountered an NVD issue, check logs."'
+                            // Removing persistent NVD cache lock to allow dynamic worker agents to spin up cross-AZ
+                            sh 'mvn org.owasp:dependency-check-maven:check -DnvdApiKey=${NVD_API_KEY} -DnvdApiDelay=16000 -Dformat=HTML -DoutputDirectory=../reports/ || echo "SCA Scan encountered an NVD issue, check logs."'
                         }
                     }
                 }
