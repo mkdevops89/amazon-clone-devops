@@ -202,7 +202,7 @@ spec:
                             sh """
                                 sonar-scanner \
                                 -Dsonar.projectKey=${SONAR_PROJECT}:frontend \
-                                -Dsonar.projectName="Amazon Clone Frontend" \
+                                -Dsonar.projectName="Cognito" \
                                 -Dsonar.sources=src \
                                 -Dsonar.host.url=http://sonarqube \
                                 -Dsonar.login=\${SONAR_TOKEN} \
