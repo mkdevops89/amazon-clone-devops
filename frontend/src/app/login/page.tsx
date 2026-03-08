@@ -179,7 +179,7 @@ function LoginInner() {
             {/* 1. Logo Outside of typical box */}
             <div style={{ textAlign: 'center', marginBottom: '1rem', marginTop: '2rem' }}>
                 <Link href="/" style={{ fontSize: '2.5rem', fontWeight: 'bold', textDecoration: 'none', color: 'black' }}>
-                    Amazon<span style={{ color: '#ff9900' }}></span>
+                    Amazon Clone<span style={{ color: '#ff9900' }}></span>
                 </Link>
             </div>
 
@@ -187,10 +187,10 @@ function LoginInner() {
                 <div style={{
                     width: '100%',
                     maxWidth: '350px',
-                    padding: '1.5rem 2rem',
+                    padding: '0rem 2rem',
                     borderRadius: '8px',
-                    backgroundColor: 'white',
-                    border: '1px solid #ddd',
+                    backgroundColor: 'transparent',
+                    border: 'none',
                     marginBottom: '2rem'
                 }}>
                     <Authenticator
