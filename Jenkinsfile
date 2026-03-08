@@ -235,7 +235,8 @@ spec:
                         usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKERHUB_PASS', usernameVariable: 'DOCKERHUB_USER_CREDS')
                     ]) {
                         script {
-                            sh 'dockerd > /var/log/dockerd.log 2>&1 &'
+                            // Explicitly set Docker Bridge IP to avoid overlapping with EKS Service CIDR (172.20.0.0/16)
+                            sh 'dockerd --bip=192.168.123.1/24 --mtu=1400 > /var/log/dockerd.log 2>&1 &'
                             sh '''
                                 count=0
                                 while ! docker info >/dev/null 2>&1; do
