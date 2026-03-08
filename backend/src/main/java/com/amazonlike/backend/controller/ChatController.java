@@ -19,6 +19,7 @@ public class ChatController {
         this.chatService = chatService;
     }
 
+    @SuppressWarnings("unchecked")
     @PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> chat(@RequestBody Map<String, Object> payload) {
         // Vercel AI SDK heavily uses a {"messages": [...]} structure
