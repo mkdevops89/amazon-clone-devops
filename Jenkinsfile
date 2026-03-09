@@ -263,8 +263,21 @@ spec:
                             }
 
                             dir('frontend') {
+                                // Fetch Cognito Settings dynamically from AWS SSM so we never hardcode .env variables
+                                env.COGNITO_USER_POOL_ID = sh(script: "aws ssm get-parameter --name '/devcloudproject/prod/cognito/user_pool_id' --query 'Parameter.Value' --output text", returnStdout: true).trim()
+                                env.COGNITO_APP_CLIENT_ID = sh(script: "aws ssm get-parameter --name '/devcloudproject/prod/cognito/app_client_id' --query 'Parameter.Value' --output text", returnStdout: true).trim()
+                                env.COGNITO_DOMAIN = sh(script: "aws ssm get-parameter --name '/devcloudproject/prod/cognito/domain' --query 'Parameter.Value' --output text", returnStdout: true).trim()
+
                                 // ECR Tags
-                                sh "docker build --build-arg NEXT_PUBLIC_API_URL='https://api.devcloudproject.com/api' -t ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} -t ${ECR_REGISTRY}/amazon-frontend:latest ."
+                                sh """
+                                docker build \\
+                                    --build-arg NEXT_PUBLIC_API_URL='https://api.devcloudproject.com/api' \\
+                                    --build-arg NEXT_PUBLIC_COGNITO_USER_POOL_ID='${env.COGNITO_USER_POOL_ID}' \\
+                                    --build-arg NEXT_PUBLIC_COGNITO_APP_CLIENT_ID='${env.COGNITO_APP_CLIENT_ID}' \\
+                                    --build-arg NEXT_PUBLIC_COGNITO_DOMAIN='${env.COGNITO_DOMAIN}' \\
+                                    -t ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} \\
+                                    -t ${ECR_REGISTRY}/amazon-frontend:latest .
+                                """
                                 // Docker Hub Tags
                                 sh "docker tag ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} ${DOCKERHUB_USER}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
                                 sh "docker tag ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} ${DOCKERHUB_USER}/amazon-frontend:latest"

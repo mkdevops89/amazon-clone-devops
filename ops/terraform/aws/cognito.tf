@@ -68,3 +68,28 @@ resource "aws_cognito_user_pool_client" "client" {
     "http://localhost:3000"
   ]
 }
+
+# ==========================================
+# Export to Systems Manager (SSM) for Jenkins
+# ==========================================
+
+resource "aws_ssm_parameter" "cognito_user_pool_id" {
+  name        = "/devcloudproject/prod/cognito/user_pool_id"
+  description = "Cognito User Pool ID"
+  type        = "String"
+  value       = aws_cognito_user_pool.pool.id
+}
+
+resource "aws_ssm_parameter" "cognito_app_client_id" {
+  name        = "/devcloudproject/prod/cognito/app_client_id"
+  description = "Cognito App Client ID"
+  type        = "String"
+  value       = aws_cognito_user_pool_client.client.id
+}
+
+resource "aws_ssm_parameter" "cognito_domain" {
+  name        = "/devcloudproject/prod/cognito/domain"
+  description = "Cognito Hosted UI Domain"
+  type        = "String"
+  value       = "${aws_cognito_user_pool_domain.main.domain}.auth.${var.region}.amazoncognito.com"
+}
