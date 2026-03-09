@@ -64,6 +64,11 @@ output "s3_reports_bucket" {
   value       = aws_s3_bucket.reports.id
 }
 
+output "s3_images_bucket" {
+  description = "S3 Bucket Name for Public Storefront Images"
+  value       = aws_s3_bucket.product_images.id
+}
+
 # ==========================================
 # Amazon Cognito Outputs
 # ==========================================
