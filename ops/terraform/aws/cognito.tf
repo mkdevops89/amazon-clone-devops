@@ -6,7 +6,7 @@ resource "aws_cognito_user_pool" "pool" {
   name = "devcloudproject-user-pool"
 
   # Allow users to sign in with their email address
-  alias_attributes         = ["email"]
+  username_attributes      = ["email"]
   auto_verified_attributes = ["email"]
 
   password_policy {
