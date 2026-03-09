@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+import api from '../services/api';
+
 interface ProductCardProps {
     id: number;
     title: string;
@@ -17,22 +19,15 @@ export default function ProductCard({ id, title, price, image, category }: Produ
     const addToCart = async () => {
         setLoading(true);
         const sessionId = localStorage.getItem("sessionId");
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.devcloudproject.com/api';
 
         try {
-            const res = await fetch(`${apiUrl}/cart/add`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    productId: id,
-                    quantity: 1,
-                    sessionId: sessionId
-                }),
+            const res = await api.post(`/cart/add`, {
+                productId: id,
+                quantity: 1,
+                sessionId: sessionId
             });
 
-            if (res.ok) {
+            if (res.status === 200) {
                 // Dispatch event to update Navbar cart count
                 window.dispatchEvent(new Event('cart-updated'));
                 // Temporary visual feedback could be added here

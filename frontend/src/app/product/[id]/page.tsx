@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import Navbar from '../../../components/Navbar';
 import Link from 'next/link';
+import api from '../../../services/api';
 
 interface Product {
     id: number;
@@ -45,20 +46,14 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         if (!product) return;
         setAddingToCart(true);
         const sessionId = localStorage.getItem("sessionId");
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.devcloudproject.com/api';
-
         try {
-            const res = await fetch(`${apiUrl}/cart/add`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    productId: product.id,
-                    quantity: 1,
-                    sessionId: sessionId
-                }),
+            const res = await api.post(`/cart/add`, {
+                productId: product.id,
+                quantity: 1,
+                sessionId: sessionId
             });
 
-            if (res.ok) {
+            if (res.status === 200) {
                 window.dispatchEvent(new Event('cart-updated'));
                 // Optional: Show a subtle "Added to cart" toast here
             }
