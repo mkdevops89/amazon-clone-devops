@@ -368,7 +368,7 @@ spec:
                                 cd temp-gitops
                                 
                                 # Checkout the correct branch
-                                git checkout phase-14-ai-chatbot
+                                git checkout phase-15-cognito
                                 
                                 # Update the tag in the fresh clone
                                 sed -i 's/tag: .*/tag: "${env.GIT_COMMIT_SHORT}"/g' ops/helm/amazon-app/values.yaml
@@ -381,7 +381,7 @@ spec:
                                 # Only commit if there are changes
                                 if ! git diff --cached --quiet; then
                                     git commit -m "chore(gitops): update image tag to ${env.GIT_COMMIT_SHORT} [skip ci]"
-                                    git push origin phase-14-ai-chatbot
+                                    git push origin phase-15-cognito
                                     echo "✅ GitOps manifests updated successfully."
                                 else
                                     echo "No changes to commit."
