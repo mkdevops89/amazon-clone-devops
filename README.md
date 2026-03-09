@@ -1,74 +1,41 @@
-# 📦 Amazon-Like E-Commerce Platform (Phase 14: AI Customer Support Chatbot)
+# 📦 Amazon-Like E-Commerce Platform (Phase 15: AWS Cognito & GitOps Decoupling)
 
-## 🚀 Phase 14 Overview
-This branch (`phase-14-ai-chatbot`) represents the **Grand Finale** of the e-commerce platform journey. We have evolved from a basic UI deployment all the way to a completely automated, observable, FinOps-optimized Kubernetes GitOps architecture.
+## 🚀 Phase 15 Overview
+This branch (`phase-15-cognito`) focuses on transitioning the Amazon Clone application from a homegrown JWT authentication mechanism to an enterprise-grade **AWS Cognito Identity Provider**, while simultaneously hardening the DevSecOps CI/CD pipeline by introducing **Dynamic Environment Decoupling**.
 
-To cap off the application's capabilities, this phase introduces **Generative AI**. By integrating AWS Bedrock and Anthropic's Claude Foundation Model, we have built a fully interactive, context-aware Customer Support Chatbot directly into the React frontend.
+## 🔐 AWS Cognito Authentication Architecture
 
-### 🤖 AI Integration Architecture
-1. **The LLM Backend (Spring AI & AWS Bedrock)**
-   * **Technology**: Java Spring Boot, Spring AI framework, AWS Bedrock (Anthropic Claude 3 Haiku).
-   * **Purpose**: Instead of making raw HTTP requests to OpenAI or AWS, the backend leverages the `spring-ai-bedrock` abstraction. This allows the backend to securely authenticate with AWS IAM roles, generate prompts, and stream responses back to the client using a clean, standardized Java API.
-   * **Resilience**: The backend is configured with Spring Retry and AOP to gracefully backoff and retry inference requests if the AWS Bedrock API is throttled or temporarily unavailable.
-2. **The React UI (Next.js Chat Interface)**
-   * **Technology**: React, TailwindCSS, Next.js.
-   * **Purpose**: A floating action button was added to the storefront UI that expands into a sleek chat window. It maintains conversation history locally and interfaces with the new `/api/chat` backend endpoint.
+### 1. Infrastructure (Terraform)
+We provisioned a robust, serverless authentication backend:
+*   **`aws_cognito_user_pool`**: The core directory storing customer emails and cryptographic user subjects (`sub`).
+*   **`aws_cognito_user_pool_client`**: The OAuth App Client bridging Next.js to the Cognito directory.
+*   **`aws_cognito_user_pool_domain`**: The Hosted UI Domain that powers the secure AWS backend login processing.
+*   **AWS Systems Manager (SSM)**: Engineered Terraform to export the 3 dynamically generated AWS Cognito Identifiers directly into the SSM Parameter Store to completely eliminate hardcoded `.env` files.
 
-```mermaid
-graph TD
-    %% User
-    User[Shopper]
-    
-    %% Frontend
-    subgraph Frontend ["React / Next.js Storefront"]
-        ChatUI[Floating Chatbot UI]
-    end
-    
-    %% Backend
-    subgraph Backend ["Spring Boot API"]
-        Controller["/api/chat Endpoint"]
-        SpringAI[Spring AI Abstraction]
-    end
-    
-    %% AI Provider
-    subgraph AWS ["Amazon Web Services"]
-        Bedrock{"AWS Bedrock API"}
-        Claude((Anthropic<br/>Claude 3 Model))
-    end
-    
-    %% Data Flow
-    User -->|Types Message| ChatUI
-    ChatUI -->|POST Request| Controller
-    Controller -->|Formats Prompt| SpringAI
-    SpringAI -.->|IAM Authenticated Call| Bedrock
-    Bedrock <==>|Inference| Claude
-    SpringAI -.->|Streams Response| ChatUI
+### 2. Application Security Refactoring
+#### Spring Boot Backend
+*   **OAuth2 Resource Server**: Integrated `spring-boot-starter-oauth2-resource-server` so the backend naturally authenticates the AWS Cognito JWKS (JSON Web Key Set).
+*   **Silent Database Synchronization**: Implemented `CurrentUserController.java`. When a user authenticates via Next.js and hits the backend, Spring automatically extracts their Cognito `sub` identifier and silently bridges them into the local MySQL `users` table so features like the Shopping Cart seamlessly persist.
 
-    %% Styling
-    classDef aws fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
-    classDef app fill:#e1f5fe,stroke:#0288d1,color:black,stroke-width:1px
-    classDef ai fill:#f3e5f5,stroke:#8e24aa,color:black,stroke-width:2px
-    
-    class AWS aws
-    class ChatUI,Controller,SpringAI app
-    class Bedrock,Claude ai
-```
+#### Next.js Frontend
+*   **Amplify SDK Integration**: Injected `@aws-amplify/ui-react` globally.
+*   **Amazon Clone Aesthetics**: Heavily customized the default AWS Amplify `<Authenticator>` form by overriding `.amplify-tabs__list` to perfectly match the exact aesthetic and styling of the authentic Amazon.com login experience.
+*   **Strict API Authentication**: Upgraded the `ProductCard` and `Cart` components to strictly use an authenticated `api.post` Axios instance, ensuring the Cognito `Authorization` Bearer token is permanently attached to all Shopping Cart transactions.
 
-## 📂 Project Structure
-```text
-.
-├── .github/workflows/             # 🐙 GitHub Actions Pipelines (DevSecOps Scans)
-├── .gitlab-ci.yml                 # 🦊 GitLab CI Pipeline (Legacy UI/API Deployments)
-├── Jenkinsfile                    # 🕴️ Jenkins Pipeline (GitOps Automation & SHA Tagging)
-├── backend/                       # ✅ Spring Boot App 
-│   ├── build.gradle               # 📦 Updated with spring-ai-bedrock dependencies
-│   └── src/main/java.../chat/     # 🧠 ChatModel controllers and service abstractions
-├── frontend/                      # ✅ React App 
-│   └── src/components/ChatBot.tsx # 💬 New React chatbot component UI
-└── ops/
-    ├── helm/amazon-app/           # ☸️ Production GitOps charts
-    └── ...
-```
+## 🏗️ Enterprise CI/CD Hardening
 
----
-*Created as the Generative AI capstone for a DevOps Reference Architecture journey.*
+### 1. Infrastructure Paralysis Resolution
+*   **The Problem:** The `t3.large` (2 vCPU) EKS instance was suffering constant CPU credit starvation (sustaining 295% burst capacity) while hosting Jenkins, Nexus, SonarQube, Grafana, and Elasticsearch simultaneously, causing nodes to crash.
+*   **The Solution:** Executed a Terraform state modification to scale the critical workload node up to a `t3.xlarge` (4 vCPUs, 16GB RAM), successfully severing orphaned EBS `VolumeAttachment` objects to restore the cluster entirely without data loss.
+
+### 2. Dynamic Pipeline Variable Injection
+*   **The Problem:** The Next.js frontend historically required `NEXT_PUBLIC_` AWS Cognito IDs to be statically hardcoded into `.env.production` before Docker compilation, violating core Zero-Trust CI/CD automation principles.
+*   **The Solution:** Rewrote the `Jenkinsfile` CI/CD pipeline to natively execute `aws ssm get-parameter` inside the pipeline runner, dynamically pulling the live AWS Identifiers and injecting them into the `docker build --build-arg` command.
+
+### 3. Enterprise GitOps Decoupling (Phase 15.6)
+*   **The Problem:** ArgoCD was forced to painfully track 16 different `phase-*` branches, requiring error-prone manual YAML revisions every time a new sprint started.
+*   **The Solution:** 
+    1. Spawned a permanent, immutable `gitops-dev` environment branch. 
+    2. Locked ArgoCD to exclusively monitor `gitops-dev`.
+    3. Programmed the `Jenkinsfile` to dynamically detect its executing branch (`env.BRANCH_NAME`), build the Docker images, and natively `git checkout gitops-dev` to merge the updated Helm configurations directly into the deployment state branch. 
+    4. **Result:** Developers can branch infinitely without ever touching a pipeline script again.
