@@ -34,13 +34,16 @@ public class CartController {
             @RequestParam(value = "sessionId", required = false) String sessionId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
-            // Authenticated User
-            String username = ((org.springframework.security.core.userdetails.UserDetails) auth.getPrincipal())
-                    .getUsername();
-            Optional<User> user = userRepository.findByUsername(username);
-            if (user.isPresent()) {
-                List<CartItem> items = cartRepository.findByUser(user.get());
-                return ResponseEntity.ok(items);
+            // Authenticated User via Cognito OAuth2 JWT
+            if (auth.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt) {
+                org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) auth
+                        .getPrincipal();
+                String cognitoSub = jwt.getClaimAsString("sub");
+                Optional<User> user = userRepository.findByCognitoSub(cognitoSub);
+                if (user.isPresent()) {
+                    List<CartItem> items = cartRepository.findByUser(user.get());
+                    return ResponseEntity.ok(items);
+                }
             }
         }
 
@@ -61,9 +64,12 @@ public class CartController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = null;
         if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
-            String username = ((org.springframework.security.core.userdetails.UserDetails) auth.getPrincipal())
-                    .getUsername();
-            user = userRepository.findByUsername(username).orElse(null);
+            if (auth.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt) {
+                org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) auth
+                        .getPrincipal();
+                String cognitoSub = jwt.getClaimAsString("sub");
+                user = userRepository.findByCognitoSub(cognitoSub).orElse(null);
+            }
         }
 
         if (user != null) {
