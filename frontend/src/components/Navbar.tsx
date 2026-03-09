@@ -121,9 +121,12 @@ export default function Navbar() {
                                 <span className="text-xs">Hello, {user.email?.split('@')[0]}</span>
                                 <span className="font-bold text-sm">Account & Lists</span>
                             </div>
-                            <button onClick={handleSignOut} className="hidden group-hover:flex items-center gap-1 bg-amazon-light px-2 py-1 rounded hover:bg-red-600 transition-colors text-xs font-bold absolute -bottom-8 left-0">
-                                <LogOut size={14} /> Sign Out
-                            </button>
+                            {/* Dropdown container with padding top to bridge the hover gap */}
+                            <div className="hidden group-hover:block absolute top-full left-0 pt-1 z-50">
+                                <button onClick={handleSignOut} className="flex items-center gap-1 bg-white px-4 py-2 rounded shadow-lg hover:bg-gray-100 transition-colors text-sm font-bold text-black border border-gray-300 whitespace-nowrap">
+                                    <LogOut size={16} /> Sign Out
+                                </button>
+                            </div>
                         </div>
                     ) : (
                         <Link href="/login" className="hidden md:flex flex-col leading-tight hover:outline hover:outline-1 hover:outline-white p-2 rounded-sm cursor-pointer">
