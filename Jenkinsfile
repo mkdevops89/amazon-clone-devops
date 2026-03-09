@@ -367,21 +367,30 @@ spec:
                                 git clone https://\${GITHUB_TOKEN}@github.com/mkdevops89/amazon-clone-devops.git temp-gitops
                                 cd temp-gitops
                                 
-                                # Checkout the correct branch
-                                git checkout phase-15-cognito
+                                # Discover current branch
+                                CURRENT_BRANCH=\$(git rev-parse --abbrev-ref HEAD)
+                                if [ "\$CURRENT_BRANCH" = "HEAD" ]; then
+                                    CURRENT_BRANCH=${env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')}
+                                fi
                                 
-                                # Update the tag in the fresh clone
+                                # Checkout the environment deployment branch
+                                git checkout gitops-dev
+                                
+                                # Pull the EXACT helm charts from the branch that just built the code
+                                git checkout origin/\${CURRENT_BRANCH} -- ops/helm/amazon-app/
+                                
+                                # Update the tag in the freshly synced helm chart
                                 sed -i 's/tag: .*/tag: "${env.GIT_COMMIT_SHORT}"/g' ops/helm/amazon-app/values.yaml
                                 
                                 # Commit and Push
                                 git config user.email "mlis.dev89@gmail.com"
                                 git config user.name "Micheal L"
-                                git add ops/helm/amazon-app/values.yaml
+                                git add ops/helm/amazon-app/
                                 
                                 # Only commit if there are changes
                                 if ! git diff --cached --quiet; then
-                                    git commit -m "chore(gitops): update image tag to ${env.GIT_COMMIT_SHORT} [skip ci]"
-                                    git push origin phase-15-cognito
+                                    git commit -m "chore(gitops): update environment state from \${CURRENT_BRANCH} to ${env.GIT_COMMIT_SHORT} [skip ci]"
+                                    git push origin gitops-dev
                                     echo "✅ GitOps manifests updated successfully."
                                 else
                                     echo "No changes to commit."
