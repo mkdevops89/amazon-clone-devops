@@ -11,6 +11,7 @@ export default function Navbar() {
     const [searchQuery, setSearchQuery] = useState("");
     const [cartCount, setCartCount] = useState(0);
     const [user, setUser] = useState<any>(null);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -67,6 +68,7 @@ export default function Navbar() {
         try {
             await signOut();
             setUser(null);
+            setShowLogoutConfirm(false); // Close modal on success
             router.push('/');
         } catch (error) {
             console.error('error signing out: ', error);
@@ -123,7 +125,7 @@ export default function Navbar() {
                             </div>
                             {/* Dropdown container with padding top to bridge the hover gap */}
                             <div className="hidden group-hover:block absolute top-full left-0 pt-1 z-50">
-                                <button onClick={handleSignOut} className="flex items-center gap-1 bg-white px-4 py-2 rounded shadow-lg hover:bg-gray-100 transition-colors text-sm font-bold text-black border border-gray-300 whitespace-nowrap">
+                                <button onClick={() => setShowLogoutConfirm(true)} className="flex items-center gap-1 bg-white px-4 py-2 rounded shadow-lg hover:bg-gray-100 transition-colors text-sm font-bold text-black border border-gray-300 whitespace-nowrap">
                                     <LogOut size={16} /> Sign Out
                                 </button>
                             </div>
@@ -156,6 +158,43 @@ export default function Navbar() {
 
             {/* Sub-Navigation */}
             <CategoryBar />
+
+            {/* Logout Confirmation Modal Overlay */}
+            {showLogoutConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-[100] flex justify-center items-center">
+                    <div className="bg-white text-black rounded-lg shadow-2xl w-[400px] overflow-hidden">
+
+                        {/* Amazon Style Header */}
+                        <div className="bg-[#f0f2f2] border-b border-[#d5d9d9] px-6 py-4">
+                            <h3 className="text-xl font-bold text-[#0f1111]">Sign Out</h3>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="px-6 py-5">
+                            <p className="text-[#0f1111] text-sm">
+                                Are you sure you want to sign out of your Amazon Clone account? You will need to enter your email and password to log back in.
+                            </p>
+                        </div>
+
+                        {/* Amazon Style Footer */}
+                        <div className="bg-white border-t border-[#d5d9d9] px-6 py-4 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowLogoutConfirm(false)}
+                                className="px-4 py-1.5 rounded-lg border border-[#d5d9d9] bg-white hover:bg-[#f7fafa] text-[#0f1111] text-sm font-medium shadow-[0_1px_2px_rgba(15,17,17,0.15)] transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSignOut}
+                                className="px-4 py-1.5 rounded-lg border border-[#fcd200] bg-[#ffd814] hover:bg-[#f7ca00] text-[#0f1111] text-sm font-medium shadow-[0_1px_2px_rgba(15,17,17,0.15)] transition-all"
+                            >
+                                Sign Out
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            )}
         </nav>
     );
 }
