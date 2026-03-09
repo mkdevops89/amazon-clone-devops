@@ -11,7 +11,7 @@ backend:
   replicaCount: 1
   image:
     repository: "406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-backend"
-    tag: "c5da042"
+    tag: "affffbd"
     pullPolicy: Always
   resources:
     requests:
@@ -22,12 +22,15 @@ backend:
       memory: "1024Mi"
   service:
     port: 8080
+  extraEnv:
+    - name: COGNITO_USER_POOL_ID
+      value: "us-east-1_a9RGlAuxn"
 
 frontend:
   replicaCount: 1
   image:
     repository: "406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-frontend"
-    tag: "c5da042"
+    tag: "affffbd"
     pullPolicy: Always
   resources:
     requests:
