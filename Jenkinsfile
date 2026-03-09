@@ -379,6 +379,9 @@ spec:
                                 # Update the tag in the freshly synced helm chart
                                 sed -i 's/tag: .*/tag: "${env.GIT_COMMIT_SHORT}"/g' ops/helm/amazon-app/values.yaml
                                 
+                                # Inject dynamic AWS Cognito User Pool ID into backend env
+                                sed -i 's/COGNITO_USER_POOL_ID_PLACEHOLDER/${env.COGNITO_USER_POOL_ID}/g' ops/helm/amazon-app/values.yaml
+                                
                                 # Commit and Push
                                 git config user.email "mlis.dev89@gmail.com"
                                 git config user.name "Micheal L"

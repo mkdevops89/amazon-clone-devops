@@ -81,6 +81,9 @@ spec:
                   optional: true
             - name: AMAZONLIKE_APP_JWTEXPIRATIONMS
               value: "86400000"
+            {{- if .Values.backend.extraEnv }}
+            {{- toYaml .Values.backend.extraEnv | nindent 12 }}
+            {{- end }}
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
 ---

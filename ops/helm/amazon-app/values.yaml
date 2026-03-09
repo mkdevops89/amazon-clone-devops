@@ -22,6 +22,9 @@ backend:
       memory: "1024Mi"
   service:
     port: 8080
+  extraEnv:
+    - name: COGNITO_USER_POOL_ID
+      value: "COGNITO_USER_POOL_ID_PLACEHOLDER"
 
 frontend:
   replicaCount: 1
