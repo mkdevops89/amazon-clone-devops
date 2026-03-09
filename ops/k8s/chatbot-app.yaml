@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: chatbot
+  name: amazonclone
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/mkdevops89/amazon-clone-devops.git'
-    targetRevision: phase-14-ai-chatbot
+    targetRevision: phase-15-cognito
     path: ops/helm/amazon-app
     helm:
       valueFiles:
