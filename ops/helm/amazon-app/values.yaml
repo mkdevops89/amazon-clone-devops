@@ -11,7 +11,7 @@ backend:
   replicaCount: 1
   image:
     repository: "406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-backend"
-    tag: "28ba13f"
+    tag: "1a1fbca"
     pullPolicy: Always
   resources:
     requests:
@@ -27,7 +27,7 @@ frontend:
   replicaCount: 1
   image:
     repository: "406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-frontend"
-    tag: "28ba13f"
+    tag: "1a1fbca"
     pullPolicy: Always
   resources:
     requests:
