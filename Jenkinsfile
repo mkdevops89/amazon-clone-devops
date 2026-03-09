@@ -367,11 +367,8 @@ spec:
                                 git clone https://\${GITHUB_TOKEN}@github.com/mkdevops89/amazon-clone-devops.git temp-gitops
                                 cd temp-gitops
                                 
-                                # Discover current branch
-                                CURRENT_BRANCH=\$(git rev-parse --abbrev-ref HEAD)
-                                if [ "\$CURRENT_BRANCH" = "HEAD" ]; then
-                                    CURRENT_BRANCH=${env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')}
-                                fi
+                                # Use Jenkins injected branch name
+                                CURRENT_BRANCH="${env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')}"
                                 
                                 # Checkout the environment deployment branch
                                 git checkout gitops-dev
