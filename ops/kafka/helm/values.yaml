@@ -1,0 +1,34 @@
+# ops/kafka/helm/values.yaml
+# Redpanda Event Streaming Configuration for AWS EKS
+
+# Deploy Redpanda strictly to the On-Demand Critical node group
+# to prevent data loss during Spot instance termination.
+statefulset:
+  replicas: 3
+  nodeSelector:
+    node-group: eks-critical-ng
+
+resources:
+  cpu:
+    cores: 1
+  memory:
+    container:
+      min: 2Gi
+      max: 2Gi # Capping memory usage to fit on t3.xlarge alongside Jenkins/SonarQube
+
+storage:
+  persistentVolume:
+    enabled: true
+    size: 20Gi
+    storageClass: "gp3" # Efficient AWS EBS storage
+
+auth:
+  sasl:
+    enabled: true
+    mechanism: "SCRAM-SHA-512"
+
+logging:
+  logLevel: "info"
+
+tuning:
+  tune_aio_events: true

@@ -1,0 +1,43 @@
+# ops/kafka/k8s/topics.yaml
+# Declarative Kafka/Redpanda Topics
+
+apiVersion: cluster.redpanda.com/v1alpha1
+kind: Topic
+metadata:
+  name: audit-events
+  namespace: devsecops
+spec:
+  partitions: 3
+  replicationFactor: 3
+  additionalConfiguration:
+    "retention.ms": "604800000"     # 7 days retention
+    "retention.bytes": "1073741824" # 1GB limit per partition to protect EBS volume
+    "cleanup.policy": "delete"      
+
+---
+apiVersion: cluster.redpanda.com/v1alpha1
+kind: Topic
+metadata:
+  name: product-updates
+  namespace: devsecops
+spec:
+  partitions: 3
+  replicationFactor: 3
+  additionalConfiguration:
+    # Log compaction ensures we only keep the LATEST state of a product ID
+    # Highly efficient for syncing product catalog changes across microservices
+    "cleanup.policy": "compact"
+    "segment.ms": "86400000" # Roll segments daily
+
+---
+apiVersion: cluster.redpanda.com/v1alpha1
+kind: Topic
+metadata:
+  name: user-notifications
+  namespace: devsecops
+spec:
+  partitions: 3
+  replicationFactor: 3
+  additionalConfiguration:
+    "retention.ms": "86400000" # 24 hours (Transient emails/notifications)
+    "cleanup.policy": "delete"

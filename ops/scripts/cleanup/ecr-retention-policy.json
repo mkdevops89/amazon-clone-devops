@@ -1,0 +1,30 @@
+{
+    "rules": [
+        {
+            "rulePriority": 10,
+            "description": "Expire untagged images older than 14 days to save S3 storage costs",
+            "selection": {
+                "tagStatus": "untagged",
+                "countType": "sinceImagePushed",
+                "countUnit": "days",
+                "countNumber": 14
+            },
+            "action": {
+                "type": "expire"
+            }
+        },
+        {
+            "rulePriority": 20,
+            "description": "Keep only the 50 most recent tagged GitOps deployment images",
+            "selection": {
+                "tagStatus": "tagged",
+                "tagPrefixList": ["sha-", "v"],
+                "countType": "imageCountMoreThan",
+                "countNumber": 50
+            },
+            "action": {
+                "type": "expire"
+            }
+        }
+    ]
+}
