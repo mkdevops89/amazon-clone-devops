@@ -1,0 +1,35 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enforce-cryptographic-signatures
+  annotations:
+    policies.kyverno.io/title: "Enforce Cosign Signatures for Proprietary ECR Images"
+    policies.kyverno.io/category: "Software Supply Chain Security"
+    policies.kyverno.io/description: >-
+      This policy enforces absolute Zero-Trust by violently rejecting any container image 
+      matching our private ECR repository that lacks a valid cryptographic signature 
+      proven by our Jenkins CI/CD Cosign private key.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: verify-image-signature
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      verifyImages:
+      - imageReferences:
+        - "406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-*"
+        verifyDigest: true
+        required: true
+        mutateDigest: true
+        attestors:
+        - entries:
+          - keys:
+              publicKeys: |-
+                -----BEGIN PUBLIC KEY-----
+                MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEQJfGV7987ldnYcTxA0FEbYY7hH0b
+                gjYjoq5tpQ83rap58hRnisKDXkYkPV0DeBetpkGAOtek3Wd9qzbryuHK2Q==
+                -----END PUBLIC KEY-----

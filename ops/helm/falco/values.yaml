@@ -1,0 +1,43 @@
+# ops/helm/falco/values.yaml
+# Phase 17: Runtime Threat Detection (eBPF)
+# This configuration deploys Sysdig Falco as a DaemonSet across the EKS worker nodes.
+# It hooks directly into the Linux Kernel via eBPF to monitor raw system calls.
+
+# 1. Use the modern eBPF probe instead of a kernel module, as EKS actively supports eBPF.
+driver:
+  kind: modern_ebpf
+
+# 2. Output configurations tailored for our ELK (Elasticsearch/Logstash/Kibana) Native SIEM
+falco:
+  json_output: true
+  json_include_output_property: true
+  json_include_tags_property: true
+  log_level: info
+
+# 3. Custom Rule Overrides for the "Simulated Hack" demonstration
+customRules:
+  # Rule A: Detect if a user runs `kubectl exec` to gain a bash shell inside a running pod
+  terminal_shell_spawn: |-
+    - rule: Terminal shell in container
+      desc: A shell was used as the entrypoint/exec point into a container with an attached terminal.
+      condition: >
+        spawned_process and container
+        and shell_procs and proc.tty != 0
+        and container_entrypoint
+      output: >
+        A shell was spawned in a container with an attached terminal (user=%user.name user_loginuid=%user.loginuid %container.info
+        shell=%proc.name parent=%proc.pname cmdline=%proc.cmdline terminal=%proc.tty container_id=%container.id image=%container.image.repository)
+      priority: CRITICAL
+      tags: [container, shell, mitre_execution]
+
+  # Rule B: Detect if a process tries to read the highly sensitive shadow password file
+  read_sensitive_file: |-
+    - rule: Read sensitive file untrusted
+      desc: An attempt to read any sensitive file (e.g. files containing user/password/authentication info /etc/shadow)
+      condition: >
+        open_read and sensitive_files and not trusted_containers
+      output: >
+        Sensitive file opened for reading by non-trusted program (user=%user.name user_loginuid=%user.loginuid program=%proc.name
+        command=%proc.cmdline file=%fd.name parent=%proc.pname gparent=%proc.aname[2] ggparent=%proc.aname[3] gggparent=%proc.aname[4] %container.info image=%container.image.repository)
+      priority: WARNING
+      tags: [host, container, filesystem, mitre_credential_access, mitre_discovery]

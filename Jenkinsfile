@@ -31,6 +31,10 @@ spec:
           memory: "1536Mi"
         limits:
           memory: "3072Mi"
+      volumeMounts:
+        - name: cosign-keys
+          mountPath: "/opt/cosign"
+          readOnly: true
     - name: tools
       image: alpine:latest
       command:
@@ -87,6 +91,10 @@ spec:
           memory: "512Mi"
         limits:
           memory: "1024Mi"
+  volumes:
+    - name: cosign-keys
+      secret:
+        secretName: cosign-keys
 '''
         }
     }
@@ -298,6 +306,17 @@ spec:
                         sh "docker push ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
                         sh "docker push ${ECR_REGISTRY}/amazon-frontend:latest"
                         
+                        echo "--- 📦 Generating SBOM with Syft ---"
+                        sh 'apk add --no-cache curl aws-cli jq'
+                        sh 'curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin'
+                        sh "syft registry:${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT} -o json > reports/sbom-backend.json"
+                        sh "syft registry:${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} -o json > reports/sbom-frontend.json"
+                        
+                        echo "--- 🔐 Cryptographically Signing Images with Cosign ---"
+                        sh 'curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64" && mv cosign-linux-amd64 /usr/local/bin/cosign && chmod +x /usr/local/bin/cosign'
+                        sh "export COSIGN_PASSWORD=portfolio-secure && cosign sign --key /opt/cosign/cosign.key -y ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT}"
+                        sh "export COSIGN_PASSWORD=portfolio-secure && cosign sign --key /opt/cosign/cosign.key -y ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
+                        
                         // Push to Docker Hub
                         sh "docker push ${DOCKERHUB_USER}/amazon-backend:${env.GIT_COMMIT_SHORT}"
                         sh "docker push ${DOCKERHUB_USER}/amazon-backend:latest"
@@ -345,6 +364,12 @@ spec:
                              echo "--- 📤 Uploading Reports to S3: s3://${S3_REPORT_BUCKET}/${S3_REPORT_PATH} ---"
                              // Recursive copy of the entire reports folder
                              sh "aws s3 cp reports/ s3://${S3_REPORT_BUCKET}/${S3_REPORT_PATH}/ --recursive"
+                             
+                             echo "--- 🔒 Archiving Evidence to WORM S3 Bucket ---"
+                             def EVIDENCE_BUCKET = sh(script: "aws s3api list-buckets --query \"Buckets[?starts_with(Name, 'amazon-clone-security-evidence')].Name\" --output text", returnStdout: true).trim()
+                             if (EVIDENCE_BUCKET) {
+                                 sh "aws s3 cp reports/ s3://${EVIDENCE_BUCKET}/${S3_REPORT_PATH}/ --recursive"
+                             }
                          }
                     }
                 }
