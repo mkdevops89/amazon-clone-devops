@@ -11,8 +11,8 @@ kubectl patch application amazon-app -n argocd --type merge -p '{"spec":{"syncPo
 
 echo "=> 2. ArgoCD is now synchronizing cluster state..."
 echo "⏳ Waiting for ArgoCD to heal application pods..."
-kubectl rollout status deployment/amazon-backend -n devsecops
-kubectl rollout status deployment/amazon-frontend -n devsecops
+kubectl rollout status deployment/amazon-app-backend -n devsecops
+kubectl rollout status deployment/amazon-app-frontend -n devsecops
 
 echo ""
 echo "✅ Maintenance Mode Deactivated. Platform is fully operational."
