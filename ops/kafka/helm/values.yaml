@@ -4,9 +4,14 @@
 # Deploy Redpanda strictly to the On-Demand Critical node group
 # to prevent data loss during Spot instance termination.
 statefulset:
-  replicas: 3
-  nodeSelector:
-    node-group: eks-critical-ng
+  replicas: 1
+  podTemplate:
+    spec:
+      nodeSelector:
+        intent: critical
+  podAntiAffinity:
+    type: custom
+    custom: {}
 
 resources:
   cpu:
@@ -24,7 +29,7 @@ storage:
 
 auth:
   sasl:
-    enabled: true
+    enabled: false
     mechanism: "SCRAM-SHA-512"
 
 logging:
@@ -32,3 +37,9 @@ logging:
 
 tuning:
   tune_aio_events: true
+
+tls:
+  enabled: false
+
+external:
+  enabled: false

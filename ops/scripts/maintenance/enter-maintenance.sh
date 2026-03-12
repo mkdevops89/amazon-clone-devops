@@ -11,12 +11,12 @@ kubectl patch application amazon-app -n argocd --type merge -p '{"spec":{"syncPo
 
 # 2. Scale down application pods to halt database traffic
 echo "=> 2. Displaying resources targeted for termination..."
-kubectl get pods -n devsecops -l "app.kubernetes.io/name in (amazon-frontend, amazon-backend)"
+kubectl get pods -n devsecops -l "app.kubernetes.io/instance=amazon-app"
 
 echo ""
 echo "=> 3. Scaling down backend and frontend deployments to 0..."
-kubectl scale deployment amazon-frontend --replicas=0 -n devsecops
-kubectl scale deployment amazon-backend --replicas=0 -n devsecops
+kubectl scale deployment amazon-app-frontend --replicas=0 -n devsecops
+kubectl scale deployment amazon-app-backend --replicas=0 -n devsecops
 
 echo ""
 echo "✅ Maintenance Mode Active."
