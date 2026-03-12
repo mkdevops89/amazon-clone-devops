@@ -37,7 +37,7 @@ As we matured from basic metrics to full ELK Stack logging and Prometheus monito
 - **Orphaned EBS Volumes:** Legacy StatefulSets (e.g., old versions of Nexus or SonarQube) that were deleted may have left behind unattached `gp3` Elastic Block Store volumes that are still billing monthly.
 **Action Required:** Execute an AWS Cost Explorer audit for unattached EBS volumes and configure EKS to exclusively rely on ELK for application logs.
 
-## 7. Phase 6: CI/CD Pipeline Fragmentation 
+## 7. Phase 11: CI/CD Pipeline Fragmentation 
 During our early automated deployments, we extensively prototyped CI/CD workflows using both **GitHub Actions** (Phase 6a) and **GitLab CI** (Phase 6c) before definitively standardizing on **Jenkins** as the Enterprise DevSecOps Hub. This led to severe CI/CD fragmentation.
 - `.github/workflows/`
 - `.gitlab-ci.yml`
