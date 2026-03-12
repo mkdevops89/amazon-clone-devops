@@ -14,3 +14,7 @@ During the transition from local `backend.tf` execution to CI/CD automation, sev
 ## 4. Target 3: Extraneous Kubernetes Namespaces
 Check the EKS cluster for namespaces that were used for temporary sandboxes but were never deleted.
 - **Plan:** Admin executes `kubectl get namespaces` and then `kubectl delete namespace <sandbox>` to rapidly free up CPU and Memory reserved by dormant pods inside the cluster.
+
+## 5. Target 4: RabbitMQ (Messaging Consolidation)
+With the introduction of **Redpanda (Kafka)** for Event-Driven Architecture in Phase 16, maintaining our legacy **RabbitMQ** infrastructure is redundant and incurs unnecessary compute overhead.
+- **Plan:** Update the `amazon-backend` Spring Boot application to exclusively use Kafka instead of RabbitMQ. Once validated, execute `helm uninstall rabbitmq` to completely purge the old broker from the cluster, immediately saving Memory and CPU on the EC2 worker nodes.
