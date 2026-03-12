@@ -105,8 +105,8 @@ spec:
         DOCKERHUB_USER = "mlis682"
         S3_REPORT_BUCKET = "amazon-clone-reports-6cc84b5432a5904b"
         // New Structured Path
-        S3_REPORT_PATH = "chatbot-reports/Report-${BUILD_NUMBER}"
-        SONAR_PROJECT = "Cognito"
+        S3_REPORT_PATH = "cybersecurity-reports/Report-${BUILD_NUMBER}"
+        SONAR_PROJECT = "Cybersecurity"
     }
 
     options {
@@ -187,7 +187,7 @@ spec:
                     dir('backend') {
                         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                             // Using specific project key requested by user
-                            sh 'mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN} -Dsonar.host.url=http://sonarqube -Dsonar.projectKey=${SONAR_PROJECT} -Dsonar.projectName="Cognito"'
+                            sh 'mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN} -Dsonar.host.url=http://sonarqube -Dsonar.projectKey=${SONAR_PROJECT} -Dsonar.projectName="Cybersecurity-backend"'
                         }
                     }
                 }
@@ -203,7 +203,7 @@ spec:
                             sh """
                                 sonar-scanner \
                                 -Dsonar.projectKey=${SONAR_PROJECT}:frontend \
-                                -Dsonar.projectName="Cognito" \
+                                -Dsonar.projectName="Cybersecurity-frontend" \
                                 -Dsonar.sources=src \
                                 -Dsonar.host.url=http://sonarqube \
                                 -Dsonar.login=\${SONAR_TOKEN} \
