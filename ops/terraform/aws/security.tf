@@ -80,4 +80,3 @@ resource "aws_cloudtrail" "account_audit" {
 }
 
 data "aws_region" "current" {}
-data "aws_caller_identity" "current" {}
