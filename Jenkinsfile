@@ -315,7 +315,7 @@ spec:
                         sh "syft registry:${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT} -o json > reports/sbom-frontend.json"
                         
                         echo "--- 🔐 Cryptographically Signing Images with Cosign ---"
-                        sh 'curl -O -L "https://github.com/sigstore/cosign/releases/download/v1.13.1/cosign-linux-amd64" && mv cosign-linux-amd64 /usr/local/bin/cosign && chmod +x /usr/local/bin/cosign'
+                        sh 'curl -O -L "https://github.com/sigstore/cosign/releases/download/v2.2.4/cosign-linux-amd64" && mv cosign-linux-amd64 /usr/local/bin/cosign && chmod +x /usr/local/bin/cosign'
                         withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                             sh """
                                 aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
