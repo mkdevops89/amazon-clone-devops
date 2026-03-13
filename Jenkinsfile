@@ -110,6 +110,8 @@ spec:
     }
 
     options {
+        // Automatically delete old build logs to save EBS volume disk space
+        buildDiscarder(logRotator(numToKeepStr: '5', artifactNumToKeepStr: '5'))
         disableConcurrentBuilds()
         timestamps()
     }
