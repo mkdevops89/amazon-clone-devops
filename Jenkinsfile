@@ -316,12 +316,15 @@ spec:
                         
                         echo "--- 🔐 Cryptographically Signing Images with Cosign ---"
                         sh 'curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64" && mv cosign-linux-amd64 /usr/local/bin/cosign && chmod +x /usr/local/bin/cosign'
-                        sh "export COSIGN_PASSWORD=portfolio-secure && cosign sign --key /opt/cosign/cosign.key -y ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT}"
-                        sh "export COSIGN_PASSWORD=portfolio-secure && cosign sign --key /opt/cosign/cosign.key -y ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
-                        
-                        // Push to Docker Hub
-                        sh "docker push ${DOCKERHUB_USER}/amazon-backend:${env.GIT_COMMIT_SHORT}"
-                        sh "docker push ${DOCKERHUB_USER}/amazon-backend:latest"
+                        withCredentials([usernamePassword(credentialsId: 'aws-credentials', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                            sh """
+                                aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                                export COSIGN_PASSWORD=portfolio-secure
+                                cosign sign --key /opt/cosign/cosign.key -y ${ECR_REGISTRY}/amazon-backend:${env.GIT_COMMIT_SHORT}
+                                cosign sign --key /opt/cosign/cosign.key -y ${ECR_REGISTRY}/amazon-frontend:${env.GIT_COMMIT_SHORT}
+                            """
+                        }
+
                         sh "docker push ${DOCKERHUB_USER}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
                         sh "docker push ${DOCKERHUB_USER}/amazon-frontend:latest"
                     }
