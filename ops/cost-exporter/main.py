@@ -17,6 +17,8 @@ PORT = int(os.environ.get('PORT', 8000))
 # Prometheus Metrics
 TOTAL_COST = Gauge('aws_billing_estimated_charges_total', 'Total estimated billing charges for the current month')
 SERVICE_COST = Gauge('aws_billing_service_cost_total', 'Estimated billing charges per service', ['service'])
+DAILY_COST = Gauge('aws_cost_daily_total', 'Total estimated billing charges for today')
+OPTIMIZER_ACTIONS = Gauge('aws_cost_optimizer_actions_total', 'Number of resources terminated by automation')
 
 def get_cost_and_usage():
     """
@@ -30,6 +32,10 @@ def get_cost_and_usage():
         today = datetime.now()
         start_date = today.replace(day=1).strftime('%Y-%m-%d')
         end_date = today.strftime('%Y-%m-%d')
+
+        # Daily Cost Date Range
+        daily_start_date = (today - timedelta(days=1)).strftime('%Y-%m-%d')
+        daily_end_date = today.strftime('%Y-%m-%d')
 
         # If it's the 1st of the month, AWS API requires end_date > start_date
         # So we query the previous month or handle typically.
@@ -62,6 +68,20 @@ def get_cost_and_usage():
         # Update Total Metric
         TOTAL_COST.set(total_bill)
         logger.info(f"Updated metrics. Total Bill MTD: ${total_bill:.2f}")
+
+        # --- query daily cost ---
+        daily_response = client.get_cost_and_usage(
+            TimePeriod={'Start': daily_start_date, 'End': daily_end_date},
+            Granularity='DAILY',
+            Metrics=['UnblendedCost']
+        )
+        daily_bill = float(daily_response['ResultsByTime'][0]['Total']['UnblendedCost']['Amount'])
+        DAILY_COST.set(daily_bill)
+        logger.info(f"Updated metrics. Daily Bill: ${daily_bill:.2f}")
+
+        # --- dummy optimizer for now or parse real logs if accessible ---
+        OPTIMIZER_ACTIONS.set(0) # Update later if real DynamoDB data exists
+        logger.info("Updated metrics. Optimizer actions: 0")
 
     except Exception as e:
         logger.error(f"Failed to query AWS Cost Explorer: {e}")
