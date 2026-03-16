@@ -107,7 +107,7 @@
                         "type": "prometheus",
                         "uid": "P1809F7F0C75BB332"
                     },
-                    "expr": "sum(kyverno_policy_results_total{rule_result=\"fail\"})",
+                    "expr": "sum(increase(kyverno_policy_results_total{rule_result=\"fail\"}[5m]))",
                     "legendFormat": "Zero-Trust Blocks (Unsigned Pods)",
                     "refId": "A"
                 }
