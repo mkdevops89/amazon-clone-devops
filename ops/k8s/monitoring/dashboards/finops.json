@@ -25,7 +25,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7F0C75BB332"
+                "uid": "prometheus"
             },
             "fieldConfig": {
                 "defaults": {
@@ -76,7 +76,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7F0C75BB332"
+                        "uid": "prometheus"
                     },
                     "expr": "sum(aws_cost_daily_total)",
                     "refId": "A"
@@ -88,7 +88,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7F0C75BB332"
+                "uid": "prometheus"
             },
             "fieldConfig": {
                 "defaults": {
@@ -164,7 +164,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7F0C75BB332"
+                        "uid": "prometheus"
                     },
                     "expr": "aws_cost_optimizer_actions_total",
                     "legendFormat": "{{resource_type}} ({{action}})",

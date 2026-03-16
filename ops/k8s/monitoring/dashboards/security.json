@@ -25,7 +25,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7F0C75BB332"
+                "uid": "prometheus"
             },
             "fieldConfig": {
                 "defaults": {
@@ -105,7 +105,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7F0C75BB332"
+                        "uid": "prometheus"
                     },
                     "expr": "sum(increase(kyverno_policy_results_total{rule_result=\"fail\"}[5m]))",
                     "legendFormat": "Zero-Trust Blocks (Unsigned Pods)",

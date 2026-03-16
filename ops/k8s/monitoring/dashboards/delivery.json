@@ -25,7 +25,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7F0C75BB332"
+                "uid": "prometheus"
             },
             "fieldConfig": {
                 "defaults": {
@@ -93,7 +93,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7F0C75BB332"
+                        "uid": "prometheus"
                     },
                     "expr": "argocd_app_info",
                     "legendFormat": "{{health_status}}",
@@ -106,7 +106,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7F0C75BB332"
+                "uid": "prometheus"
             },
             "fieldConfig": {
                 "defaults": {
@@ -166,7 +166,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7F0C75BB332"
+                        "uid": "prometheus"
                     },
                     "expr": "argocd_app_info",
                     "legendFormat": "{{sync_status}}",
@@ -179,7 +179,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "P1809F7F0C75BB332"
+                "uid": "prometheus"
             },
             "fieldConfig": {
                 "defaults": {
@@ -225,7 +225,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "P1809F7F0C75BB332"
+                        "uid": "prometheus"
                     },
                     "expr": "argocd_app_info",
                     "legendFormat": "{{sync_commit}}",
