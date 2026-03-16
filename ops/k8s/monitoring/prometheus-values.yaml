@@ -30,6 +30,15 @@ grafana:
       api_url: https://auth-devcloudproject.auth.us-east-1.amazoncognito.com/oauth2/userInfo
       role_attribute_path: contains(cognito:groups[*], 'Admin') && 'Admin' || 'Viewer'
   envFromSecret: grafana-sso-credentials
+  additionalDataSources:
+    - name: Elasticsearch
+      type: elasticsearch
+      access: proxy
+      url: http://elasticsearch-master.logging.svc.cluster.local:9200
+      database: "logs-*"
+      jsonData:
+        timeField: "@timestamp"
+        esVersion: "8.0.0"
 
 prometheus:
   prometheusSpec:
