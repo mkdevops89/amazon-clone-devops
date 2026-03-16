@@ -66,6 +66,13 @@
                         }
                     },
                     "mappings": [],
+                    "links": [
+                        {
+                            "targetBlank": true,
+                            "title": "Investigate Raw Logs in Kibana",
+                            "url": "https://kibana.devcloudproject.com/app/discover"
+                        }
+                    ],
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
