@@ -19,8 +19,8 @@ aws cognito-idp create-user-pool-client \
     --user-pool-id US_EAST_1_YOUR_POOL_ID \
     --client-name grafana-sso-client \
     --generate-secret \
-    --callback-urls "http://localhost:8080/login/generic_oauth" \
-    --logout-urls "http://localhost:8080/logout" \
+    --callback-urls "https://grafana.devcloudproject.com/login/generic_oauth" \
+    --logout-urls "https://grafana.devcloudproject.com/logout" \
     --supported-identity-providers "COGNITO" \
     --allowed-o-auth-flows "code" "implicit" \
     --allowed-o-auth-scopes "email" "openid" "profile" \
@@ -44,7 +44,7 @@ Update your `prometheus-values.yaml` file to enforce SSO and map Cognito IAM Gro
 grafana:
   grafana.ini:
     server:
-      root_url: http://localhost:8080
+      root_url: https://grafana.devcloudproject.com
     auth:
       disable_login_form: true
       oauth_auto_login: true
@@ -101,7 +101,7 @@ Instead of using generic host-CPU monitors, use the provided JSON dashboards exp
     ```bash
     kubectl port-forward svc/kube-prom-stack-grafana 8080:80 -n monitoring
     ```
-2.  **Open the Browser:** Navigate to `http://localhost:8080`.
+2.  **Open the Browser:** Navigate to `https://grafana.devcloudproject.com`.
 3.  **Navigate to Dashboards:** On the left-hand navigation pane, click the **Dashboards** icon (the four squares) and select **Import**.
 4.  **Upload JSON:** You can either:
     *   Click **Upload JSON file** and select the `.json` files from `ops/k8s/monitoring/dashboards/`.
@@ -195,7 +195,7 @@ kubectl run curl-template --image=curlimages/curl --restart=Never -n logging -- 
 To definitively prove your SRE configuration was successful, execute the following 5 live test cases.
 
 ### Test Case 1: Amazon Cognito SSO Authentication
-1. Navigate to `http://localhost:8080`.
+1. Navigate to `https://grafana.devcloudproject.com`.
 2. **Expected Result:** You should be instantly and forcefully redirected to the Amazon Cognito Hosted UI login screen. The standard Grafana `admin/admin` username/password prompt should no longer exist. Logging in with a registered Cognito user will redirect you back to the dashboards.
 
 ### Test Case 2: Enterprise FinOps Visualization

@@ -15,7 +15,7 @@ grafana:
     type: LoadBalancer
   grafana.ini:
     server:
-      root_url: http://localhost:8080
+      root_url: https://grafana.devcloudproject.com
     auth:
       disable_login_form: true
       oauth_auto_login: true
