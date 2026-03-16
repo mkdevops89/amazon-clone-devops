@@ -32,6 +32,13 @@
                     "color": {
                         "mode": "thresholds"
                     },
+                    "links": [
+                        {
+                            "targetBlank": true,
+                            "title": "Open in ArgoCD",
+                            "url": "https://argocd.devcloudproject.com/applications/{{name}}"
+                        }
+                    ],
                     "mappings": [
                         {
                             "options": {
@@ -69,7 +76,7 @@
             },
             "gridPos": {
                 "h": 8,
-                "w": 8,
+                "w": 12,
                 "x": 0,
                 "y": 0
             },
@@ -96,7 +103,7 @@
                         "uid": "prometheus"
                     },
                     "expr": "argocd_app_info",
-                    "legendFormat": "{{health_status}}",
+                    "legendFormat": "{{name}} ({{health_status}})",
                     "refId": "A"
                 }
             ],
@@ -113,6 +120,13 @@
                     "color": {
                         "mode": "thresholds"
                     },
+                    "links": [
+                        {
+                            "targetBlank": true,
+                            "title": "Open in ArgoCD",
+                            "url": "https://argocd.devcloudproject.com/applications/{{name}}"
+                        }
+                    ],
                     "mappings": [
                         {
                             "options": {
@@ -142,8 +156,8 @@
             },
             "gridPos": {
                 "h": 8,
-                "w": 8,
-                "x": 8,
+                "w": 12,
+                "x": 12,
                 "y": 0
             },
             "id": 2,
@@ -169,70 +183,11 @@
                         "uid": "prometheus"
                     },
                     "expr": "argocd_app_info",
-                    "legendFormat": "{{sync_status}}",
+                    "legendFormat": "{{name}} ({{sync_status}})",
                     "refId": "A"
                 }
             ],
             "title": "ArgoCD Sync State",
-            "type": "stat"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "dark-blue",
-                                "value": null
-                            }
-                        ]
-                    }
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 8,
-                "x": 16,
-                "y": 0
-            },
-            "id": 3,
-            "options": {
-                "colorMode": "background",
-                "graphMode": "none",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "fields": "",
-                    "values": false
-                },
-                "textMode": "name"
-            },
-            "pluginVersion": "10.0.0",
-            "targets": [
-                {
-                    "datasource": {
-                        "type": "prometheus",
-                        "uid": "prometheus"
-                    },
-                    "expr": "argocd_app_info",
-                    "legendFormat": "{{sync_commit}}",
-                    "refId": "A"
-                }
-            ],
-            "title": "Deployed Git Commit Hash",
             "type": "stat"
         }
     ],
