@@ -210,8 +210,10 @@ To definitively prove your SRE configuration was successful, execute the followi
 
 ### Test Case 4: Security NOC (Zero-Trust Blocks)
 1. Open the **Enterprise Security NOC** in Grafana.
-2. Attempt to deploy a malicious, unsigned pod to the cluster:
-   `kubectl run malicious-nginx --image=nginx`
+2. Attempt to deploy a spoofed, unsigned proprietary container image to the cluster:
+   ```bash
+   kubectl run malicious-amazon-app --image=406312601212.dkr.ecr.us-east-1.amazonaws.com/amazon-app:hacker-tag
+   ```
 3. **Expected Result:** The terminal returns `admission webhook "mutate.kyverno.svc-fail" denied the request`. Immediately look at the Grafana dashboard—the visual graph will explicitly spike, logging the exact Zero-Trust supply chain block.
 
 ### Test Case 5: ELK Ingest Pipeline Validation
