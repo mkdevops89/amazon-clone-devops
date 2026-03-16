@@ -20,7 +20,7 @@ aws cognito-idp create-user-pool-client \
     --client-name grafana-sso-client \
     --generate-secret \
     --callback-urls "https://grafana.devcloudproject.com/login/generic_oauth" \
-    --logout-urls "https://grafana.devcloudproject.com/logout" \
+    --logout-urls "https://grafana.devcloudproject.com/logout" "https://grafana.devcloudproject.com/" \
     --supported-identity-providers "COGNITO" \
     --allowed-o-auth-flows "code" "implicit" \
     --allowed-o-auth-scopes "email" "openid" "profile" \
@@ -48,6 +48,7 @@ grafana:
     auth:
       disable_login_form: true
       oauth_auto_login: true
+      signout_redirect_url: "https://YOUR_COGNITO_DOMAIN.auth.us-east-1.amazoncognito.com/logout?client_id=YOUR_COGNITO_CLIENT_ID&logout_uri=https://grafana.devcloudproject.com/"
     auth.generic_oauth:
       enabled: true
       name: Amazon Cognito

@@ -19,6 +19,7 @@ grafana:
     auth:
       disable_login_form: true
       oauth_auto_login: true
+      signout_redirect_url: "https://auth-devcloudproject.auth.us-east-1.amazoncognito.com/logout?client_id=16c8e7la37sl1v5tcrkukple8s&logout_uri=https://grafana.devcloudproject.com/"
     auth.generic_oauth:
       enabled: true
       name: Amazon Cognito
