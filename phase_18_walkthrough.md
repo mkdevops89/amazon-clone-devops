@@ -58,7 +58,7 @@ grafana:
       auth_url: https://YOUR_COGNITO_DOMAIN.auth.us-east-1.amazoncognito.com/oauth2/authorize
       token_url: https://YOUR_COGNITO_DOMAIN.auth.us-east-1.amazoncognito.com/oauth2/token
       api_url: https://YOUR_COGNITO_DOMAIN.auth.us-east-1.amazoncognito.com/oauth2/userInfo
-      role_attribute_path: contains(cognito:groups[*], 'Admin') && 'Admin' || 'Viewer'
+      role_attribute_path: "contains(\"cognito:groups\"[*], 'Admin') && 'Admin' || 'Viewer'"
   envFromSecret: grafana-sso-credentials
 ```
 
