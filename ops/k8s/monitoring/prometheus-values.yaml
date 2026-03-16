@@ -13,6 +13,23 @@ grafana:
     size: 10Gi
   service:
     type: LoadBalancer
+  grafana.ini:
+    server:
+      root_url: http://localhost:8080
+    auth:
+      disable_login_form: true
+      oauth_auto_login: true
+    auth.generic_oauth:
+      enabled: true
+      name: Amazon Cognito
+      allow_sign_up: true
+      client_id: 16c8e7la37sl1v5tcrkukple8s
+      scopes: openid profile email
+      auth_url: https://auth-devcloudproject.auth.us-east-1.amazoncognito.com/oauth2/authorize
+      token_url: https://auth-devcloudproject.auth.us-east-1.amazoncognito.com/oauth2/token
+      api_url: https://auth-devcloudproject.auth.us-east-1.amazoncognito.com/oauth2/userInfo
+      role_attribute_path: contains(cognito:groups[*], 'Admin') && 'Admin' || 'Viewer'
+  envFromSecret: grafana-sso-credentials
 
 prometheus:
   prometheusSpec:
