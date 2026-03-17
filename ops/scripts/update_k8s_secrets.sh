@@ -4,7 +4,8 @@ set -e
 # Configuration
 # Resolve absolute path to script directory to handle 'cd' usage later
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TF_DIR="$SCRIPT_DIR/../terraform/aws"
+ENV=${1:-dev}
+TF_DIR="$SCRIPT_DIR/../terraform/environments/$ENV/eks"
 SECRETS_FILE="$SCRIPT_DIR/../k8s/db-secrets.yaml"
 BACKEND_FILE="$SCRIPT_DIR/../k8s/backend.yaml"
 FRONTEND_FILE="$SCRIPT_DIR/../k8s/frontend.yaml"
@@ -14,12 +15,12 @@ cd "$TF_DIR"
 
 # Helper function to get output safely
 get_tf_output() {
-    terraform output -raw "$1" 2>/dev/null || echo "ERROR"
+    terragrunt output -raw "$1" 2>/dev/null || echo "ERROR"
 }
 
 # Helper for sensitive output
 get_tf_sensitive() {
-    terraform output -json "$1" 2>/dev/null | tr -d '"' || echo "ERROR"
+    terragrunt output -json "$1" 2>/dev/null | tr -d '"' || echo "ERROR"
 }
 
 RDS_ENDPOINT=$(get_tf_output rds_endpoint)
@@ -32,7 +33,7 @@ ECR_FRONTEND=$(get_tf_output ecr_frontend_url)
 
 # Verify one key value to ensure Terraform ran
 if [[ "$RDS_ENDPOINT" == "ERROR" || -z "$RDS_ENDPOINT" ]]; then
-    echo "❌ Error retrieving Terraform outputs. Did you run 'terraform apply'?"
+    echo "❌ Error retrieving Terragrunt outputs. Did you run 'terragrunt run-all apply'?"
     exit 1
 fi
 
