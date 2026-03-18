@@ -325,8 +325,10 @@ spec:
                             """
                         }
 
-                        sh "docker push ${DOCKERHUB_USER}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
-                        sh "docker push ${DOCKERHUB_USER}/amazon-frontend:latest"
+                        retry(5) {
+                            sh "docker push ${DOCKERHUB_USER}/amazon-frontend:${env.GIT_COMMIT_SHORT}"
+                            sh "docker push ${DOCKERHUB_USER}/amazon-frontend:latest"
+                        }
                     }
                 }
             }
