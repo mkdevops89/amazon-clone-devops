@@ -6,7 +6,8 @@ resource "random_id" "reports_bucket_suffix" {
 }
 
 resource "aws_s3_bucket" "reports" {
-  bucket = "${var.project}-${var.environment}-reports-${random_id.reports_bucket_suffix.hex}"
+  bucket        = "${var.project}-reports-${random_id.reports_bucket_suffix.hex}"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "reports_encryption" {

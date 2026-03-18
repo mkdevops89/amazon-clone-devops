@@ -14,10 +14,11 @@ resource "random_id" "bucket_suffix" {
 # 1. The Immutable S3 Bucket
 # ==========================================
 resource "aws_s3_bucket" "security_evidence" {
-  bucket = "${var.project}-${var.environment}-security-evidence-${random_id.bucket_suffix.hex}"
+  bucket = "${var.project}-security-evidence-${random_id.bucket_suffix.hex}"
 
   # Enable Object Lock WORM features
   object_lock_enabled = true
+  force_destroy       = true
 
   tags = {
     Name        = "${var.project}-security-evidence"

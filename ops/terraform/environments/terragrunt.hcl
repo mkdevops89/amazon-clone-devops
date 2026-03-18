@@ -27,7 +27,7 @@ provider "aws" {
     tags = {
       Project     = "Amazon-Clone-DevSecOps"
       ManagedBy   = "Terragrunt"
-      Environment = "dev"
+      Environment = var.environment
     }
   }
 }

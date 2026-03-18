@@ -106,7 +106,7 @@ def stop_dev_instances():
     logger.info("Stopping Dev EC2 Instances...")
     # Fix: Exclude Spot Instances (they cannot be stopped, only terminated via ASG/EKS scaling)
     filters = [
-        {'Name': 'tag:Environment', 'Values': ['Dev']}, 
+        {'Name': 'tag:Environment', 'Values': ['Dev', 'dev']}, 
         {'Name': 'instance-state-name', 'Values': ['running']},
         {'Name': 'instance-lifecycle', 'Values': ['on-demand']} # Only stop On-Demand
     ]
@@ -124,7 +124,7 @@ def stop_dev_instances():
 def start_dev_instances():
     """Starts EC2 Intances tagged Environment=Dev"""
     logger.info("Starting Dev EC2 Instances...")
-    filters = [{'Name': 'tag:Environment', 'Values': ['Dev']}, {'Name': 'instance-state-name', 'Values': ['stopped']}]
+    filters = [{'Name': 'tag:Environment', 'Values': ['Dev', 'dev']}, {'Name': 'instance-state-name', 'Values': ['stopped']}]
     instances = ec2.describe_instances(Filters=filters)
     ids = [i['InstanceId'] for r in instances['Reservations'] for i in r['Instances']]
     
@@ -174,7 +174,7 @@ def stop_dev_rds():
         # Robust tag checking: strip whitespace
         env_tag = next((t['Value'].strip() for t in tags if t['Key'].strip() == 'Environment'), None)
 
-        if env_tag == 'Dev' and status == 'available':
+        if env_tag and env_tag.lower() == 'dev' and status == 'available':
             rds.stop_db_instance(DBInstanceIdentifier=db_id)
             logger.info(f"Stopped RDS: {db_id}")
             return f"Stopped RDS Instance: {db_id}"
@@ -193,7 +193,7 @@ def start_dev_rds():
         # Robust tag checking: strip whitespace
         env_tag = next((t['Value'].strip() for t in tags if t['Key'].strip() == 'Environment'), None)
 
-        if env_tag == 'Dev' and status == 'stopped':
+        if env_tag and env_tag.lower() == 'dev' and status == 'stopped':
             rds.start_db_instance(DBInstanceIdentifier=db_id)
             logger.info(f"Started RDS: {db_id}")
             return f"Started RDS Instance: {db_id}"
