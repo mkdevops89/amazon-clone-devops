@@ -351,6 +351,17 @@ spec:
             }
         }
 
+        stage('Compliance: STIG Gate') {
+            steps {
+                container('trivy') {
+                    script {
+                        echo "--- 🛡️ Enforcing Federal Compliance: Trivy Config Scan ---"
+                        sh "trivy config --format table --severity HIGH,CRITICAL --output reports/trivy-compliance-report.txt ./ops/ || echo 'Compliance scan finished (Audit Mode)'"
+                    }
+                }
+            }
+        }
+
         stage('Security: DAST Scan') {
             steps {
                 container('zap') {

@@ -1,0 +1,41 @@
+---
+- name: DISA STIG Baseline Hardening for EC2 Hosts
+  hosts: all
+  become: yes
+  vars:
+    auditd_rules_file: "/etc/audit/rules.d/stig.rules"
+
+  roles:
+    - { role: ../roles/ssh_hardening }
+
+  tasks:
+    - name: STIG V-222230 | Ensure Auditd Service is Installed
+      package:
+        name: auditd
+        state: present
+
+    - name: STIG V-222231 | Configure Auditd File Permission Rules
+      copy:
+        dest: "{{ auditd_rules_file }}"
+        content: |
+          -w /etc/passwd -p wa -k identity
+          -w /etc/group -p wa -k identity
+          -w /etc/shadow -p wa -k identity
+          -w /etc/sudoers -p wa -k privilege_escalation
+        owner: root
+        group: root
+        mode: '0600'
+      notify: Restart Auditd
+
+    - name: STIG V-222240 | Restrict Core Dumps (Security)
+      sysctl:
+        name: fs.suid_dumpable
+        value: '0'
+        state: present
+        reload: yes
+
+  handlers:
+    - name: Restart Auditd
+      service:
+        name: auditd
+        state: restarted

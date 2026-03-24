@@ -1,0 +1,36 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow Latest Tag
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      The ':latest' tag is mutable and can lead to unexpected vulnerabilities in Production.
+      This policy enforces explicit semantic versioning or SHAs.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: require-image-tag
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - argocd
+          - monitoring
+          - security
+    validate:
+      message: "An immutable image tag is strictly required. The ':latest' tag is blocked by Federal compliance standards."
+      pattern:
+        spec:
+          containers:
+          - image: "*:*"
+            =(image): "!*:latest"

@@ -1,0 +1,27 @@
+---
+- name: STIG V-222220 | Disable SSH Root Login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PermitRootLogin'
+    line: 'PermitRootLogin no'
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: Restart SSH Console
+
+- name: STIG V-222221 | Disable SSH Password Authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: Restart SSH Console
+
+- name: STIG V-222222 | Enforce SSH Idle Timeout (ClientAliveInterval)
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^ClientAliveInterval'
+    line: 'ClientAliveInterval 900'
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: Restart SSH Console

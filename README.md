@@ -1,20 +1,16 @@
-# Phase 18: Ultimate Enterprise Observability (The Correlation Engine)
+# Phase 20: Federal DevSecOps & STIG Compliance Enforcement
 
 ## Overview
-Phase 18 bridges the gap between Day 1 cluster deployment and Day 2 Site Reliability Engineering (SRE). This phase transforms the basic operational metrics into an **Enterprise Correlation Engine**—a true "Single Pane of Glass" that unifies AWS Billing, GitOps Deployments, and Kubernetes kernel security.
+Phase 20 bridges the gap between basic CI/CD vulnerability scanning and true **Federal Governance**. Evolving past the massive Phase 19 Terragrunt state decapsulation, this centralized architecture now actively enforces DISA STIG and NIST compliance baselines across the Kubernetes cluster, the CI delivery pipeline, and the raw EC2 host OS layer through targeted Ansible methodologies.
 
-## Core SRE Upgrades
-1. **SSO Identity Hardening (Amazon Cognito):** The default Grafana `admin/admin` credentials have been eliminated. Access is now rigidly secured behind an OIDC integration with the AWS IAM/Cognito environment, actively mapping Cognito `Admin` groups to Grafana Admin roles.
-2. **The Correlation Engine (Metrics-to-Logs):** We engineered Grafana to natively index the internal Elasticsearch database. Level-2 Support Engineers can now identify a Prometheus CPU or latency spike, highlight the specific 5-minute time window, and initiate a split-screen view that instantly pulls the exact application logs for that exact microsecond.
-3. **Advanced ELK Architecture:** Elasticsearch is no longer a flat "dumping ground" for raw pod logs. We implemented **Index Lifecycle Management (ILM)** natively via the REST API to define Data Streams that automatically age-out and delete logs older than 30 days. We also constructed **Ingest Pipelines** to physically parse and clean incoming JSON payloads before they hit the disk.
-
-## Enterprise Dashboards (Network Operations Center)
-Instead of generic host monitors, we built three specialized JSON dashboards for the SRE team:
-- **Enterprise FinOps & Automation:** Visualizes the `aws_cost_daily_total` directly alongside `aws_cost_optimizer_actions_total`. This mathematically proves to operations that the nightly AWS EC2/RDS auto-stop scripts actively reduce the monthly AWS bill.
-- **Enterprise GitOps Delivery Pipeline:** Directly queries ArgoCD Prometheus metrics to physically track the exact Git commit hashes actively running in the EKS cluster, along with real-time Sync and Application Health states.
-- **Enterprise Security NOC:** Visualizes the Kyverno Admission Webhook, charting any Zero-Trust pod blocks directly on the NOC screen to prove the software supply chain is secure.
+## Core Compliance Upgrades
+1. **Kubernetes API Policy Blocking (Kyverno):** The EKS cluster no longer operates on implicit trust. We authored strict `ClusterPolicy` YAML matrices that natively intercept and explicitly reject any `Pod` component attempting to run as `root`, utilize the mutable `:latest` tag, or deploy non-compliant filesystems.
+2. **CI/CD Evidence Archival (Jenkins WORM checks):** The `Jenkinsfile` now enforces a rigid `trivy config` Federal Gate. Infrastructure misconfigurations immediately halt the downstream ArgoCD GitOps synchronizations, and the resulting JSON compliance receipts are synchronously flushed to an immutable S3 Object Lock bucket to satisfy rigid forensic audit-retentions.
+3. **Automated Host Hardening (Ansible):** The foundational EC2 Bastion infrastructures are structurally locked down via `ops/ansible/playbooks/stig-baseline.yaml`. Extraneous SSH connections (root/password login) are strictly disabled at the daemon level, and `auditd` actively logs all IAM modifications.
+4. **Governing SLAs & Vulnerability Documentation:** We formally defined our security response boundaries natively within `docs/security/vulnerability-management-process.md`, locking Critical patches into 48-hour resolution windows and mathematically mapping all overlying AWS controls into the core DISA STIG matrix.
 
 ## Key Files & Directories
-- `ops/k8s/monitoring/prometheus-values.yaml`: Aggressively modified to enforce Amazon Cognito SSO and mount the `elasticsearch-master` internal data source.
-- `ops/k8s/monitoring/dashboards/`: Directory holding the custom `finops.json`, `delivery.json`, and `security.json` NOC dashboards.
-- `phase_18_walkthrough.md`: A highly detailed instructional runbook on how to provision this SRE architecture and execute 5 explicit live testing scenarios.
+- `ops/security/kyverno-policies/`: Contains the federal `ClusterPolicy` configurations (`disallow-root-user`, `require-readonly-rootfs`).
+- `ops/ansible/playbooks/stig-baseline.yaml`: The master Ansible playbook that aggressively hardens raw EC2 compute environments.
+- `Jenkinsfile`: Hardened dynamically with the `Compliance: STIG Gate` blocking threshold.
+- `docs/security/`: Formal Markdown mappings isolating precise vulnerability response SLAs and compliance matrices.

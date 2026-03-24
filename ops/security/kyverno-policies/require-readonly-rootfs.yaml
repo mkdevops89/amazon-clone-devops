@@ -1,0 +1,36 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-ro-rootfs
+  annotations:
+    policies.kyverno.io/title: Require Read-Only Root Filesystem
+    policies.kyverno.io/category: Pod Security Standards (Restricted)
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      A read-only root filesystem helps to prevent malicious binaries from writing to the 
+      underlying host OS. This policy validates that `readOnlyRootFilesystem` is set to `true`.
+spec:
+  validationFailureAction: audit
+  background: true
+  rules:
+  - name: validate-readOnlyRootFilesystem
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - argocd
+          - monitoring
+          - security
+    validate:
+      message: "Root filesystem must be read-only to comply with DISA STIG baselines. Please adjust your SecurityContext."
+      pattern:
+        spec:
+          containers:
+          - securityContext:
+              readOnlyRootFilesystem: true
