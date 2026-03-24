@@ -63,7 +63,7 @@ spec:
           cpu: "5m"
           memory: "64Mi"
     - name: trivy
-      image: aquasec/trivy:latest
+      image: ghcr.io/aquasecurity/trivy:latest
       command:
         - cat
       tty: true
