@@ -51,6 +51,10 @@ inputs = {
   # from being destroyed & recreated due to the new multi-tenant naming convention.
   cluster_name            = "amazon-cluster"
   db_name                 = "amazon-db"
+  
+  # Inject the Dynamic Disaster Recovery parameter directly from the Terminal Environment!
+  snapshot_identifier     = get_env("RESTORE_SNAPSHOT_ID", null)
+
   redis_cluster_id        = "amazon-redis"
   
   db_sg_name              = "amazon-db-sg"

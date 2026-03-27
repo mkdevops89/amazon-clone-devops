@@ -185,9 +185,12 @@ module "db" {
   username          = var.db_username
   port              = 3306
   
-  # Fix: Skip snapshot on destroy for Dev environments to allow clean teardown
-  skip_final_snapshot = true
+  # Dynamic Disaster Recovery 
+  snapshot_identifier = var.snapshot_identifier
   
+  # Allow organic backup generation on destruction
+  skip_final_snapshot       = false
+  final_snapshot_identifier = "${var.project}-${var.environment}-final-db-snapshot"
   # Network & Security
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   subnet_ids             = var.private_subnets

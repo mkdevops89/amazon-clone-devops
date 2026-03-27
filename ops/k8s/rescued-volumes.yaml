@@ -1,0 +1,121 @@
+# Persistent Volume Backup Map for Amazon E-Commerce Clone
+# Generated pre-destruction to statically bind orphaned AWS EBS drives to the new EKS cluster.
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rescued-elasticsearch-volume
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  awsElasticBlockStore:
+    volumeID: vol-0d45baf58d92d7102
+    fsType: ext4
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rescued-jenkins-nvd-cache-volume
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-0e9564517c042dfef
+    fsType: ext4
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rescued-grafana-volume
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-0ddd85755f2a929f2
+    fsType: ext4
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rescued-sonarqube-volume
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-05a34fee4ac8636bd
+    fsType: ext4
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rescued-jenkins-volume
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-0c2f8c9c70b596e04
+    fsType: ext4
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rescued-argocd-redis-volume
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-055f4fb6eac7ec081
+    fsType: ext4
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rescued-nexus-volume
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-0f9d5225bbcfad9c5
+    fsType: ext4
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rescued-redpanda-volume
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-031d72390f87a8c6a
+    fsType: ext4

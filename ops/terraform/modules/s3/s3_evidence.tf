@@ -37,7 +37,7 @@ resource "aws_s3_bucket_object_lock_configuration" "evidence_lock" {
   rule {
     default_retention {
       mode  = "COMPLIANCE" # Strictest mode: Cannot be bypassed or deleted by *anyone* until retention expires
-      years = 7          # Standard PCI-DSS/SOC2 retention period
+      years = 7            # Standard PCI-DSS/SOC2 retention period
     }
   }
 }

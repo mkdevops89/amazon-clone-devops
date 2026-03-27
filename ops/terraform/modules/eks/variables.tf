@@ -49,6 +49,12 @@ variable "db_name" {
   default     = "amazon-clone-db"
 }
 
+variable "snapshot_identifier" {
+  description = "The ARN or name of the AWS RDS snapshot to restore from"
+  type        = string
+  default     = null
+}
+
 variable "db_username" {
   description = "The RDS MySQL Master Username"
   type        = string

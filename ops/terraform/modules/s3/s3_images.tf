@@ -5,7 +5,8 @@ resource "random_id" "image_bucket_suffix" {
 
 # The actual standard S3 bucket to hold your storefront images
 resource "aws_s3_bucket" "product_images" {
-  bucket = "${var.project}-${var.environment}-product-images-${random_id.image_bucket_suffix.hex}"
+  bucket        = "${var.project}-${var.environment}-product-images-${random_id.image_bucket_suffix.hex}"
+  force_destroy = true
 
   tags = {
     Name        = "Amazon Clone Product Images"
