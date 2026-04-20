@@ -190,7 +190,6 @@ module "db" {
   
   # Allow organic backup generation on destruction
   skip_final_snapshot       = false
-  final_snapshot_identifier = "${var.project}-${var.environment}-final-db-snapshot"
   # Network & Security
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   subnet_ids             = var.private_subnets
