@@ -4,6 +4,7 @@
 resource "aws_ecr_repository" "backend" {
   name                 = "amazon-backend"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -21,6 +22,7 @@ resource "aws_ecr_repository" "backend" {
 resource "aws_ecr_repository" "frontend" {
   name                 = "amazon-frontend"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -80,6 +82,7 @@ resource "aws_ecr_lifecycle_policy" "frontend_policy" {
 resource "aws_ecr_repository" "cost_exporter" {
   name                 = "cost-exporter"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true

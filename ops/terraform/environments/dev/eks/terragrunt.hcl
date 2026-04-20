@@ -53,7 +53,7 @@ inputs = {
   db_name                 = "amazon-db"
   
   # Inject the Dynamic Disaster Recovery parameter directly from the Terminal Environment!
-  snapshot_identifier     = get_env("RESTORE_SNAPSHOT_ID", null)
+  snapshot_identifier     = get_env("RESTORE_SNAPSHOT_ID", "")
 
   redis_cluster_id        = "amazon-redis"
   

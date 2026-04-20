@@ -21,7 +21,7 @@ To completely wipe AWS back to a virgin state cleanly, you must strictly follow 
 
 ### Step 1: Purge the Kubernetes Workloads
 You must gracefully strip out every dynamic load balancer and volume dynamically orchestrated by EKS.
-1. Authenticate to the specific Terragrunt `dev` cluster: `aws eks update-kubeconfig --region us-east-1 --name amazon-clone-dev`
+1. Authenticate to the specific Terragrunt `dev` cluster: `aws eks update-kubeconfig --region us-east-1 --name amazon-cluster`
 2. Eradicate the primary ArgoCD application:
    ```bash
    kubectl delete application amazon-app -n argocd
@@ -46,11 +46,10 @@ Once the dynamic K8s endpoints and blob buckets are flawlessly emptied, you can 
    - `vpc` (NAT Gateways, Subnets, Routing Tables)
    
 3. **Execute the Destruction Map:**
-Because you structurally want to physically recycle your legacy databases and preserve the active S3 bucket logic (product images, reports, and the locked evidence room), you must specifically instruct the dependency graph to isolate and ignore the entire S3 payload block organically natively:
+Because you structurally want to physically recycle your legacy databases and preserve the active S3 bucket logic (product images, reports, and the locked evidence room), Terragrunt will natively bypass the S3 namespace due to our hardcoded `skip = true` backend configuration!
    ```bash
-   terragrunt run-all destroy --terragrunt-exclude-dir s3
+   terragrunt run --all -- destroy
    ```
-*By surgically omitting the S3 directory, your `terragrunt run-all apply` structural rebuild tomorrow will logically discover the surviving buckets still inside AWS, statically mapping your new EKS nodes directly to the legacy images natively!*
 
 ---
 
@@ -62,7 +61,7 @@ When the AWS console is successfully returned to an empty void, follow this stru
 We must rebuild the core underlying AWS services using Terragrunt.
 1. Inside the `environments/dev/` module, unleash the pipeline:
    ```bash
-   terragrunt run-all apply --terragrunt-non-interactive
+   terragrunt run --all --non-interactive -- apply
    ```
 2. Terragrunt will autonomously deploy the raw baseline (VPCs, OpenSearch/Redis, RabbitMQ MQ Brokers, RDS MySQL clusters, Cognito, and EKS).
 3. **Important Note:** Because the system was wiped, AWS will generate definitively new `host URLs` (e.g., brand new RDS Endpoint DNS strings) and organic database passwords natively stored inside the `aws-secrets-manager`.
@@ -111,8 +110,9 @@ cd ops/terraform/environments/dev/dns
 # Force-remove the dead DNS lookup object from the tracking graph
 terragrunt state rm 'data.aws_lb.ingress'
 
-# Resume the teardown procedure organically
-terragrunt destroy
+# Resume the overarching cluster teardown procedure organically from the environment root
+cd ..
+terragrunt run --all -- destroy
 ```
 
 ---
@@ -164,7 +164,7 @@ Terragrunt flawlessly recreates the overarching AWS Cognito User Pools and struc
 
 ## Phase 5: The RDS `RESTORE_SNAPSHOT_ID` Disaster Recovery
 
-During the infrastructure teardown loop, the Terraform AWS Provider will algorithmically execute a final native snapshot of the MySQL application database (e.g., `amazon-clone-dev-final-db-snapshot`), securely saving all active Shopping Carts, Live Orders, and product arrays.
+During the infrastructure teardown loop, the Terraform AWS Provider will algorithmically execute a final native snapshot of the MySQL application database (e.g., `amazon-db-final-snapshot`), securely saving all active Shopping Carts, Live Orders, and product arrays.
 
 **The Automated Resurrection:**
 Terraform natively refuses to assume you want to restore a database from an old snapshot unless explicitly commanded. To mathematically restore your shopping data rather than spinning up a blank database, you must aggressively inject the explicit Bash variable during the application layer execution!
