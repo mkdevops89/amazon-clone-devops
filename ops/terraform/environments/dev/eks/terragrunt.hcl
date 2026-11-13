@@ -35,6 +35,7 @@ dependency "identity" {
 inputs = {
   environment              = "dev"
   project                  = "amazon-clone"
+  admin_source_cidr        = get_env("ADMIN_SOURCE_CIDR")
   
   # Inject the downstream Networking variables
   vpc_id                   = dependency.networking.outputs.vpc_id

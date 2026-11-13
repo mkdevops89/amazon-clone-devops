@@ -54,7 +54,7 @@ These are technologies referenced by repository configuration. This list does no
 ## Engineering decisions and security boundaries
 
 - The repository has moved through multiple pipeline and infrastructure designs. The current default branch is the reference point for this overview; phase branches are historical snapshots.
-- AWS infrastructure is configured for a development environment, but some current defaults need review before provisioning. In particular, the EKS public API endpoint, selected node ingress rules, and bastion ingress include `0.0.0.0/0`.
+- AWS infrastructure is configured for a development environment. The EKS public API endpoint and bastion SSH now require `ADMIN_SOURCE_CIDR` to be supplied to the development EKS Terragrunt environment; selected node ports are restricted to the VPC CIDR. Use a trusted VPN or fixed administrative network. The endpoint remains public, but the broad `0.0.0.0/0` access rules have been removed from this module.
 - The backend JWT signing value is now read from `JWT_SECRET` rather than embedded in `application.properties`. Provide a strong Base64-encoded value through a secret manager or local environment. The former value remains in Git history and should be rotated anywhere it may have been used. Do not place secrets in Git or build arguments.
 - The tracked frontend `.env.production` contains Cognito identifiers and a public API URL used by browser code. These are client configuration values, not credentials. Keep confidential values out of `NEXT_PUBLIC_*` variables.
 - Some manifests still use mutable image tags, and the current Jenkins agent definition includes privileged Docker-in-Docker. Treat those as hardening work, not secure defaults.
@@ -68,7 +68,7 @@ The Terraform, Helm, Kubernetes, and Ansible files are configuration evidence. T
 
 ## Setup and teardown
 
-This repository does not currently provide a verified one-command setup that creates the complete application platform. A full deployment depends on AWS credentials, configured Terraform/Terragrunt state, account-specific settings, GitHub/Jenkins secrets, DNS and certificates, and external service prerequisites. Review the environment files and runbooks before running infrastructure commands.
+This repository does not currently provide a verified one-command setup that creates the complete application platform. A full deployment depends on AWS credentials, configured Terraform/Terragrunt state, account-specific settings, an `ADMIN_SOURCE_CIDR` value for the EKS environment, GitHub/Jenkins secrets, DNS and certificates, and external service prerequisites. Review the environment files and runbooks before running infrastructure commands.
 
 The AWS design includes billable resources such as EKS worker nodes, load balancers, NAT gateways, RDS, ElastiCache, Amazon MQ, EBS volumes, and log storage. Estimate cost in the target account before provisioning and inspect billing after teardown; deleting a cluster does not necessarily remove every dependent resource. RDS is configured with `skip_final_snapshot = true`, so destroying it can permanently remove database data.
 

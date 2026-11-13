@@ -9,7 +9,7 @@ resource "aws_key_pair" "ansible_bastion_keypair" {
   public_key = tls_private_key.ansible_bastion_key.public_key_openssh
 }
 
-# The Bastion Security Group (Allow SSH from anywhere for Ansible)
+# Restrict bastion SSH to the configured administrative network.
 resource "aws_security_group" "bastion_sg" {
   name        = "bastion-sg"
   description = "Security group for Ansible managed bastion host"
@@ -20,7 +20,7 @@ resource "aws_security_group" "bastion_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # In a real environment, restrict to the engineer's IP
+    cidr_blocks = [var.admin_source_cidr]
   }
 
   egress {

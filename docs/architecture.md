@@ -26,7 +26,7 @@ Branches named for earlier phases preserve iterations of the project. The curren
 
 ## Material security and operations risks
 
-- Terraform currently permits public access to the EKS API and selected node/bastion ports from `0.0.0.0/0`. Restrict these ranges to required sources before provisioning.
+- The EKS API endpoint remains public but is now restricted by required `ADMIN_SOURCE_CIDR` input. Bastion SSH uses the same input; selected node service ports are limited to the VPC CIDR. Confirm the configured CIDR is a trusted administrative network before provisioning.
 - Jenkins agents include privileged Docker-in-Docker and several mutable tool image tags. Pin and isolate build tooling before treating the pipeline as hardened.
 - A JWT signing value was previously committed in application configuration. Source now requires `JWT_SECRET`; rotate the value in any environment where the former value was used. Git history still contains it.
 - Some teardown and compliance documents include strong guarantees that are not demonstrated by the current source. Validate every destructive command, retention setting, and control mapping against the deployed account before use.
