@@ -134,7 +134,9 @@ jobs:
           sleep 10 # Give next.js time to boot
 
       - name: Run ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.7.0
+        uses: zaproxy/action-baseline@v0.15.0
         with:
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
           target: 'http://localhost:3000'
-          fail_action: false # Don't fail build for demo warnings
+          allow_issue_writing: false
+          fail_action: false # Baseline alerts are reported without blocking this demo build
