@@ -11,7 +11,7 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:17-jre AS extract
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
-RUN java -Djarmode=layertools -jar app.jar extract
+RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
 
 # ==========================================
 # Stage 3: Run Stage (Runtime)
@@ -27,10 +27,10 @@ USER spring:spring
 # Copy extracted layers. 
 # Docker will cache 'dependencies' and 'spring-boot-loader' layers.
 # Only 'application' layer changes when you edit code.
-COPY --from=extract /app/dependencies/ ./
-COPY --from=extract /app/spring-boot-loader/ ./
-COPY --from=extract /app/snapshot-dependencies/ ./
-COPY --from=extract /app/application/ ./
+COPY --from=extract /app/extracted/dependencies/ ./
+COPY --from=extract /app/extracted/spring-boot-loader/ ./
+COPY --from=extract /app/extracted/snapshot-dependencies/ ./
+COPY --from=extract /app/extracted/application/ ./
 
-ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["java", "-jar", "application.jar"]
 
