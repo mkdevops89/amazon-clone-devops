@@ -16,9 +16,9 @@ This is a learning and demonstration project. The repository does not establish 
 | GitHub Actions on `main` | **Failing in the latest visible run found during this review (November 13, 2026)** | The latest visible `Amazon Clone CI/CD` run, from March 25, 2026, failed in both `backend-build` and `frontend-build`; dependent Docker and DAST jobs were skipped. [Open the run](https://github.com/mkdevops89/amazon-clone-devops/actions/runs/23544858142). The public job summary did not expose failed-step details during this review. |
 | Project roadmap | Ongoing | `main` contains a Phase 20 commit. Phase-named branches record earlier iterations; they are not all separate, currently supported deployment paths. |
 
-The latest visible main-branch workflow result is a failure, so this README does not use a passing CI badge. Recheck the Actions page before relying on any status statement.
+The latest visible `main` workflow result before this cleanup branch was a failure, so this README does not use a passing CI badge. The cleanup branch's current build and scan results are summarized under [Validation and limitations](#validation-and-limitations); check the Actions page for current default-branch status.
 
-The workflow requested Node.js 18 while the locked Next.js 16 package requires Node.js 20.9 or newer. This branch updates the CI runtime to Node.js 22. The backend failure remains undiagnosed because step-level logs were unavailable; a new workflow run is needed before claiming the pipeline passes.
+The workflow had requested Node.js 18 while the locked Next.js 16 package requires Node.js 20.9 or newer. This branch updates CI to Node.js 22. The original main-branch failure details were unavailable, so this records the observed failure without attributing an unverified root cause.
 
 ## Architecture
 
@@ -62,7 +62,9 @@ These are technologies referenced by repository configuration. This list does no
 
 ## Validation and limitations
 
-GitHub Actions provides build and scan workflows, but the latest visible `main` CI run failed in the frontend and backend build jobs. The public run summary did not provide step-level failure details during this review. Successful historical-branch runs are not evidence that the current `main` workflow passes.
+On November 13, 2026, cleanup PR branch run [#20](https://github.com/mkdevops89/amazon-clone-devops/actions/runs/43505811938) passed backend Maven build/tests, frontend dependency installation/build, both container builds, and both Trivy scans. ZAP Baseline reported 64 checks passed, 4 warnings, and 0 fail-level alerts. The remaining warnings are CSP missing, non-storable content, COEP missing/invalid, and ZAP's informational Modern Web Application rule. ZAP is configured with `fail_action: false`, so warnings do not block the workflow. The Snyk steps also use `continue-on-error: true` and are not blocking checks.
+
+Before this branch's changes, the latest visible `main` CI run found in this review failed in the backend and frontend build jobs; its step-level logs were unavailable. The PR branch run does not establish the current state of `main` or a live AWS deployment. Check the Actions page for current default-branch results.
 
 The Terraform, Helm, Kubernetes, and Ansible files are configuration evidence. They do not prove current AWS account state, a successful clean-room deployment, production readiness, or recovery from a disaster. Cost, availability, security, and performance outcomes have not been independently measured here.
 
@@ -90,6 +92,6 @@ For teardown, inventory resources and persistent volumes first, take any require
 ## Suggested review order
 
 1. Read the [architecture notes](docs/architecture.md) and inspect the current `main` branch.
-2. Review the [latest GitHub Actions result](https://github.com/mkdevops89/amazon-clone-devops/actions/runs/23544858142) and its failed steps.
+2. Review the [cleanup-branch Actions result](https://github.com/mkdevops89/amazon-clone-devops/actions/runs/43505811938) and remaining ZAP warnings.
 3. Review the open-access network rules and secret configuration before considering an AWS deployment.
 4. Treat historical phase branches and older runbooks as project history unless they are explicitly revalidated.
