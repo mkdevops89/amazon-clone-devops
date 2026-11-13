@@ -31,7 +31,7 @@ jobs:
         working-directory: ./backend
 
       - name: Snyk Security Scan (Backend)
-        uses: snyk/actions/maven-3jdk17@master
+        uses: snyk/actions/maven-3-jdk-17@master
         continue-on-error: true # Don't block build for demo purposes
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
