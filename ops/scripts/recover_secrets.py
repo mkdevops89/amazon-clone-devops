@@ -115,7 +115,7 @@ data:
   rabbitmq_password: {b64(mq_pw)}
 
   # JWT
-  jwt_secret: {b64(os.getenv("JWT_SECRET", "mySuperSecretkeyForJwtTestingPurposesOnly1234567890"))}
+  jwt_secret: {b64(os.environ["JWT_SECRET"])}
 """
     
     with open('ops/k8s/db-secrets.yaml', 'w') as f:
