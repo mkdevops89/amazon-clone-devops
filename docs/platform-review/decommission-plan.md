@@ -1,20 +1,15 @@
-# 🗑️ Resource Decommissioning Plan
+# Decommissioning review backlog
 
-## 1. Objective
-To reduce AWS costs and minimize security vulnerabilities, we must forcefully decommission unused cloud resources and stale code identified in the Technical Debt Register.
+This file lists checks to complete before proposing resource deletion. It is not authorization to delete cloud resources, and no live AWS inventory was available during this review.
 
-## 2. Target 1: Unused ECR Images
-Our Jenkins CI pipeline tags a new Docker image for every single Git commit. Over time, Amazon Elastic Container Registry (ECR) fills up with thousands of obsolete gigabytes.
-- **Plan:** Apply an automated ECR Lifecycle Policy (`ops/scripts/cleanup/ecr-retention-policy.json`) to automatically expire untagged images or images older than 14 days.
+## Review items
 
-## 3. Target 2: Orphaned Terraform State Files
-During the transition from local `backend.tf` execution to CI/CD automation, several local state files (`terraform.tfstate`) may have been accidentally committed.
-- **Plan:** Execute `git filter-repo` or simple `git rm --cached` interventions to scrub any `.tfstate` files from the repository's history to prevent credential leakage.
+1. **ECR retention:** inspect the lifecycle policy and repositories in AWS. The existence of `ops/scripts/cleanup/ecr-retention-policy.json` alone does not establish that a policy is attached.
+2. **Terraform state:** the current tracked-file scan found no Terraform state file in the default branch. Review all history and state backends separately before drawing conclusions about secret exposure.
+3. **Kubernetes resources:** query the intended cluster and check ownership, PVCs, and Argo CD applications before removing namespaces or storage.
+4. **Messaging services:** the backend configuration references RabbitMQ and the Terraform module provisions Amazon MQ. Do not remove it based on the presence of Kafka/Redpanda files; verify application usage and deployment state first.
+5. **DNS and network resources:** inspect Route 53, load balancers, NAT gateways, EIPs, and certificates in the correct account before cleanup.
 
-## 4. Target 3: Extraneous Kubernetes Namespaces
-Check the EKS cluster for namespaces that were used for temporary sandboxes but were never deleted.
-- **Plan:** Admin executes `kubectl get namespaces` and then `kubectl delete namespace <sandbox>` to rapidly free up CPU and Memory reserved by dormant pods inside the cluster.
+## Evidence to retain
 
-## 5. Target 4: RabbitMQ (Messaging Consolidation)
-With the introduction of **Redpanda (Kafka)** for Event-Driven Architecture in Phase 16, maintaining our legacy **RabbitMQ** infrastructure is redundant and incurs unnecessary compute overhead.
-- **Plan:** Update the `amazon-backend` Spring Boot application to exclusively use Kafka instead of RabbitMQ. Once validated, execute `helm uninstall rabbitmq` to completely purge the old broker from the cluster, immediately saving Memory and CPU on the EC2 worker nodes.
+For each proposed removal, record the resource ID, owning Terraform stack or Kubernetes controller, data-retention decision, reviewed plan or console evidence, and post-change billing check. Do not use automated deletion for volumes, snapshots, or repositories until retention and recovery requirements are confirmed.

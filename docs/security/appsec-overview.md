@@ -1,51 +1,37 @@
-# Enterprise Application Security (AppSec) Overview
+# Application security design notes
 
-## 1. Defense-in-Depth Architecture
-The Amazon Clone DevSecOps architecture implements a strict "Defense-in-Depth" layered security model:
+This page distinguishes code and configuration present in the repository from controls that have not been validated in a running environment. The project is not an independently audited or certified security platform.
 
-*   **Layer 3/4 (Network):** Private EKS Subnets, NAT Gateways, Security Groups restricting inter-node traffic.
-*   **Layer 7 (Application):** AWS Application Load Balancer (ALB) enforcing TLS 1.3 encryption for all ingress traffic (`https://devcloudproject.com`). NGINX Ingress Controller enforcing HTTP Strict Transport Security (HSTS) and anti-clickjacking headers.
-*   **Identity & Access (IAM):** Amazon Cognito providing OAuth 2.0 / JWT issuance. Spring Security Gateway enforcing granular Role-Based Access Control (RBAC) on all backend API routes.
-*   **Supply Chain (Zero-Trust):** Kyverno Admission Controller aggressively denying the deployment of any proprietary container image lacking a valid mathematical `cosign` signature.
-*   **Kernel Runtime (eBPF):** Sysdig Falco actively monitoring Linux system calls inside Kubernetes containers to instantly alert on rogue bash shells or unauthorized file reads (e.g., `/etc/shadow`).
+## Application components
 
----
+- The backend is a Spring Boot service with Spring Security, OAuth2 resource-server support, and JWT utility classes.
+- The frontend includes Cognito client configuration and a chat API route.
+- Backend configuration references database, Redis, RabbitMQ, and Amazon Bedrock settings through environment variables.
+- Kubernetes and Terraform configuration include secret references, ingress, security groups, and workload resources.
 
-## 2. STRIDE Threat Model Analysis
+These repository facts do not establish that authentication is correctly configured for a deployed environment, that every endpoint has the intended authorization, or that credentials are delivered securely at runtime. Review the current code paths and test behavior before making those claims.
 
-To anticipate and mitigate potential attacks targeting the Spring Boot/Next.js ecosystem, we apply the Microsoft **STRIDE** methodology.
+## Security controls in the repository
 
-| Threat Type | Description | Targeted Asset | Mitigation Strategy Applied |
-| :--- | :--- | :--- | :--- |
-| **S**poofing | Attacker impersonates an admin user. | User Accounts, API Gateway | Amazon Cognito MFA, strict JWT validation at the Spring Cloud Gateway. |
-| **T**ampering | Malicious actors modify Docker images. | AWS ECR, Kubernetes | **Cosign** cryptographic signatures verified by **Kyverno** at runtime. |
-| **R**epudiation | Users deny performing destructive actions. | AWS Infrastructure, K8s | Immutable centralized logging via **AWS CloudTrail** archived to WORM S3. |
-| **I**nformation Disclosure | Extraction of sensitive database credentials. | PostgreSQL, Application Pods | Secrets vaulted in AWS Secrets Manager, injected dynamically via External Secrets Operator. (No hardcoded `.env` files). |
-| **D**enial of Service | Botnets flooding the Next.js frontend. | ALB, EKS Nodes | AWS ALB innate protections, Karpenter Auto-scaling to absorb traffic spikes. |
-| **E**levation of Privilege| Container breakout to compromise EKS worker node. | Linux Kernel, Docker Daemon | Container security contexts configured (`runAsNonRoot`), **Sysdig Falco eBPF** behavioral monitoring. |
+| Topic | Evidence | Validation boundary |
+|---|---|---|
+| Authentication | Spring Security/JWT code and Cognito configuration | No end-to-end identity-provider test was reviewed. |
+| Secret configuration | External Secrets templates and Kubernetes secret references; backend JWT value now comes from `JWT_SECRET` | The previous JWT signing value remains in Git history and must be rotated where used. The remote secret store was not inspected. |
+| Container and IaC scanning | GitHub Actions and Jenkins scanner steps | Main CI currently has a visible failure; scan warning/failure behavior varies by workflow. |
+| Admission policies | Kyverno policy files | Runtime policy installation and enforcement were not verified. |
+| Runtime detection | Falco chart configuration | Runtime installation and alert delivery were not verified. |
+| Artifact signing | Review the Jenkinsfile and related configuration before asserting signing behavior | No successful signing-and-verification result was established during this review. |
+| Network controls | Terraform security groups and EKS configuration | Current live rules were not inspected. The cleanup branch narrows public admin sources in the EKS module. |
 
----
+## Threat-model work
 
-## 3. Secure Software Development Life Cycle (SSDLC)
+A STRIDE-style threat model can be useful for organizing future tests, but mitigations should be described as implemented only after tracing them to code and validation evidence. Prior versions of this page described MFA, signed-image admission, WAF protections, runtime Falco detection, and immutable CloudTrail retention as active controls; this review did not establish those claims, so they are not repeated here.
 
-All proprietary code modifications must pass through an automated, cryptographically bound CI/CD pipeline (Jenkins). Any failure in this chain halts the deployment.
+## Validation to add
 
-1.  **Static Application Security Testing (SAST):** SonarQube scans the Next.js and Spring Boot raw source code for OWASP Top 10 vulnerabilities (e.g., SQL Injection, Hardcoded Tokens).
-2.  **Software Composition Analysis (SCA):** Jenkins generates a comprehensive Software Bill of Materials (SBOM) using `syft` and aggressively scans all operating system libraries (Alpine/Debian) and application dependencies (NPM/Maven) using `trivy`.
-3.  **Cryptographic Attestation:** Upon passing all security gates, the `cosign` binary uses a vaulted private key to sign the specific SHA-256 Digest of the Docker image and pushes the signature as a `.sig` artifact to ECR.
-4.  **Zero-Trust Deployment:** ArgoCD attempts to deploy the new Kubernetes deployment manifest. The Kyverno Admission Webhook intercepts the request, queries AWS ECR for the `.sig` artifact, validates the cryptography, and only then authorizes the EKS Control Plane to spin up the pod.
-
----
-
-## 4. Vulnerability Remediation SLAs
-
-When automated scans (Trivy, GuardDuty) or external audits detect vulnerabilities, the Engineering team is strictly bound by the following Service Level Agreements based on the Common Vulnerability Scoring System (CVSS v3.1).
-
-| CVSS Severity | Score Range | Maximum Remediation Timeframe | Required Action |
-| :--- | :--- | :--- | :--- |
-| **CRITICAL** | 9.0 - 10.0 | **< 48 Hours** | Immediate hotfix. Production deployments halted until resolved. |
-| **HIGH** | 7.0 - 8.9 | **< 7 Days** | Prioritized in current sprint. Temporary WAF rules applied if no direct patch exists. |
-| **MEDIUM** | 4.0 - 6.9 | **< 30 Days** | Scheduled into the standard Agile backlog. |
-| **LOW** | 0.1 - 3.9 | **< 90 Days** | Addressed during routine technical debt/maintenance cycles. |
-
-*Note: Any deviations from these SLAs must be manually risk-accepted and signed off by the acting Security Architect or CISO.*
+1. Test authentication and authorization for allowed and denied user roles.
+2. Verify secret delivery and rotation without exposing values in logs or artifacts.
+3. Run and retain successful CI evidence for source, dependency, container, IaC, and DAST checks.
+4. Confirm admission policy behavior with both accepted and rejected workloads.
+5. Confirm image signing and verification end to end if that capability is intended to be claimed.
+6. Inspect deployed network, logging, and runtime-monitoring configuration in the target account.
