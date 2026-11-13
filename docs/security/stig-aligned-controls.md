@@ -1,25 +1,16 @@
-# DISA STIG Aligned Baseline Controls
+# Security configuration notes
 
-This document serves as an ongoing matrix mapping our DevSecOps architecture to standard Federal cybersecurity requirements (inspired by DISA STIGs and CIS Benchmarks).
+This file records security-related configuration examples in the repository. It is not a DISA STIG implementation statement, compliance assessment, or certification. The control identifiers and mandatory language from earlier versions have been removed because they had not been verified against an authoritative baseline.
 
-## 1. Kubernetes & Container Hardening
-*   **Control:** V-242414 | "The Kubernetes cluster must restrict execution of privileged containers."
-*   **Implementation:** Kyverno `ClusterPolicy` rules (`disallow-root-user.yaml`) strictly block pods attempting to elevate to root.
-*   **Control:** V-242415 | "The Kubernetes cluster must ensure containers run with a read-only root filesystem."
-*   **Implementation:** Enforced natively via the Kyverno `require-ro-rootfs` policy mapping.
+| Area | Repository evidence | What this does not establish |
+|---|---|---|
+| Kubernetes admission | Kyverno policy examples are under `ops/security/kyverno-policies/` and `ops/k8s/kyverno/`. | Policies are not proven installed, selected by the active cluster, or enforced on every workload. |
+| Image and source scanning | GitHub Actions workflows and a Jenkins pipeline contain scanner steps. | A passing result is not established. Some steps are warning-only, triggers are branch-specific, and the latest visible main CI run failed. |
+| Host configuration | Ansible playbooks include SSH and host-hardening tasks under `ops/ansible/`. | No host inventory or successful Ansible execution was reviewed. |
+| Secrets delivery | External Secrets resources and Kubernetes secret references are present. | The remote secret store, IAM permissions, and runtime values were not inspected. |
+| Evidence storage | S3 modules and report-upload logic are present in the repository. | Object Lock mode, retention duration, immutable storage, and successful uploads were not verified. |
+| Network access | Terraform defines VPC, EKS, and security-group resources. | The live AWS security posture is unknown. The cleanup branch narrows EKS API and bastion ingress to an explicit CIDR. |
 
-## 2. CI/CD Pipeline & Code Integrity
-*   **Control:** V-222220 | "The CI/CD pipeline must cryptographically sign deployment artifacts."
-*   **Implementation:** Sigstore Cosign is natively integrated into the Jenkinsfile, signing all Docker images prior to ECR upstream pushes.
-*   **Control:** V-222221 | "Vulnerabilities must be detected prior to deployment."
-*   **Implementation:** Trivy Config and SonarQube are configured as hard gates in the Jenkins CI pipeline. Artifacts failing SLA thresholds invoke `exit 1` stops.
+## Review guidance
 
-## 3. Host & OS Security (Ansible)
-*   **Control:** V-230222 | "The operating system must not permit direct root logins."
-*   **Implementation:** Managed automatically via `ops/ansible/playbooks/stig-baseline.yaml`, modifying `/etc/ssh/sshd_config` to `PermitRootLogin no`.
-*   **Control:** V-230223 | "The operating system must configure auditd to log all permission modifications."
-*   **Implementation:** Baseline Ansible playbooks deploy custom `/etc/audit/rules.d/stig.rules` covering all IAM files.
-
-## 4. Audit & Accountability (Evidence Retention)
-*   **Control:** V-230224 | "The system must retain audit and vulnerability records immutably."
-*   **Implementation:** The Jenkins pipeline securely uses `aws s3 cp` to automatically flush all generated Trivy, SBOM, and ZAP reports to an isolated AWS S3 bucket configured with WORM (Write Once, Read Many) Object Lock retention policies.
+For each control you want to claim, link the exact source configuration and attach a dated validation result from the intended environment. Use the applicable current DISA or organizational baseline to verify control identifiers and implementation expectations. Do not represent a configuration mapping as certification.

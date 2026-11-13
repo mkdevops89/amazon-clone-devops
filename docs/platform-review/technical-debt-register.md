@@ -1,48 +1,27 @@
-# 📉 Enterprise Technical Debt Register
+# Technical debt and verification backlog
 
-## 1. Overview
-As the Amazon Clone platform evolved from raw EC2 instances to a fully managed Kubernetes GitOps environment, several legacy artifacts were left behind. This register documents known technical debt that must be audited and cleaned up to optimize repository health and avoid developer confusion.
+This is a repository-level review list, not a report from a live AWS account. Items below are based on files in the current `main` branch and should be rechecked before execution.
 
-## 2. Phase 0-3: Deprecated Click-Ops & EC2 Scripts
-The following scripts in `ops/scripts/` were originally used to manually provision the data layer and manage EC2 instances. They are now entirely obsolete due to our transition to Terraform and Helm charts.
-- `ops/scripts/phase_0/install_mysql.sh`
-- `ops/scripts/phase_0/install_redis.sh`
-- `ops/scripts/phase_0/install_rabbitmq.sh`
-- `ops/scripts/setup_ec2.sh`
-- `ops/scripts/deploy_k8s.sh` (Replaced by GitOps)
-- `ops/scripts/update_ingress_cert.sh` (Replaced by cert-manager)
-**Action Required:** Move to an `ops/archive/` folder or permanently delete via a decommissioning PR.
+## Confirmed repository issues
 
-## 3. Phase 4-7: Kubernetes Manifest Duplication & Helm Transition
-Early Kubernetes adoptions relied on static manifests in `ops/k8s/`. These have since been wholly replaced by ArgoCD and the dynamic `ops/helm/amazon-app` charts.
-- `ops/k8s/frontend.yaml`
-- `ops/k8s/backend-deployment.yaml`
-- `ops/k8s/backend-service.yaml`
-- `ops/k8s/ingress.yaml`
-**Action Required:** Audit the `ops/k8s/` directory and purge all manifests that overlap with the `amazon-app` Helm chart to prevent split-brain state issues.
+| Priority | Finding | Evidence | Follow-up |
+|---|---|---|---|
+| High | Main-branch GitHub Actions run is failing | The latest visible `Amazon Clone CI/CD` run failed in the backend and frontend build jobs. | Inspect the failed steps and obtain a clean run before describing CI as passing. The frontend Node version was adjusted on the portfolio cleanup branch; it has not been run on GitHub yet. |
+| High | Terraform generates a bastion private key | `ops/terraform/modules/eks/bastion.tf` uses `tls_private_key` and writes a local key file. Private-key material is also stored in Terraform state. | Prefer managed access such as SSM Session Manager or provision from an externally managed public key. Protect state and local files until changed. |
+| Medium | Mutable image references remain | Some platform manifests and CI agent definitions use tags such as `latest` or `stable`. | Pin tool and workload images to reviewed versions or digests. |
+| Medium | Multiple CI/CD paths remain | Jenkins and three GitHub Actions workflows coexist; some GitHub workflows trigger only from phase branches. | Identify which pipeline is the current supported path and disable or label obsolete triggers. |
+| Medium | Teardown and security documents contain unverified claims | See the platform review and security documents. | Use the revised documents as review notes; validate all account-specific procedures before execution. |
 
-## 4. Phase 9-10: HashiCorp Vault Deprecation
-We initially deployed HashiCorp Vault for secrets management. However, in Phase 15, we fully transitioned to AWS Systems Manager (SSM) Parameter Store and the External Secrets Operator. Vault is now dead weight on the cluster.
-- `ops/helm/vault-values.yaml` (Decommissioned)
-**Action Required:** Ensure the Vault Helm release is completely uninstalled from the cluster, and delete the legacy `vault-values.yaml` configurations from the repository.
+## Review boundaries
 
-## 5. Phase 15: Legacy Authentication Endpoints
-The Spring Boot backend still houses dead code (`LoginRequest.java`, `SignupRequest.java`, `JwtUtils.java`) originally used for homegrown JWT authentication. AWS Cognito now handles this entirely at the edge.
-**Action Required:** Schedule a Java refactoring sprint to strip out these defunct payload classes and `UsernamePasswordAuthenticationFilter` logic to reduce the container attack surface.
+- No AWS account inventory, billing report, Terraform plan, or cluster query was used for this list.
+- A path in the repository establishes that configuration exists, not that it is installed or active.
+- No claim is made that old scripts, resources, DNS records, storage volumes, or cloud costs remain in an account.
+- The GitHub Actions log summary did not expose step-level details during the review.
 
-## 6. Phase 11 & 13: Observability, Logging, & FinOps Overlap
-As we matured from basic metrics to full ELK Stack logging and Prometheus monitoring, we created overlaps that generate unnecessary AWS costs.
-- **Redundant Log Storage:** EKS is currently shipping default container logs to AWS CloudWatch Logs, while Filebeat is simultaneously shipping the exact same logs to our self-hosted Elasticsearch cluster. This double-billing must be severed by disabling the CloudWatch log streams.
-- **Manual Grafana Dashboards:** Early Grafana dashboards were built manually in the UI (Click-Ops). They must be exported as JSON models and committed to `ops/k8s/monitoring/dashboards/` to enforce GitOps state.
-- **Orphaned EBS Volumes:** Legacy StatefulSets (e.g., old versions of Nexus or SonarQube) that were deleted may have left behind unattached `gp3` Elastic Block Store volumes that are still billing monthly.
-**Action Required:** Execute an AWS Cost Explorer audit for unattached EBS volumes and configure EKS to exclusively rely on ELK for application logs.
+## Suggested order
 
-## 7. Phase 11: CI/CD Pipeline Fragmentation 
-During our early automated deployments, we extensively prototyped CI/CD workflows using both **GitHub Actions** (Phase 6a) and **GitLab CI** (Phase 6c) before definitively standardizing on **Jenkins** as the Enterprise DevSecOps Hub. This led to severe CI/CD fragmentation.
-- `.github/workflows/`
-- `.gitlab-ci.yml`
-**Action Required:** Delete all non-Jenkins pipeline definitions from the repository to establish a single source of truth for CI/CD and prevent "ghost builds" from triggering externally on GitHub or GitLab runners.
-
-## 8. Phase 5: Route 53 DNS Sprawl & Manual Records
-In the foundational phases—before fully adopting declarative Terraform `route53.tf` modules and automated Kubernetes Ingress generation—we successfully routed traffic to our early EC2 instances and ALBs via Click-Ops manual AWS Route 53 insertions.
-**Action Required:** Conduct an AWS Route 53 Public Hosted Zone audit. Identify and purge any "dangling DNS" records (A/CNAME records) pointing to non-existent resources to eliminate the risk of subdomain takeover vulnerabilities. Ensure 100% of platform routing is now codified via Infrastructure-as-Code.
+1. Review GitHub Actions failures and choose the supported build/deployment path.
+2. Supply and verify the restricted administrator CIDR; replace Terraform-generated SSH key material with a managed access method or externally managed public key.
+3. Reconcile README and runbook statements with the selected current architecture.
+4. Audit cloud resources and actual costs in AWS before making cleanup decisions.

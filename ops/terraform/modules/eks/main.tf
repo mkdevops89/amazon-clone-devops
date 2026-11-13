@@ -13,9 +13,10 @@ module "eks" {
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnets
   
-  # Fix: Enable Public Access for kubectl from local machine
+  # Keep the endpoint public for operator access, but restrict it to the
+  # explicitly configured administrative network.
   cluster_endpoint_public_access = true
-  cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
+  cluster_endpoint_public_access_cidrs = [var.admin_source_cidr]
 
   # Worker Nodes Group
   eks_managed_node_groups = {
@@ -113,7 +114,7 @@ module "eks" {
       from_port   = 8080
       to_port     = 8080
       type        = "ingress"
-      cidr_blocks = ["0.0.0.0/0"]
+      cidr_blocks = [var.vpc_cidr_block]
     }
     ingress_allow_3000 = {
       description = "Allow Inbound 3000 for Frontend"
@@ -121,7 +122,7 @@ module "eks" {
       from_port   = 3000
       to_port     = 3000
       type        = "ingress"
-      cidr_blocks = ["0.0.0.0/0"]
+      cidr_blocks = [var.vpc_cidr_block]
     }
   }
 }

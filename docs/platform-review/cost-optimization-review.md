@@ -1,22 +1,21 @@
-# 💰 FinOps & Cost Optimization Review
+# Cost review notes
 
-## 1. Executive Summary
-As the platform has stabilized through Phase 15, our focus must shift to micro-optimizations. While the Hybrid Spot Node architecture reduced gross compute costs by 70%, several secondary infrastructure resources remain unoptimized.
+This document identifies likely cost drivers from repository configuration. It does not contain measured AWS charges, savings, or a comparison of before-and-after costs.
 
-## 2. Identified Cost Leaks
+## Configured cost drivers to review
 
-### A. CloudWatch Logs vs. ELK Stack (Double Billing)
-- **Issue:** We deployed a self-hosted ELK stack for centralized logging, completely eliminating our reliance on AWS CloudWatch. However, the EKS cluster and various Lambda functions are still emitting logs to CloudWatch log groups by default.
-- **Remediation:** Implement a Terraform configuration (`aws_cloudwatch_log_group`) with a draconian 1-day retention policy, or disable EKS control plane logging if compliance permits.
+| Resource area | Repository evidence | Cost review question |
+|---|---|---|
+| EKS worker nodes | `ops/terraform/modules/eks/main.tf` configures an On-Demand `t3.xlarge` node group and a Spot node group. | What are the actual node count, utilization, interruption effects, and regional rates? |
+| NAT and load balancing | VPC and Kubernetes ingress configuration define network paths that may create NAT gateway and load balancer charges. | Which gateways and load balancers exist, and what data processing or hourly costs appear in billing? |
+| Managed data services | Terraform defines RDS, ElastiCache, and Amazon MQ resources. | Which resources are currently provisioned, and are snapshots or storage retained after teardown? |
+| Persistent volumes and logs | Kubernetes and logging configuration can create EBS and log-storage costs. | Which volumes and log groups exist, what retention is configured, and are any resources unattached? |
+| Container registries | ECR modules and image publishing configuration are present. | How many images and layers are stored, and is an actual lifecycle policy attached? |
 
-### B. Orphaned Elastic Block Store (EBS) Volumes
-- **Issue:** During Kubernetes upgrades and StatefulSet replacements (Nexus, Jenkins, SonarQube), the underlying EBS volumes are sometimes detached but not automatically destroyed. AWS continues to charge for provisioned storage.
-- **Remediation:** Write a Python Lambda function triggered weekly by EventBridge to scan for and delete any EBS volume with an `available` state (unattached) that is older than 7 days.
+## Measurement before optimization
 
-### C. NAT Gateway Data Transfer Costs
-- **Issue:** Private EKS nodes frequently pull public Docker images from DockerHub and push large metrics. This traffic traverses the AWS NAT Gateway, accumulating massive per-GB data processing fees.
-- **Remediation:** Introduce **AWS VPC Endpoints (PrivateLink)** for S3, ECR, and CloudWatch. This routes AWS-native traffic internally, bypassing the expensive NAT Gateway.
+Use AWS Cost Explorer or billing exports for the target account and time range. Record service-level costs, relevant resource identifiers, dates, and the deployment state. Compare equivalent periods before claiming a reduction. Do not automatically delete unattached volumes or snapshots without confirming ownership and retention requirements.
 
-### D. Untagged AWS Resources
-- **Issue:** It is difficult to attribute infrastructure spend back to specific business units because many basic EC2, VPC, and S3 resources lack standardized tags.
-- **Remediation:** Enforce `default_tags` at the AWS Provider level inside `ops/terraform/aws/main.tf` to universally tag all generated resources with `Project: AmazonClone` and `Environment: Dev/Prod`.
+## Status
+
+No cost-saving percentage is asserted. Cost controls and automation code in the repository are examples until their deployment and observed effects are verified in the target AWS account.

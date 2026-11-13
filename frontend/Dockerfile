@@ -1,7 +1,7 @@
 # ==========================================
 # Stage 1: Base Image
 # ==========================================
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
 # ==========================================
 # Stage 2: Dependencies
@@ -60,6 +60,9 @@ COPY --from=builder /app/public ./public
 # Set correct permissions for the nextjs user
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
+
+# The runtime only needs Node.js; remove the package manager and its dependency tree.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing

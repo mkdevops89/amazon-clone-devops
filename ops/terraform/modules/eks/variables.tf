@@ -36,6 +36,16 @@ variable "vpc_cidr_block" {
   type        = string
 }
 
+variable "admin_source_cidr" {
+  description = "CIDR allowed to reach the public EKS API endpoint and bastion SSH; use a trusted VPN or fixed administrative network"
+  type        = string
+
+  validation {
+    condition     = can(cidrnetmask(var.admin_source_cidr)) && var.admin_source_cidr != "0.0.0.0/0"
+    error_message = "admin_source_cidr must be a valid IPv4 CIDR block and must not allow all IPv4 sources."
+  }
+}
+
 # --- Compute Engine Inputs ---
 variable "cluster_name" {
   description = "The EKS cluster name"
