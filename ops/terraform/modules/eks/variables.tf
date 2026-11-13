@@ -41,8 +41,8 @@ variable "admin_source_cidr" {
   type        = string
 
   validation {
-    condition     = can(cidrnetmask(var.admin_source_cidr))
-    error_message = "admin_source_cidr must be a valid IPv4 CIDR block."
+    condition     = can(cidrnetmask(var.admin_source_cidr)) && var.admin_source_cidr != "0.0.0.0/0"
+    error_message = "admin_source_cidr must be a valid IPv4 CIDR block and must not allow all IPv4 sources."
   }
 }
 
