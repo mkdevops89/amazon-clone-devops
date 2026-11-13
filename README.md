@@ -18,6 +18,8 @@ This is a learning and demonstration project. The repository does not establish 
 
 The latest visible main-branch workflow result is a failure, so this README does not use a passing CI badge. Recheck the Actions page before relying on any status statement.
 
+The workflow requested Node.js 18 while the locked Next.js 16 package requires Node.js 20.9 or newer. This branch updates the CI runtime to Node.js 22. The backend failure remains undiagnosed because step-level logs were unavailable; a new workflow run is needed before claiming the pipeline passes.
+
 ## Architecture
 
 The diagram describes the main repository configuration. It does not claim that every component is currently provisioned or healthy.
